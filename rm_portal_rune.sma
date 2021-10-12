@@ -380,6 +380,9 @@ public native_give(id) {
 	portal_create_pair(id)
 	HAS_PORTAL_GUN(id) = 1
 	VISIBLE_PORTAL_GUN(id) = 1
+	set_pev_string(id, pev_viewmodel2, g_pStringPortalGunModelV)
+	set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)
+	SET_PORTAL_GUN_ANIM(id, GUN_ANIM_DEPLOY)
 	return 1
 }
 

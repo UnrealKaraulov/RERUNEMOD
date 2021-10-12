@@ -82,7 +82,8 @@ public event_new_round( )
 	{
 		player_drop_rune(i);
 	}
-	/*new ent = 0;
+	//cleanup spawns for create new
+	new ent = 0;
 	while((ent = find_ent_by_class(ent,"rune_model")) != 0)
 	{
 		remove_entity(ent);
@@ -90,7 +91,7 @@ public event_new_round( )
 	for (new i = 0; i < filled_spawns; i++)
 	{
 		spawn_filled[i] = false;
-	}*/
+	}
 }
 
 // Прекеш модели руны "models/runemodel.mdl" или использование стандартной предзагруженной модели "models/w_weaponbox.mdl"
