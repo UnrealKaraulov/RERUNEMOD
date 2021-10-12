@@ -49,7 +49,7 @@ new g_pCommonTr
 #include <portal_gun\types\portalBox.inc>
 #include <portal_gun\portal.inc>
 
-new g_pStringPortalGunModelV, g_pStringPortalGunModelP
+new g_pStringPortalGunModelV, g_pStringPortalGunModelP, g_knifeV, g_knifeP
 new g_idPortalGunModelV
 new g_idPortalModel
 
@@ -97,6 +97,9 @@ public plugin_init() {
 	g_pStringPortalClass = engfunc(EngFunc_AllocString, PORTAL_CLASSNAME)
 	g_pStringPortalGunModelV = engfunc(EngFunc_AllocString, g_sPortalGunModelV)
 	g_pStringPortalGunModelP = engfunc(EngFunc_AllocString, g_sPortalGunModelP)
+	
+	g_knifeP = engfunc(EngFunc_AllocString, "models/v_knife.mdl")
+	g_knifeV = engfunc(EngFunc_AllocString, "models/p_knife.mdl")
 	
 	g_iMaxplayers = get_maxplayers()
 	
@@ -398,20 +401,34 @@ public native_give(id) {
 	portal_create_pair(id)
 	HAS_PORTAL_GUN(id) = 1
 	VISIBLE_PORTAL_GUN(id) = 1
-	set_pev_string(id, pev_viewmodel2, g_pStringPortalGunModelV)
-	set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)
+	if ( get_user_weapon(id) == CSW_KNIFE )
+	{
+		set_pev_string(id, pev_viewmodel2, g_pStringPortalGunModelV)
+		set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)
+	}
+	else 
+	{
+		client_cmd(id,"slot3");
+		client_cmd(id,"slot3");
+	}
+	
 	SET_PORTAL_GUN_ANIM(id, GUN_ANIM_DEPLOY)
 	return 1
 }
 
+
+
 public  native_remove(id) {
 	if(!HAS_PORTAL_GUN(id))
 		return 0
-	
 	portal_remove_pair(id)
 	HAS_PORTAL_GUN(id) = 0
 	VISIBLE_PORTAL_GUN(id) = 0
-	
+	if ( get_user_weapon(id) == CSW_KNIFE )
+	{
+		set_pev_string(id, pev_viewmodel2, g_knifeV)
+		set_pev_string(id, pev_weaponmodel2, g_knifeP)
+	}
 	return 1
 }
 
