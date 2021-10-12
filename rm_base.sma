@@ -2,6 +2,7 @@
 #include <amxmisc>
 #include <csx>
 #include <hamsandwich>
+#include <xs>
 
 #include <rm_api>
 
@@ -17,12 +18,13 @@
 #define SPAWN_RUNES_TASK_ID 10001
 
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
-#define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
+#define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.5
 
 #define HUD_CHANNEL_ID 3
+#define HUD_CHANNEL_ID_2 2
 
 // Таймер обновление рун и обучения новым спавнам
-#define SPAWN_NEW_RUNE_TIME 30.0
+#define SPAWN_NEW_RUNE_TIME 20.0
 
 // Количество спавнов
 new filled_spawns = 0;
@@ -43,11 +45,11 @@ new Float:rune_list_model_color[MAX_REGISTER_RUNES][3];
 // Активная руна игрока - номер плагина
 new active_rune[MAX_PLAYERS + 1];
 // Получение ID руны по номеру плагина
-public get_runeid_by_pluginid( id )
+public get_runeid_by_pluginid( pid )
 {
 	for(new i = 0; i < filled_runes;i++)
 	{
-		if (rune_list_id[i] == id)
+		if (rune_list_id[i] == pid)
 			return i;
 	}
 	return -1;
@@ -71,6 +73,24 @@ public plugin_init()
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	set_task(SPAWN_NEW_RUNE_TIME, "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID, _, _, "b");
 	set_task(UPDATE_RUNE_DESCRIPTION_HUD_TIME, "RM_SHOW_RUNE_INFO", UPDATE_RUNE_DESCRIPTION_HUD_ID, _, _, "b");
+	register_event("HLTV", "event_new_round", "a", "1=0", "2=0")
+}
+// Забрать руны при старте нового раунда
+public event_new_round( )
+{
+	for(new i = 0; i < MAX_PLAYERS + 1;i++)
+	{
+		player_drop_rune(i);
+	}
+	/*new ent = 0;
+	while((ent = find_ent_by_class(ent,"rune_model")) != 0)
+	{
+		remove_entity(ent);
+	}
+	for (new i = 0; i < filled_spawns; i++)
+	{
+		spawn_filled[i] = false;
+	}*/
 }
 
 // Прекеш модели руны "models/runemodel.mdl" или использование стандартной предзагруженной модели "models/w_weaponbox.mdl"
@@ -152,20 +172,19 @@ public player_drop_rune(id)
 // Функция вызывается в плагинах рун, позволяет принудительно заставить базовый плагин отключить руну игроку.
 public rm_drop_rune_api(id)
 {
-	player_drop_rune(id); // вопрос стоит ли вызывать rm_drop_rune_callback
+	player_drop_rune(id); 
 }
 
 // Событие происходит при столкновении игрока с руной, если руны нет, даем игроку новую, освобождаем спавн и удаляем модель руны
-public rune_touch(rune_id, player_id)
+public rune_touch(rune_ent, player_id)
 {
 	if (active_rune[player_id] == 0)
 	{
-		new spawn_id = get_rune_spawnid(rune_id);
+		new spawn_id = get_rune_spawnid(rune_ent);
 		spawn_filled[spawn_id] = false;
-		active_rune[player_id] = rune_list_id[rune_id];
+		active_rune[player_id] = rune_list_id[get_rune_runeid(rune_ent)];
 		rm_give_rune_callback(active_rune[player_id],player_id);
-		remove_entity(rune_id);
-		return PLUGIN_HANDLED;
+		remove_entity(rune_ent);
 	}
 	return PLUGIN_CONTINUE;
 }
@@ -174,7 +193,7 @@ public rune_touch(rune_id, player_id)
 public bool:is_no_spawn_point( Float:coords[3] )
 {
 	new ent, classname[64]
-	while((ent = find_ent_in_sphere(ent, coords, 100.0)))
+	while((ent = find_ent_in_sphere(ent, coords, 200.0)))
 	{
 		entity_get_string(ent, EV_SZ_classname,classname,charsmax(classname))
 		if(equali(classname, "info_player_start") || equali(classname, "info_player_deathmatch"))
@@ -189,7 +208,7 @@ public bool:is_no_spawn_point( Float:coords[3] )
 public bool:is_no_player_point( Float:coords[3] )
 {
 	new ent;
-	while((ent = find_ent_in_sphere(ent, coords, 100.0)))
+	while((ent = find_ent_in_sphere(ent, coords, 64.0)))
 	{
 		if (ent > MAX_PLAYERS)
 			continue;
@@ -217,20 +236,19 @@ public fill_new_spawn_point( )
 {
 	if (filled_spawns >= MAX_ACTIVE_RUNES)
 		return;
-	new current_spawn_id = filled_spawns;
 	new iPlayers[ 32 ], iNum;
 	new Float:fOrigin[3];
 	get_players( iPlayers, iNum  );
 	for( new i = 0; i < iNum; i++ )
 	{
 		new iPlayer = iPlayers[ i ];
-		if (is_user_connected(iPlayer) && is_user_alive(iPlayer)/* && is_user_onground(iPlayer)*/)
+		if (is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer))
 		{
 			entity_get_vector(iPlayer, EV_VEC_origin, fOrigin );
 			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin))
 			{
-				entity_get_vector(iPlayer, EV_VEC_origin, spawn_list[current_spawn_id] );
-				spawn_filled[current_spawn_id] = false;
+				entity_get_vector(iPlayer, EV_VEC_origin, spawn_list[filled_spawns] );
+				spawn_filled[filled_spawns] = false;
 				filled_spawns++;
 				if (filled_spawns >= MAX_ACTIVE_RUNES)
 					return;
@@ -242,23 +260,24 @@ public fill_new_spawn_point( )
 // Функция сохраняет ид руны в сущность модели руны 
 public set_rune_runeid( id, rune )
 {
-	return entity_set_int(id, EV_INT_iuser4, rune );
+	return entity_set_float(id, EV_FL_fuser4, float(rune) );
 }
 // Функция возвращает ид руны из сущности модели руны 
 public get_rune_runeid( id )
 {
-	return entity_get_int(id, EV_INT_iuser4);
+	return floatround(entity_get_float(id, EV_FL_fuser4));
 }
 // Функция возвращает ид спавн точки из сущности модели руны 
 public get_rune_spawnid( id )
 {
-	return entity_get_int(id, EV_INT_iuser3);
+	return floatround(entity_get_float(id, EV_FL_fuser3));
 }
 // Собственно создаем одну руну
 public spawn_one_rune(rune, spawn_id)
 {
 	new EntNum = create_entity("info_target");
 	entity_set_string(EntNum, EV_SZ_classname,"rune_model");
+	entity_set_float(EntNum, EV_FL_gravity, 2.0 )
 	entity_set_int(EntNum, EV_INT_renderfx, kRenderFxGlowShell);
 	entity_set_float(EntNum, EV_FL_renderamt, 500.0);
 	entity_set_int(EntNum, EV_INT_rendermode, kRenderTransAlpha);
@@ -266,15 +285,14 @@ public spawn_one_rune(rune, spawn_id)
 	entity_set_model(EntNum, rune_list_model[rune]);
 	entity_set_vector(EntNum, EV_VEC_maxs, Float:{15.0,15.0,15.0});
 	entity_set_vector(EntNum, EV_VEC_mins, Float:{-15.0,-15.0,-15.0});
-	entity_set_vector(EntNum, EV_VEC_origin, spawn_list[spawn_id] );
-	entity_set_int(EntNum, EV_INT_effects, EF_NOINTERP);
-	entity_set_int(EntNum, EV_INT_solid, 1);
-	entity_set_int(EntNum, EV_INT_iuser3,spawn_id);
-	entity_set_int(EntNum, EV_INT_iuser4,rune);
+	entity_set_int(EntNum, EV_INT_solid, SOLID_TRIGGER )
+	entity_set_float(EntNum, EV_FL_fuser3,float(spawn_id));
+	entity_set_float(EntNum, EV_FL_fuser4,float(rune));
 	entity_set_int(EntNum, EV_INT_movetype, MOVETYPE_FLY);
 	entity_set_vector(EntNum, EV_VEC_velocity,Float:{0.0,0.0,0.0});
 	entity_set_vector(EntNum, EV_VEC_avelocity,Float:{0.0,25.0,0.0});
-	entity_set_float(EntNum, EV_FL_gravity, 50.0);
+	entity_set_origin(EntNum, spawn_list[spawn_id])
+	entity_set_vector(EntNum, EV_VEC_origin, spawn_list[spawn_id] );
 	spawn_filled[spawn_id] = true;
 }
 // Функция создающая руны
@@ -291,7 +309,7 @@ public spawn_runes( id )
 		if (spawn_filled[i])
 			continue;
 			
-		new cur_rune_id = random_num(0,filled_runes);
+		new cur_rune_id = random_num(1,filled_runes) - 1;
 		if (is_no_player_point(spawn_list[i]))
 		{
 			spawn_one_rune( cur_rune_id, i );
@@ -306,14 +324,20 @@ public spawn_runes( id )
 public RM_SPAWN_RUNE( id )
 {
 	fill_new_spawn_point( );
-	set_task(5.0, "spawn_runes", SPAWN_RUNES_TASK_ID );
+	set_task(2.0, "spawn_runes", SPAWN_RUNES_TASK_ID );
 }
 
 // Функция обновляющая HUD на экране игрока с информацией о руне.
 public RM_UPDATE_HUD_RUNE( id, rune_id )
 {
-	set_hudmessage(0, 50, 200, -1.0, 0.20, 0, 0.1, 2.5, 0.02, 0.02, HUD_CHANNEL_ID);
-	show_hudmessage(id, "Название: %s^nОписание: %s^n", rune_list_name[rune_id],rune_list_descr[rune_id]);
+	set_hudmessage(0, 50, 200, -1.0, 0.20, 0, 0.1, 1.5, 0.02, 0.02, HUD_CHANNEL_ID);
+	show_hudmessage(id, "Название: %s^nОписание: %s^n",rune_list_name[rune_id],rune_list_descr[rune_id]);
+}
+
+public RM_UPDATE_HUD( id, rune_id )
+{
+	set_hudmessage(0, 50, 200, -1.0, 0.80, 0, 0.1, 1.5, 0.02, 0.02, HUD_CHANNEL_ID_2);
+	show_hudmessage(id, "%s: %s",rune_list_name[rune_id],rune_list_descr[rune_id]);
 }
 
 // Отображаем информацию о руне. 
@@ -322,23 +346,57 @@ public RM_SHOW_RUNE_INFO( id )
 {
 	new iPlayers[ 32 ], iNum, iPlayer;
 	new ClassName[64]
-	new int_origin[3], Float:flt_origin[3];
 	get_players( iPlayers, iNum  );
 	for( new i = 0; i < iNum; i++ )
 	{
 		iPlayer = iPlayers[ i ];
 		if (is_user_connected(iPlayer)/* && is_user_alive(iPlayer)*/)
 		{
-			get_user_origin(id, int_origin, Origin_AimEndEyes);
-			IVecFVec(int_origin,flt_origin);
-			new Target = 0
-			while((Target = find_ent_in_sphere(Target, flt_origin, 45.0)) > 0)
+			if (active_rune[iPlayer] > 0)
 			{
-				entity_get_string( Target, EV_SZ_classname,ClassName,charsmax(ClassName) )
-				if(equal(ClassName, "rune_model"))
+				new runeid = get_runeid_by_pluginid(active_rune[iPlayer]);
+				RM_UPDATE_HUD(iPlayer,runeid);
+			}
+			new iEyesOrigin[ 3 ];
+			get_user_origin( iPlayer, iEyesOrigin, Origin_Eyes );
+			
+			new iEyesEndOrigin[ 3 ];
+			get_user_origin( iPlayer, iEyesEndOrigin, Origin_AimEndEyes );
+			
+			new Float:vecEyesOrigin[ 3 ];
+			IVecFVec( iEyesOrigin, vecEyesOrigin );
+			
+			new Float:vecEyesEndOrigin[ 3 ];
+			IVecFVec( iEyesEndOrigin, vecEyesEndOrigin );
+			
+			new Float:vecDirection[ 3 ];
+			velocity_by_aim( iPlayer, 1, vecDirection );
+
+			new Float:vecAimOrigin[ 3 ];
+			xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
+
+			new target, i = 0;
+			
+			while (i < 1200) {
+				i+=64;
+				velocity_by_aim( iPlayer, i, vecDirection );
+				xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
+				
+				if (get_distance_f(vecEyesEndOrigin,vecAimOrigin) < 40.0)
 				{
-					RM_UPDATE_HUD_RUNE(iPlayer, get_rune_runeid( Target ));
 					break;
+				}
+				
+				target = 0;
+				while((target = find_ent_in_sphere(target, vecAimOrigin, 32.0)) > 0)
+				{
+					entity_get_string( target, EV_SZ_classname,ClassName,charsmax(ClassName) )
+					if(equal(ClassName, "rune_model"))
+					{
+						RM_UPDATE_HUD_RUNE(iPlayer, get_rune_runeid( target ));
+						i = 1200;
+						break;
+					}
 				}
 			}
 		}

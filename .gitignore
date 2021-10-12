@@ -157,3 +157,4 @@ include/xs.inc
 pawnc.dll
 pawncc.exe
 pawndisasm.exe
+compiled/rm_invis_rune.amxx

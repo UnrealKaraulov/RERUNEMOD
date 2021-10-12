@@ -82,7 +82,7 @@ stock rm_drop_rune_callback(OwnIndex, id)
 	return callfunc_end();
 }
 
-stock rm_base_drop_plugin()
+stock rm_base_drop_plugin(id)
 {
 	new BasePluginIndex = rm_base_plugin_id()
 	new BasePluginRegFunc = get_func_id("rm_drop_rune_api",BasePluginIndex)
@@ -97,7 +97,7 @@ stock rm_base_drop_plugin()
 		log_amx("CALL BASE FUNC ERROR 2")
 		return PLUGIN_HANDLED		
 	}
-	callfunc_push_int(rm_current_plugin_id())
+	callfunc_push_int(id)
 	return callfunc_end()
 }
 
