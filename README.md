@@ -1,2 +1,2 @@
 # RERUNEMOD
- Runemod Reloaded (More easy and without errors)
+ Runemod Reloaded (More easy and bots compability)
