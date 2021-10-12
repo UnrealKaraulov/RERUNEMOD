@@ -89,7 +89,7 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune(rm_current_plugin_id(),"Портал","Игрок может использовать порталы.",Float:{255.0,255.0,255.0}, "DEFAULT MODEL");
+	rm_register_rune(rm_current_plugin_id(),"Портал","Откройте два портала для перемещения!^n +attack, +attack2",Float:{255.0,255.0,255.0}, "DEFAULT MODEL");
 	
 	g_pCommonTr = create_tr2()
 	
@@ -406,13 +406,9 @@ public native_give(id) {
 		set_pev_string(id, pev_viewmodel2, g_pStringPortalGunModelV)
 		set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)
 	}
-	else 
-	{
-		client_cmd(id,"slot3");
-		client_cmd(id,"slot3");
-	}
-	
 	SET_PORTAL_GUN_ANIM(id, GUN_ANIM_DEPLOY)
+	client_cmd(id,"slot3");
+	client_cmd(id,"slot3");
 	return 1
 }
 

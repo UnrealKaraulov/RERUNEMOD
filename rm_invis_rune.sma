@@ -24,13 +24,25 @@ public rm_drop_rune(id)
 {
 	g_invis[id] = false;
 	if (is_user_connected(id))
+	{
 		set_user_rendering(id, kRenderFxNone, 255, 255, 255, kRenderNormal, 255)
+		new iFlags = entity_get_int( id, EV_INT_flags );
+		if (iFlags & FL_NOTARGET)
+		{
+			entity_set_int( id, EV_INT_flags, iFlags & ~FL_NOTARGET )
+		}
+	}
 }
 
 public client_PostThink(id)
 {
 	if (g_invis[id] && is_user_connected(id))
 	{
+		new iFlags = entity_get_int( id, EV_INT_flags );
+		if (!(iFlags & FL_NOTARGET))
+		{
+			entity_set_int( id, EV_INT_flags, iFlags | FL_NOTARGET )
+		}
 		if (entity_get_int(id, EV_INT_button) & MovingBits)
 			set_user_rendering(id, kRenderFxNone, 254, 254, 254, kRenderTransAlpha, 40)
 		else 

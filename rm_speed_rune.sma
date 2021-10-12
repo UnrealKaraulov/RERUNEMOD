@@ -24,9 +24,9 @@ public PM_Move(const id)
 		new Float:forwardmove = get_ucmd(cmdx, ucmd_forwardmove)
 		new Float:sidemove = get_ucmd(cmdx, ucmd_sidemove)
 		if (forwardmove > 50.0 || forwardmove < -50.0)
-			forwardmove*=10.0;
+			forwardmove*=2.0;
 		if (sidemove > 50.0 || sidemove < -50.0)
-			sidemove*=10.0;
+			sidemove*=2.0;
 		set_ucmd(cmdx, ucmd_forwardmove,forwardmove);
 		set_ucmd(cmdx, ucmd_sidemove,sidemove);
 		

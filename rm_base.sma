@@ -205,7 +205,7 @@ public rune_touch(rune_ent, player_id)
 		active_rune[player_id] = rune_list_id[get_rune_runeid(rune_ent)];
 		rm_give_rune_callback(active_rune[player_id],player_id);
 		remove_entity(rune_ent);
-		client_print_color(0, print_team_red, "^4[RUNEMOD]^3 Выберите нож и нажмите 2 раза drop что бы выбросить руну!");
+		client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Выберите нож и нажмите 2 раза drop что бы выбросить руну!");
 	}
 	return PLUGIN_CONTINUE;
 }
