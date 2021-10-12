@@ -167,6 +167,21 @@ public client_disconnected(id) {
 	return HAM_HANDLED
 }
 
+public bool:is_bad_aiming(id)
+{
+	new target[3]
+	new Float:target_flt[3]
+
+	get_user_origin(id, target, 3);
+	
+	IVecFVec(target,target_flt);
+
+	if(engfunc(EngFunc_PointContents,target_flt) == CONTENTS_SKY)
+		return true
+
+	return false
+}
+
 @knife_postframe(gun) {
 	static id
 	id = pev(gun, pev_owner)
@@ -201,6 +216,9 @@ public client_disconnected(id) {
 		
 		// test surface
 		if(!portalBox_create(originEyes, normal, id, portalBox))
+			goto error
+			
+		if (is_bad_aiming( id ))
 			goto error
 
 		// test hull

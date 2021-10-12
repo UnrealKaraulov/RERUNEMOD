@@ -159,3 +159,4 @@ pawncc.exe
 pawndisasm.exe
 compiled/rm_invis_rune.amxx
 compiled/rm_portal_rune.amxx
+*.amxx

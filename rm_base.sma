@@ -74,7 +74,25 @@ public plugin_init()
 	set_task(SPAWN_NEW_RUNE_TIME, "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID, _, _, "b");
 	set_task(UPDATE_RUNE_DESCRIPTION_HUD_TIME, "RM_SHOW_RUNE_INFO", UPDATE_RUNE_DESCRIPTION_HUD_ID, _, _, "b");
 	register_event("HLTV", "event_new_round", "a", "1=0", "2=0")
+	register_concmd( "drop", "cmd_drop" );
 }
+
+new Float:player_drop_time[MAX_PLAYERS + 1];
+
+public cmd_drop(id)
+{
+	if (get_gametime() - player_drop_time[id] < 0.2 && get_user_weapon(id) == CSW_KNIFE)
+	{
+		if (active_rune[id] != 0)
+		{
+			client_print_color(0, print_team_red, "^4[RUNEMOD]^3 Вы выбросили руну: %s!", rune_list_name[get_runeid_by_pluginid(active_rune[id])]);
+			player_drop_rune( id );
+		}
+	}
+	player_drop_time[id] = get_gametime();
+}
+
+
 // Забрать руны при старте нового раунда
 public event_new_round( )
 {
@@ -187,6 +205,7 @@ public rune_touch(rune_ent, player_id)
 		active_rune[player_id] = rune_list_id[get_rune_runeid(rune_ent)];
 		rm_give_rune_callback(active_rune[player_id],player_id);
 		remove_entity(rune_ent);
+		client_print_color(0, print_team_red, "^4[RUNEMOD]^3 Выберите нож и нажмите 2 раза drop что бы выбросить руну!");
 	}
 	return PLUGIN_CONTINUE;
 }
