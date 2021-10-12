@@ -11,7 +11,7 @@
 // Максимальное количество рун - плагинов
 #define MAX_REGISTER_RUNES 128
 // Количество рун которое будет создано за одно обновление спавнов
-#define MAX_RUNES_AT_ONE_TIME_SPAWN 4
+#define MAX_RUNES_AT_ONE_TIME_SPAWN 2
 
 
 #define SPAWN_SEARCH_TASK_ID 10000

@@ -98,8 +98,8 @@ public plugin_init() {
 	g_pStringPortalGunModelV = engfunc(EngFunc_AllocString, g_sPortalGunModelV)
 	g_pStringPortalGunModelP = engfunc(EngFunc_AllocString, g_sPortalGunModelP)
 	
-	g_knifeP = engfunc(EngFunc_AllocString, "models/v_knife.mdl")
-	g_knifeV = engfunc(EngFunc_AllocString, "models/p_knife.mdl")
+	g_knifeP = engfunc(EngFunc_AllocString, "models/p_knife.mdl")
+	g_knifeV = engfunc(EngFunc_AllocString, "models/v_knife.mdl")
 	
 	g_iMaxplayers = get_maxplayers()
 	

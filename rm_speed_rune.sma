@@ -23,16 +23,17 @@ public PM_Move(const id)
 		new cmdx = get_pmove( pm_cmd );
 		new Float:forwardmove = get_ucmd(cmdx, ucmd_forwardmove)
 		new Float:sidemove = get_ucmd(cmdx, ucmd_sidemove)
-		if (forwardmove > 50.0 || forwardmove < -50.0)
-			forwardmove*=2.0;
-		if (sidemove > 50.0 || sidemove < -50.0)
-			sidemove*=2.0;
+		
+		forwardmove *= 1.1;
+		sidemove *= 1.1;
+			
+		set_pev(id, pev_maxspeed, 650.0);
+		set_pmove(pm_maxspeed, 700.0)
+		set_pmove(pm_clientmaxspeed, 625.0)
+		
 		set_ucmd(cmdx, ucmd_forwardmove,forwardmove);
 		set_ucmd(cmdx, ucmd_sidemove,sidemove);
 		
-		set_pmove(pm_maxspeed, 1200.0)
-		set_pmove(pm_clientmaxspeed, 1200.0)
-		set_pev(id, pev_maxspeed, 1200.0);
 	}
 }
 
@@ -48,7 +49,7 @@ public rm_drop_rune(id)
 		set_pev(id, pev_maxspeed, 0.0);
 }
 
-public client_PreThink(id)
+/*public client_PreThink(id)
 {
 	if( g_iSpeed[id] && is_user_connected(id) && !(entity_get_int(id, EV_INT_button) & MovingBits) )
 	{
@@ -65,4 +66,4 @@ public client_PreThink(id)
 	}
 
 	return PLUGIN_CONTINUE;
-}
+}*/
