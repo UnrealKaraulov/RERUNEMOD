@@ -97,6 +97,7 @@ stock rm_base_drop_plugin(id)
 		log_amx("CALL BASE FUNC ERROR 2")
 		return PLUGIN_HANDLED		
 	}
+	callfunc_push_int(rm_current_plugin_id())
 	callfunc_push_int(id)
 	return callfunc_end()
 }

@@ -162,7 +162,7 @@ public client_respawned(id)
 // Функция забирает руну и вызывает соответствующую функцию в плагине руны
 public player_drop_rune(id)
 {
-	if (active_rune[id])
+	if (active_rune[id] != 0)
 	{
 		rm_drop_rune_callback(active_rune[id], id);
 	}
@@ -170,9 +170,10 @@ public player_drop_rune(id)
 }
 
 // Функция вызывается в плагинах рун, позволяет принудительно заставить базовый плагин отключить руну игроку.
-public rm_drop_rune_api(id)
+public rm_drop_rune_api(pid, id)
 {
-	player_drop_rune(id); 
+	if (active_rune[id] == pid)
+		player_drop_rune(id); 
 }
 
 // Событие происходит при столкновении игрока с руной, если руны нет, даем игроку новую, освобождаем спавн и удаляем модель руны
