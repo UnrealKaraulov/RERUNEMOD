@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <xs>
 #include <rm_api>
 
-#define PLUGIN "Portal Gun 2"
+#define PLUGIN "Portal_Gun_Rune"
 #define VERSION "1.9.2 beta"
 #define AUTHOR "Polarhigh" // aka trofian
 
@@ -72,6 +72,10 @@ public plugin_natives() {
 	register_native("pg_delete_portal", "@native_hide_portal", 0)
 }
 */
+
+
+
+
 public plugin_precache() {
 	g_idPortalModel = precache_model(g_sPortalModel)
 	g_idPortalGunModelV = precache_model(g_sPortalGunModelV)
@@ -85,11 +89,16 @@ public plugin_precache() {
 	
 	g_idSparksSpriteBlue = precache_model(g_sSparksSpriteBlue)
 	g_idSparksSpriteOrange = precache_model(g_sSparksSpriteOrange)
+	
+	if (file_exists("sound/rm_reloaded/portal_gun.wav"))
+	{
+		precache_sound("rm_reloaded/portal_gun.wav");
+	}
 }
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune(rm_current_plugin_id(),"Портал","Откройте два портала для перемещения!^n +attack, +attack2",Float:{255.0,255.0,255.0}, "DEFAULT MODEL");
+	rm_register_rune(rm_current_plugin_id(),"Пopтaл","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{255.0,255.0,255.0}, _, "rm_reloaded/portal_gun.wav");
 	
 	g_pCommonTr = create_tr2()
 	
