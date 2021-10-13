@@ -11,7 +11,7 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 public plugin_init()
 {
 	register_plugin("Regen_rune","1.1","Karaulov"); 
-	rm_register_rune(rm_current_plugin_id(),"Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,0.0,120.0}, _,"rm_reloaded/regen.wav");
+	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,0.0,120.0}, _,"rm_reloaded/regen.wav");
 }
 
 public plugin_precache()

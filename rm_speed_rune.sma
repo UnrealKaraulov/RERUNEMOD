@@ -13,7 +13,7 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 public plugin_init()
 {
 	register_plugin("Speed_rune","1.1","Karaulov"); // Thanks for Hawk552 original code
-	rm_register_rune(rm_current_plugin_id(),"Уcкopeниe","Увeличивaeт cкopocть игpoкa",Float:{0.0,0.0,255.0}, _,"rm_reloaded/speedup.wav");
+	rm_register_rune("Уcкopeниe","Увeличивaeт cкopocть игpoкa",Float:{0.0,0.0,255.0}, _,"rm_reloaded/speedup.wav");
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false)
 }
 

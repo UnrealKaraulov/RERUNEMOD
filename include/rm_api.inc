@@ -5,7 +5,7 @@
 
 #include <engine>
 
-stock rm_register_rune(OwnIndex, RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "")
+stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "")
 {
 	new BasePluginIndex = rm_base_plugin_id()
 	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex)
@@ -20,7 +20,7 @@ stock rm_register_rune(OwnIndex, RuneName[], RuneDesc[], Float:RuneColor[3], rMo
 		log_amx("CALL BASE FUNC ERROR")
 		return PLUGIN_HANDLED		
 	}
-	callfunc_push_int(OwnIndex)
+	callfunc_push_int(rm_current_plugin_id())
 	callfunc_push_str(RuneName)
 	callfunc_push_str(RuneDesc)
 	callfunc_push_float(RuneColor[0])

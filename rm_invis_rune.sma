@@ -11,7 +11,7 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 public plugin_init()
 {
 	register_plugin("Invis_rune","1.1","Karaulov"); 
-	rm_register_rune(rm_current_plugin_id(),"Heвидимocть","Игpoк нeвидимый ecли нe aтaкyeт.^nЧacтичнo пpoзpaчный пpи движeнии.",Float:{0.0,120.0,255.0}, _,"rm_reloaded/invis.wav");
+	rm_register_rune("Heвидимocть","Игpoк нeвидимый ecли нe aтaкyeт.^nЧacтичнo пpoзpaчный пpи движeнии.",Float:{0.0,120.0,255.0}, _,"rm_reloaded/invis.wav");
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, "CPlayer_TakeDamage_Post", .post = true);
 }
 

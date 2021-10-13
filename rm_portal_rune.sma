@@ -98,7 +98,7 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune(rm_current_plugin_id(),"Пopтaл","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{255.0,255.0,255.0}, _, "rm_reloaded/portal_gun.wav");
+	rm_register_rune("Пopтaл","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{255.0,255.0,255.0}, _, "rm_reloaded/portal_gun.wav");
 	
 	g_pCommonTr = create_tr2()
 	

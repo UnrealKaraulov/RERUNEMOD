@@ -10,7 +10,7 @@ new g_protection[MAX_PLAYERS + 1] = {0,...};
 public plugin_init()
 {
 	register_plugin("Protect_rune","1.1","Karaulov"); 
-	rm_register_rune(rm_current_plugin_id(),"3aщитa","Дaeт вpeмeннyю зaщитy oт пoлyчeния ypoнa.",Float:{120.0,120.0,120.0}, _,"rm_reloaded/protect.wav");
+	rm_register_rune("3aщитa","Дaeт вpeмeннyю зaщитy oт пoлyчeния ypoнa.",Float:{255.0,64.0,0.0}, _,"rm_reloaded/protect.wav");
 	RegisterHam(Ham_TakeDamage, "player", "CPlayer_TakeDamage_Pre")
 }
 
