@@ -104,7 +104,7 @@ public event_new_round( )
 		player_drop_rune(i);
 	}
 	//cleanup spawns for create new
-	new ent = 0;
+	/*new ent = -1;
 	while((ent = find_ent_by_class(ent,"rune_model")) != 0)
 	{
 		remove_entity(ent);
@@ -112,7 +112,7 @@ public event_new_round( )
 	for (new i = 0; i < filled_spawns; i++)
 	{
 		spawn_filled[i] = false;
-	}
+	}*/
 }
 
 // Пpeкeш мoдeли pyны "models/runemodel.mdl" или иcпoльзoвaниe cтaндapтнoй пpeдзaгpyжeннoй мoдeли "models/w_weaponbox.mdl"
@@ -243,7 +243,7 @@ public rune_touch(rune_ent, player_id)
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co cпaвнaми
 public bool:is_no_spawn_point( Float:coords[3] )
 {
-	new ent, classname[64]
+	new ent = -1, classname[64]
 	while((ent = find_ent_in_sphere(ent, coords, 200.0)))
 	{
 		entity_get_string(ent, EV_SZ_classname,classname,charsmax(classname))
@@ -258,7 +258,7 @@ public bool:is_no_spawn_point( Float:coords[3] )
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
 public bool:is_no_player_point( Float:coords[3] )
 {
-	new ent;
+	new ent = 1;
 	while((ent = find_ent_in_sphere(ent, coords, 64.0)))
 	{
 		if (ent > MAX_PLAYERS)
@@ -408,6 +408,7 @@ public RM_SHOW_RUNE_INFO( id )
 				new runeid = get_runeid_by_pluginid(active_rune[iPlayer]);
 				RM_UPDATE_HUD(iPlayer,runeid);
 			}
+			
 			new iEyesOrigin[ 3 ];
 			get_user_origin( iPlayer, iEyesOrigin, Origin_Eyes );
 			
@@ -420,34 +421,27 @@ public RM_SHOW_RUNE_INFO( id )
 			new Float:vecEyesEndOrigin[ 3 ];
 			IVecFVec( iEyesEndOrigin, vecEyesEndOrigin );
 			
+			new maxDistance = get_distance(iEyesOrigin,iEyesEndOrigin);
+			
 			new Float:vecDirection[ 3 ];
-			velocity_by_aim( iPlayer, 1, vecDirection );
-
+			velocity_by_aim( iPlayer, 32, vecDirection );
+			
 			new Float:vecAimOrigin[ 3 ];
 			xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
 
 			new target, i = 0;
-			
-			while (i < 1200) {
-				i+=64;
-				velocity_by_aim( iPlayer, i, vecDirection );
-				xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
-				
-				if (get_distance_f(vecEyesEndOrigin,vecAimOrigin) < 40.0)
-				{
-					break;
-				}
-				
-				target = 0;
-				while((target = find_ent_in_sphere(target, vecAimOrigin, 32.0)) > 0)
+			while (i < maxDistance) {
+				i+=32;
+				xs_vec_add( vecAimOrigin, vecDirection, vecAimOrigin );
+				target = -1;
+				if((target = find_ent_in_sphere(target, vecAimOrigin, 24.0)) > 0 && target != iPlayer)
 				{
 					entity_get_string( target, EV_SZ_classname,ClassName,charsmax(ClassName) )
 					if(equal(ClassName, "rune_model"))
 					{
 						RM_UPDATE_HUD_RUNE(iPlayer, get_rune_runeid( target ));
-						i = 1200;
-						break;
 					}
+					break;
 				}
 			}
 		}

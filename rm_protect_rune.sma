@@ -24,7 +24,7 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	g_protection[id] = 10;
+	g_protection[id] = 3;
 }
 
 public rm_drop_rune(id)
