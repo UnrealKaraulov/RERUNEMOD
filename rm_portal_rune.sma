@@ -10,8 +10,8 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "Portal_Gun_Rune"
-#define VERSION "1.9.2 beta"
-#define AUTHOR "Polarhigh" // aka trofian
+#define VERSION "2.0"
+#define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
 #define m_pActiveItem 373
@@ -63,18 +63,6 @@ new g_iPlayerData[MAX_PLAYERS+1][2]
 new g_idSparksSpriteBlue, g_idSparksSpriteOrange
 
 new g_iMaxplayers
-/*
-public plugin_natives() {
-	register_native("pg_give", "@native_give", 0)
-	register_native("pg_remove", "@native_remove", 0)
-	register_native("pg_is_have", "@native_is_has", 0)
-	register_native("pg_is_in_hand", "@native_is_visible_portal_gun", 0)
-	register_native("pg_delete_portal", "@native_hide_portal", 0)
-}
-*/
-
-
-
 
 public plugin_precache() {
 	g_idPortalModel = precache_model(g_sPortalModel)
@@ -120,13 +108,6 @@ public plugin_init() {
 	register_forward(FM_UpdateClientData, "@update_client_data_p", 1)
 	
 	register_touch(PORTAL_CLASSNAME, "*", "@portal_touch")
-	
-	/*register_clcmd("drop", "@cmd_drop")
-	
-	register_clcmd("say /pg", "@cmd_say_portalgun")
-	register_clcmd("say_team /pg", "@cmd_say_portalgun")
-	register_clcmd("say /portal_gun", "@cmd_say_portalgun")
-	register_clcmd("say_team /portal_gun", "@cmd_say_portalgun")*/
 }
 
 public rm_give_rune(id)
@@ -179,19 +160,54 @@ public client_disconnected(id) {
 	return HAM_HANDLED
 }
 
-public bool:is_bad_aiming(id)
+public bool:is_hull_vacant(id, Float:origin[3])
 {
-	new target[3]
-	new Float:target_flt[3]
-
-	get_user_origin(id, target, 3);
+	engfunc(EngFunc_TraceHull, origin, origin, 0, HULL_HEAD, id, g_pCommonTr)
 	
-	IVecFVec(target,target_flt);
-
-	if(engfunc(EngFunc_PointContents,target_flt) == CONTENTS_SKY)
+	if (!get_tr2(g_pCommonTr, TR_StartSolid) && !get_tr2(g_pCommonTr, TR_AllSolid) && get_tr2(g_pCommonTr, TR_InOpen))
 		return true
-
+	
 	return false
+}
+
+public bool:is_can_portal(iPlayer)
+{
+	new iEyesOrigin[ 3 ];
+	get_user_origin( iPlayer, iEyesOrigin, Origin_Eyes );
+	
+	new iEyesEndOrigin[ 3 ];
+	get_user_origin( iPlayer, iEyesEndOrigin, Origin_AimEndEyes );
+	
+	new Float:vecEyesOrigin[ 3 ];
+	IVecFVec( iEyesOrigin, vecEyesOrigin );
+	
+	new Float:vecEyesEndOrigin[ 3 ];
+	IVecFVec( iEyesEndOrigin, vecEyesEndOrigin );
+	
+	
+	new maxDistance = get_distance(iEyesOrigin,iEyesEndOrigin);
+	
+	new Float:vecDirection[ 3 ];
+	velocity_by_aim( iPlayer, 32, vecDirection );
+	
+	new Float:vecAimOrigin[ 3 ];
+	xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
+
+	new i = 0;
+	while (i < maxDistance) {
+		i+=32;
+		
+		if ( get_distance_f(vecAimOrigin,vecEyesEndOrigin) < 64.0 )
+		{
+			break;
+		}
+		
+		xs_vec_add( vecAimOrigin, vecDirection, vecAimOrigin );
+		if(!is_hull_vacant(iPlayer, vecAimOrigin) )
+			return false;
+	}
+	
+	return true;
 }
 
 @knife_postframe(gun) {
@@ -230,9 +246,6 @@ public bool:is_bad_aiming(id)
 		if(!portalBox_create(originEyes, normal, id, portalBox))
 			goto error
 			
-		if (is_bad_aiming( id ))
-			goto error
-
 		// test hull
 		new dimension = 1
 		if(floatabs(portalBox[pfwd][2]) > 0.7)
@@ -243,10 +256,10 @@ public bool:is_bad_aiming(id)
 		xs_vec_add(testOrigin, portalBox[pcenter], testOrigin)
 		
 		engfunc(EngFunc_TraceHull, testOrigin, testOrigin, 0, HULL_HUMAN, id, g_pCommonTr)
-		
 		if(get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid))
 			goto error
-		
+		if (!is_can_portal(id))
+			goto error
 		// test another portal
 		new Float:radius = floatmin(PORTAL_HEIGHT, PORTAL_WIDTH) / 2.0
 		
@@ -433,6 +446,8 @@ public  native_remove(id) {
 	{
 		set_pev_string(id, pev_viewmodel2, g_knifeV)
 		set_pev_string(id, pev_weaponmodel2, g_knifeP)
+		client_cmd(id,"slot2");
+		client_cmd(id,"slot2");
 	}
 	return 1
 }
