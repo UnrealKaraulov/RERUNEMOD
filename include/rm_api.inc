@@ -114,3 +114,10 @@ stock bool:is_user_onground( id )
 	}
 	return false;
 }
+
+
+// Пpoвepкa peaльный ли игpoк
+stock bool:is_real_player( id )
+{
+	return id > 0 && id < 33;
+}

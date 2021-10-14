@@ -27,7 +27,7 @@ public plugin_precache()
 
 public PM_Move(const id)
 {
-	if( id > 0 && id < 33 )
+	if( is_real_player(id) )
 	{
 		if (g_iSpeed[id] == 1 && entity_get_int(id, EV_INT_button) & MovingBits )
 		{

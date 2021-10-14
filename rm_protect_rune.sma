@@ -34,7 +34,7 @@ public rm_drop_rune(id)
 
 public CPlayer_TakeDamage_Pre(iVictim, iInflictor, iAttacker, Float:flDamage, iDamageBits)
 {
-	if (iVictim > 0 && iVictim < 33 && g_protection[iVictim] > 0)
+	if (is_real_player(iVictim) && g_protection[iVictim] > 0)
 	{
 		g_protection[iVictim]--;
 		if (g_protection[iVictim] <= 0)

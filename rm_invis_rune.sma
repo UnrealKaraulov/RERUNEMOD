@@ -60,7 +60,7 @@ public client_PostThink(id)
 
 public CPlayer_TakeDamage_Post(iVictim, iInflictor, iAttacker, Float:flDamage, iBitsDamageType)
 {
-    if (iAttacker > 0 && iAttacker < 33 && g_invis[iAttacker])
+    if (is_real_player(iAttacker) && g_invis[iAttacker])
 	{
 		rm_base_drop_plugin( iAttacker );
 	}
