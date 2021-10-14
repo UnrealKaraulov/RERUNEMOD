@@ -4,6 +4,9 @@
 #define _RUNEMOD_RELOAD
 
 
+#define HUD_CHANNEL_ID 3
+#define HUD_CHANNEL_ID_2 2
+
 #if !defined _engine_included
 	#include <engine>
 #endif

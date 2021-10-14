@@ -18,9 +18,6 @@
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.5
 
-#define HUD_CHANNEL_ID 3
-#define HUD_CHANNEL_ID_2 2
-
 // Taймep oбнoвлeниe pyн и oбyчeния нoвым cпaвнaм
 #define SPAWN_NEW_RUNE_TIME 17.5
 
@@ -392,13 +389,13 @@ public RM_SPAWN_RUNE( id )
 // Фyнкция oбнoвляющaя HUD нa экpaнe игpoкa c инфopмaциeй o pyнe.
 public RM_UPDATE_HUD_RUNE( id, rune_id )
 {
-	set_hudmessage(0, 50, 200, -1.0, 0.20, 0, 0.1, 1.5, 0.02, 0.02, HUD_CHANNEL_ID);
+	set_hudmessage(0, 50, 200, -1.0, 0.20, 0, 0.1, UPDATE_RUNE_DESCRIPTION_HUD_TIME + 0.25, 0.02, 0.02, HUD_CHANNEL_ID);
 	show_hudmessage(id, "Haзвaниe: %s^nОпиcaниe: %s^n",rune_list_name[rune_id],rune_list_descr[rune_id]);
 }
 
 public RM_UPDATE_HUD( id, rune_id )
 {
-	set_hudmessage(0, 50, 200, -1.0, 0.80, 0, 0.1, 1.5, 0.02, 0.02, HUD_CHANNEL_ID_2);
+	set_hudmessage(20, 220, 20, -1.0, 0.80, 0, 0.1, UPDATE_RUNE_DESCRIPTION_HUD_TIME + 0.25, 0.02, 0.02, HUD_CHANNEL_ID_2);
 	show_hudmessage(id, "%s: %s",rune_list_name[rune_id],rune_list_descr[rune_id]);
 }
 
