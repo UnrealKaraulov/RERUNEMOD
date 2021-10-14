@@ -54,6 +54,17 @@ public bool:is_hull_vacant(id, Float:origin[3], iHull)
 	return false
 }
 
+public bool:is_player_stuck(id,Float:originF[3])
+{
+	engfunc(EngFunc_TraceHull, originF, originF, 0, (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN, id, g_pCommonTr)
+	
+	if (get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid) || !get_tr2(g_pCommonTr, TR_InOpen))
+		return true
+	
+	return false
+}
+
+
 public bool:is_can_teleport(iPlayer)
 {
 	new iEyesOrigin[ 3 ];
@@ -97,7 +108,7 @@ public client_PostThink(id)
 {
 	if (is_user_connected(id) && g_Teleport[id] > 0.0)
 	{
-		if ((entity_get_int(id, EV_INT_button) & IN_ATTACK))
+		if ((entity_get_int(id, EV_INT_button) & IN_ATTACK) && get_user_weapon(id) == CSW_KNIFE)
 		{
 			if( get_gametime() - g_Teleport[id] > 0.5)
 			{
@@ -134,7 +145,7 @@ public teleportPlayer(id)
 	entity_set_vector(id, EV_VEC_angles, pLook)
 	entity_set_int(id, EV_INT_fixangle, 1)
 	unstuckplayer( id )
-	drop_to_floor( id )
+	entity_set_vector( id, EV_VEC_velocity,Float:{0.0,0.0,0.0});
 }
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
@@ -147,18 +158,18 @@ public unstuckplayer(id)
 	iHull = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN
 	
 	// fast unstuck 
-	if(!is_hull_vacant(id,Origin,iHull))
+	if(is_player_stuck(id,Origin))
 	{
-		Origin[2] -= 64.0
+		Origin[2] += 64.0
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin)	
 		return;
 	}
-	if(!is_hull_vacant(id,Origin,iHull))
+	if(is_player_stuck(id,Origin))
 	{
-		Origin[2] += 128.0
+		Origin[2] -= 128.0
 	}
 	else
 	{
@@ -167,7 +178,7 @@ public unstuckplayer(id)
 	}
 	
 	// slow unstuck 
-	if(!is_hull_vacant(id,Origin,iHull))
+	if(is_player_stuck(id,Origin))
 	{
 		static const Float:RANDOM_OWN_PLACE[][3] =
 		{
