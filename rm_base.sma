@@ -51,7 +51,7 @@ new rune_default_pickup_sound[256];
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("Reloaded_RuneMod","1.2","Karaulov");
+	register_plugin("Reloaded_RuneMod","1.3","Karaulov");
 	register_touch("rune_model","player","rune_touch");
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	set_task(SPAWN_NEW_RUNE_TIME, "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID, _, _, "b");
