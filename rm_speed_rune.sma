@@ -35,7 +35,7 @@ public PM_Move(const id)
 			set_pmove(pm_maxspeed, 700.0)
 			set_pmove(pm_clientmaxspeed, 800.0)
 		}
-		if (g_iSpeed[id] == 2)
+		else if (g_iSpeed[id] == 2)
 		{
 			set_pev(id, pev_maxspeed, 240.0);
 			set_pmove(pm_maxspeed, 300.0)
