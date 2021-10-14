@@ -1,16 +1,14 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <rm_api>
 #include <fun>
-#include <reapi>
 
 new Float:g_regen[MAX_PLAYERS + 1] = {0.0,...};
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 
 public plugin_init()
 {
-	register_plugin("Regen_rune","1.1","Karaulov"); 
+	register_plugin("Regen_rune","1.2","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,0.0,120.0}, _,"rm_reloaded/regen.wav");
 }
 
@@ -25,6 +23,7 @@ public plugin_precache()
 public rm_give_rune(id)
 {
 	g_regen[id] = 1.0;
+	rm_base_highlight_player(id);
 }
 
 public rm_drop_rune(id)
@@ -39,13 +38,17 @@ public client_PostThink(id)
 	{
 		if (!(entity_get_int(id, EV_INT_button) & MovingBits))
 		{
-			if( get_gametime() - g_regen[id] > 1.0)
+			if( get_gametime() - g_regen[id] > 0.1)
 			{
 				new hp = get_user_health(id);
 				if (hp < 100)
-					set_user_health(id,clamp(hp+10,0,100));
+					set_user_health(id,clamp(hp+1,0,100));
 				g_regen[id] = get_gametime();
 			}
+		}
+		else
+		{
+			g_regen[id] = get_gametime();
 		}
 	}
 }

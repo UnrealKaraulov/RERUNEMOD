@@ -3,7 +3,14 @@
 #endif
 #define _RUNEMOD_RELOAD
 
-#include <engine>
+
+#if !defined _engine_included
+	#include <engine>
+#endif
+
+#if !defined _reapi_included
+	#include <reapi>
+#endif
 
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "")
 {
@@ -103,6 +110,27 @@ stock rm_base_drop_plugin(id)
 	return callfunc_end()
 }
 
+stock rm_base_highlight_player(id)
+{
+	new BasePluginIndex = rm_base_plugin_id()
+	new BasePluginRegFunc = get_func_id("rm_highlight_player",BasePluginIndex)
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 2")
+		return PLUGIN_HANDLED	
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 2")
+		return PLUGIN_HANDLED		
+	}
+	callfunc_push_int(rm_current_plugin_id())
+	callfunc_push_int(id)
+	
+	return callfunc_end()
+}
+
 
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )
@@ -120,4 +148,11 @@ stock bool:is_user_onground( id )
 stock bool:is_real_player( id )
 {
 	return id > 0 && id < 33;
+}
+
+stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
+{
+	set_entvar(pEntity, var_renderfx, fx)
+	set_entvar(pEntity, var_rendercolor, flColor)
+	set_entvar(pEntity, var_renderamt, iAmount)
 }

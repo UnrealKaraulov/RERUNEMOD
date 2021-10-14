@@ -1,9 +1,7 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <rm_api>
 #include <fun>
-#include <reapi>
 
 new bool:g_invis[MAX_PLAYERS + 1] = {false,...};
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );

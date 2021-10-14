@@ -1,6 +1,5 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <rm_api>
 #include <fun>
 #include <hamsandwich>
@@ -25,6 +24,7 @@ public plugin_precache()
 public rm_give_rune(id)
 {
 	g_protection[id] = 3;
+	rm_base_highlight_player(id);
 }
 
 public rm_drop_rune(id)

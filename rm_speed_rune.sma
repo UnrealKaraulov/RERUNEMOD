@@ -1,9 +1,7 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <engine>
 #include <rm_api>
 #include <fakemeta>
-#include <reapi>
 
 new g_iSpeed[MAX_PLAYERS + 1] = {0,...};
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
@@ -48,6 +46,7 @@ public PM_Move(const id)
 public rm_give_rune(id)
 {
 	g_iSpeed[id] = 1;
+	rm_base_highlight_player(id);
 }
 
 public rm_drop_rune(id)

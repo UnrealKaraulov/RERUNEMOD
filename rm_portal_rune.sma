@@ -3,7 +3,6 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 */
 
 #include <amxmodx>
-#include <engine>
 #include <fakemeta>
 #include <hamsandwich>
 #include <xs>
@@ -113,6 +112,7 @@ public plugin_init() {
 public rm_give_rune(id)
 {
 	native_give(id)
+	rm_base_highlight_player(id);
 }
 
 public rm_drop_rune(id)
