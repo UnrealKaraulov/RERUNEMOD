@@ -65,6 +65,25 @@ public bool:is_player_stuck(id,Float:originF[3])
 }
 
 
+public bool:is_player_point( id, Float:coords[3] )
+{
+	new iPlayers[ 32 ], iNum;
+	new Float:fOrigin[3];
+	get_players( iPlayers, iNum  );
+	for( new i = 0; i < iNum; i++ )
+	{
+		new iPlayer = iPlayers[ i ];
+		if (iPlayer != id && is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer))
+		{
+			entity_get_vector(iPlayer, EV_VEC_origin, fOrigin );
+			if (get_distance_f(fOrigin,coords) < 256.0)
+				return true;
+		}
+	}
+	return false;
+}
+
+
 public bool:is_can_teleport(iPlayer)
 {
 	new iEyesOrigin[ 3 ];
@@ -78,6 +97,9 @@ public bool:is_can_teleport(iPlayer)
 	
 	new Float:vecEyesEndOrigin[ 3 ];
 	IVecFVec( iEyesEndOrigin, vecEyesEndOrigin );
+	
+	if (is_player_point(iPlayer,vecEyesEndOrigin))
+		return true;
 	
 	new maxDistance = get_distance(iEyesOrigin,iEyesEndOrigin);
 	
