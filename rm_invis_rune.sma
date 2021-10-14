@@ -44,7 +44,7 @@ public rm_drop_rune(id)
 
 public client_PostThink(id)
 {
-	if (is_user_connected(id) && g_invis[id])
+	if ( is_real_player(id) && g_invis[id] )
 	{
 		new iFlags = entity_get_int( id, EV_INT_flags );
 		if (!(iFlags & FL_NOTARGET))
