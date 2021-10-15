@@ -447,11 +447,10 @@ public native_give(id) {
 	if ( get_user_weapon(id) == CSW_KNIFE )
 	{
 		set_pev_string(id, pev_viewmodel2, g_pStringPortalGunModelV)
-		set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)
+		set_pev_string(id, pev_weaponmodel2, g_pStringPortalGunModelP)	
+		SET_PORTAL_GUN_ANIM(id, GUN_ANIM_DEPLOY)
 	}
-	SET_PORTAL_GUN_ANIM(id, GUN_ANIM_DEPLOY)
-	client_cmd(id,"slot3");
-	client_cmd(id,"slot3");
+
 	return 1
 }
 
