@@ -12,7 +12,7 @@
 #define PORTAL_2	1
 #define PORTAL_ALL	2
 
-static g_portals[MAX_PLAYERS][2]
+static g_portals[MAX_PLAYERS + 1][2]
 
 bool:portal_test_owner(player, ent, type) {
 	if(ent == 0)
@@ -31,7 +31,9 @@ bool:portal_test_owner(player, ent, type) {
 }
 
 bool:portal_is_set_pair(player) {
-	return (g_portals[player][0] && g_portals[player][1])
+	if (player > 0 && player < 33)
+		return (g_portals[player][0] && g_portals[player][1])
+	return false;
 }
 
 bool:portal_create_pair(player) {

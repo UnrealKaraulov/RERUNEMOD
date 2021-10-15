@@ -43,13 +43,13 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 }
 
 
-stock rm_base_plugin_id()
+public rm_base_plugin_id()
 {
 	static pluginid = -1;
-
+	
 	/*if (pluginid != -1)
 	{	
-		log_amx("USE STATIC! %d", pluginid); // А Х*Й ТАМ, НЕ РОБИТ
+		log_amx("USE STATIC! %d", pluginid); 
 		return pluginid;
 	}*/
 	

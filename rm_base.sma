@@ -93,16 +93,6 @@ public event_new_round( )
 	{
 		player_drop_rune(i);
 	}
-	//cleanup spawns for create new
-	/*new ent = -1;
-	while((ent = find_ent_by_class(ent,"rune_model")) != 0)
-	{
-		remove_entity(ent);
-	}
-	for (new i = 0; i < filled_spawns; i++)
-	{
-		spawn_filled[i] = false;
-	}*/
 }
 
 // Пpeкeш мoдeли pyны "models/runemodel.mdl" или иcпoльзoвaниe cтaндapтнoй пpeдзaгpyжeннoй мoдeли "models/w_weaponbox.mdl"
@@ -197,7 +187,7 @@ public rm_highlight_player(plug_id, id)
 {
 	if (active_rune[id] == plug_id)
 	{
-		rg_set_rendering(id, kRenderFxGlowShell, rune_list_model_color[get_runeid_by_pluginid(active_rune[id])], 12.0);
+		rg_set_rendering(id, kRenderFxGlowShell, rune_list_model_color[get_runeid_by_pluginid(active_rune[id])], 10.0);
 	}
 }
 
@@ -281,7 +271,7 @@ public bool:is_no_rune_point( Float:coords[3] )
 {
 	for (new i = 0; i < filled_spawns; i++)
 	{
-		if ( get_distance_f(coords,spawn_list[i]) < 350 )
+		if ( get_distance_f(coords,spawn_list[i]) < 400 )
 			return false;
 	}
 	return true;
@@ -358,10 +348,23 @@ public spawn_runes( )
 {
 	if (filled_runes == 0)
 		return
-		
+	
 	new i = 0;
 	new need_runes = MAX_RUNES_AT_ONE_TIME_SPAWN;
 	
+	new iPlayers[ 32 ], iNum;
+	get_players( iPlayers, iNum  );
+	
+	new cur_runes_count = 0;
+	
+	for(i = 0; i < filled_spawns; i++)
+	{
+		if (spawn_filled[i])
+			cur_runes_count++;
+	}
+	
+	if (cur_runes_count < iNum)
+		need_runes = iNum - cur_runes_count;
 	
 	for(i = 0; i < filled_spawns; i++)
 	{
