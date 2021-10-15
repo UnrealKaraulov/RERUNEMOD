@@ -1,3 +1,4 @@
+
 #if defined _RUNEMOD_RELOAD
   #endinput
 #endif
@@ -41,17 +42,28 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	return callfunc_end()
 }
 
+
 stock rm_base_plugin_id()
 {
+	static pluginid = -1;
+
+	/*if (pluginid != -1)
+	{	
+		log_amx("USE STATIC! %d", pluginid); // А Х*Й ТАМ, НЕ РОБИТ
+		return pluginid;
+	}*/
+	
 	new num_of_plugins = get_pluginsnum()
-	new name[64];
 	for (new i = 0; i < num_of_plugins; ++i)
 	{
-		get_plugin(i, name, 63)
- 		if(equal(name,"rm_base.amxx"))
- 			return i;
+		if (get_func_id("RM_RegisterPlugin",i) >= 0)
+		{
+			pluginid = i;
+			break;
+		}
 	}
- 	return -1;
+	
+ 	return pluginid;
 }
 
 stock rm_current_plugin_id()
