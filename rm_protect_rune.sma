@@ -42,7 +42,7 @@ public CPlayer_TakeDamage_Pre(iVictim, iInflictor, iAttacker, Float:flDamage, iD
 		g_protection[iVictim]--;
 		if (g_protection[iVictim] <= 0)
 			rm_base_drop_plugin( iVictim );
-		set_hudmessage(220, 20, 20, -1.0, 0.85, 0, 0.1, 2.7, 0.02, 0.02, HUD_CHANNEL_ID);
+		set_hudmessage(220, 20, 20, -1.0, 0.65, 0, 0.1, 2.7, 0.02, 0.02, HUD_CHANNEL_ID);
 		show_hudmessage(iVictim, "Осталось:%d!", g_protection[iVictim]);
 		return HAM_SUPERCEDE;
 	}

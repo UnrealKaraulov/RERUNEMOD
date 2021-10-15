@@ -125,19 +125,38 @@ stock rm_base_drop_plugin(id)
 	return callfunc_end()
 }
 
+stock rm_use_rune_as_item( )
+{
+	new BasePluginIndex = rm_base_plugin_id()
+	new BasePluginRegFunc = get_func_id("rm_rune_set_item",BasePluginIndex)
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 3")
+		return PLUGIN_HANDLED	
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 3")
+		return PLUGIN_HANDLED		
+	}
+	callfunc_push_int(rm_current_plugin_id())
+	return callfunc_end()
+}
+
 stock rm_base_highlight_player(id)
 {
 	new BasePluginIndex = rm_base_plugin_id()
 	new BasePluginRegFunc = get_func_id("rm_highlight_player",BasePluginIndex)
 	if (BasePluginRegFunc == -1)
 	{
-		log_amx("NO BASE FUNC FOUND 2")
+		log_amx("NO BASE FUNC FOUND 4")
 		return PLUGIN_HANDLED	
 	}
 	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
 	if(Temp != 1)
 	{
-		log_amx("CALL BASE FUNC ERROR 2")
+		log_amx("CALL BASE FUNC ERROR 4")
 		return PLUGIN_HANDLED		
 	}
 	callfunc_push_int(rm_current_plugin_id())
