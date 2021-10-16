@@ -29,9 +29,9 @@ public PM_Move(const id)
 	{
 		if (g_iSpeed[id] == 1 && entity_get_int(id, EV_INT_button) & MovingBits )
 		{
-			set_pev(id, pev_maxspeed, 600.0);
-			set_pmove(pm_maxspeed, 700.0)
-			set_pmove(pm_clientmaxspeed, 800.0)
+			set_pev(id, pev_maxspeed, 650.0);
+			set_pmove(pm_maxspeed, 750.0)
+			set_pmove(pm_clientmaxspeed, 650.0)
 		}
 		else if (g_iSpeed[id] == 2)
 		{

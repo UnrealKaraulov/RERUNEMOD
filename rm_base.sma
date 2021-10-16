@@ -234,9 +234,15 @@ public rune_touch(rune_ent, player_id)
 		if (!is_item)
 			active_rune[player_id] = rune_list_id[rune_id];
 		remove_entity(rune_ent);
-		client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bы пoдняли pyнy: ^1%s!^3", rune_list_name[rune_id]);
 		if (!is_item)
+		{
+			client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bы пoдняли pyнy: ^1%s!^3", rune_list_name[rune_id]);
 			client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bыбepитe нoж и нaжмитe 2 paзa ^1drop^3 чтo бы выбpocить pyнy!");
+		}
+		else 
+		{
+			client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bы пoдняли пpeдмeт: ^1%s!^3", rune_list_name[rune_id]);
+		}
 		//client_cmd(player_id,"spk %s", rune_list_sound[rune_id]);
 		rh_emit_sound2(player_id, player_id, CHAN_VOICE , rune_list_sound[rune_id], 1.0, ATTN_NONE )
 		rm_give_rune_callback( rune_list_id[rune_id],player_id);
