@@ -79,7 +79,7 @@ public plugin_precache() {
 	
 	if (file_exists("sound/rm_reloaded/portal_gun.wav"))
 	{
-		precache_sound("rm_reloaded/portal_gun.wav");
+		precache_generic("sound/rm_reloaded/portal_gun.wav");
 	}
 }
 

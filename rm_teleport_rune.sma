@@ -28,7 +28,7 @@ public plugin_precache()
 {
 	if (file_exists("sound/rm_reloaded/teleport.wav"))
 	{
-		precache_sound("rm_reloaded/teleport.wav");
+		precache_generic("sound/rm_reloaded/teleport.wav");
 	}
 }
 
@@ -54,9 +54,9 @@ public bool:is_hull_vacant(id, Float:origin[3], iHull)
 	return false
 }
 
-public bool:is_player_stuck(id,Float:originF[3])
+public bool:is_player_stuck(id,Float:originF[3], iHull)
 {
-	engfunc(EngFunc_TraceHull, originF, originF, 0, (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN, id, g_pCommonTr)
+	engfunc(EngFunc_TraceHull, originF, originF, 0, iHull, id, g_pCommonTr)
 	
 	if (get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid) || !get_tr2(g_pCommonTr, TR_InOpen))
 		return true
@@ -180,18 +180,18 @@ public unstuckplayer(id)
 	iHull = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN
 	
 	// fast unstuck 
-	if(is_player_stuck(id,Origin))
+	if(is_player_stuck(id,Origin,iHull))
 	{
-		Origin[2] += 64.0
+		Origin[2] -= 64.0
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin)	
 		return;
 	}
-	if(is_player_stuck(id,Origin))
+	if(is_player_stuck(id,Origin,iHull))
 	{
-		Origin[2] -= 128.0
+		Origin[2] += 128.0
 	}
 	else
 	{
@@ -200,7 +200,7 @@ public unstuckplayer(id)
 	}
 	
 	// slow unstuck 
-	if(is_player_stuck(id,Origin))
+	if(is_player_stuck(id,Origin,iHull))
 	{
 		static const Float:RANDOM_OWN_PLACE[][3] =
 		{

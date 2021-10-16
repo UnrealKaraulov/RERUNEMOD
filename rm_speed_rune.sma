@@ -19,7 +19,7 @@ public plugin_precache()
 {
 	if (file_exists("sound/rm_reloaded/speedup.wav"))
 	{
-		precache_sound("rm_reloaded/speedup.wav");
+		precache_generic("sound/rm_reloaded/speedup.wav");
 	}
 }
 

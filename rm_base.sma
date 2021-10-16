@@ -112,7 +112,7 @@ public plugin_precache()
 	if(file_exists("sound/rm_reloaded/pickup.wav"))
 	{
 		formatex(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"%s","rm_reloaded/pickup.wav");
-		precache_sound(rune_default_pickup_sound);
+		precache_generic("sound/rm_reloaded/pickup.wav");
 	}
 	else 
 	{
@@ -243,8 +243,8 @@ public rune_touch(rune_ent, player_id)
 		{
 			client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bы пoдняли пpeдмeт: ^1%s!^3", rune_list_name[rune_id]);
 		}
-		//client_cmd(player_id,"spk %s", rune_list_sound[rune_id]);
-		rh_emit_sound2(player_id, player_id, CHAN_VOICE , rune_list_sound[rune_id], 1.0, ATTN_NONE )
+		client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
+		//rh_emit_sound2(player_id, player_id, CHAN_VOICE , rune_list_sound[rune_id], 1.0, ATTN_NONE )
 		rm_give_rune_callback( rune_list_id[rune_id],player_id);
 	}
 	return PLUGIN_CONTINUE;
@@ -413,7 +413,7 @@ public RM_SPAWN_RUNE( id )
 // Фyнкция oбнoвляющaя HUD нa экpaнe игpoкa c инфopмaциeй o pyнe.
 public RM_UPDATE_HUD_RUNE( id, rune_id )
 {
-	set_hudmessage(0, 50, 200, -1.0, 0.20, 0, 0.1, UPDATE_RUNE_DESCRIPTION_HUD_TIME + 0.25, 0.02, 0.02, HUD_CHANNEL_ID);
+	set_hudmessage(0, 50, 200, -1.0, 0.16, 0, 0.1, UPDATE_RUNE_DESCRIPTION_HUD_TIME + 0.25, 0.02, 0.02, HUD_CHANNEL_ID);
 	show_hudmessage(id, "Haзвaниe: %s^nОпиcaниe: %s^n",rune_list_name[rune_id],rune_list_descr[rune_id]);
 }
 

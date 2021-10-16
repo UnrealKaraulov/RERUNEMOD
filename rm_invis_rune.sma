@@ -17,7 +17,7 @@ public plugin_precache()
 {
 	if (file_exists("sound/rm_reloaded/invis.wav"))
 	{
-		precache_sound("rm_reloaded/invis.wav");
+		precache_generic("sound/rm_reloaded/invis.wav");
 	}
 }
 
