@@ -17,7 +17,7 @@ new g_pCommonTr
 public plugin_init()
 {
 	register_plugin("Phantom_rune","1.2","Karaulov"); 
-	rm_register_rune("Призрак","Игрок может ходить сквозь стены!",Float:{255.0,0.0,255.0}, _,"rm_reloaded/phantom.wav");
+	rm_register_rune("Призрак","Игрок может проходить сквозь стены!",Float:{255.0,0.0,255.0}, _,"rm_reloaded/phantom.wav");
 	g_pCommonTr = create_tr2()
 }
 
@@ -89,7 +89,7 @@ public client_PostThink(id)
 			{
 				if (entity_get_int(id, EV_INT_button) & IN_FORWARD)
 				{
-					if (get_gametime() - g_Phantom[id] > 0.30)
+					if (get_gametime() - g_Phantom[id] > 0.2)
 					{
 						if (is_empty_origin(id))
 						{
@@ -133,6 +133,7 @@ public client_PostThink(id)
 				{
 					end_phantom_mode(id);
 					deactivate_phantom_mode(id);
+					g_Phantom[id] = get_gametime() + 2.0;
 				}
 			}
 		}
