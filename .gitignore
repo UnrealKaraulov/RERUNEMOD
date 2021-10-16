@@ -125,7 +125,6 @@ include/reapi_reunion.inc
 include/reapi_version.inc
 include/reapi_vtc.inc
 include/regex.inc
-include/screenfade_util.inc
 include/snipers_rbs.inc
 include/sockets.inc
 include/sorting.inc

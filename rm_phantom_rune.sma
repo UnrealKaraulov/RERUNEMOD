@@ -3,6 +3,7 @@
 #include <rm_api>
 #include <fun>
 #include <fakemeta>
+#include <screenfade_util>
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
@@ -15,8 +16,8 @@ new g_pCommonTr
 
 public plugin_init()
 {
-	register_plugin("Phantom_rune","1.1","Karaulov"); 
-	rm_register_rune("Призрак","Игрок может ходить сквозь стены!",Float:{255.0,50.0,200.0}, _,"rm_reloaded/phantom.wav");
+	register_plugin("Phantom_rune","1.2","Karaulov"); 
+	rm_register_rune("Призрак","Игрок может ходить сквозь стены!",Float:{255.0,0.0,255.0}, _,"rm_reloaded/phantom.wav");
 	g_pCommonTr = create_tr2()
 }
 
@@ -65,12 +66,14 @@ public is_empty_origin(id)
 
 public activate_phantom_mode(id)
 {
+	UTIL_ScreenFade(id,{0,0,255},1.0,5.0,20);
 	entity_set_int(id, EV_INT_movetype, MOVETYPE_NOCLIP);
 	g_Phantom_activated[id] = true;
 }
 
 public deactivate_phantom_mode(id)
 {
+	UTIL_ScreenFade(id);
 	reset_origins(id);
 	entity_set_int(id, EV_INT_movetype, MOVETYPE_WALK);
 	g_Phantom_activated[id] = false;
@@ -86,7 +89,7 @@ public client_PostThink(id)
 			{
 				if (entity_get_int(id, EV_INT_button) & IN_FORWARD)
 				{
-					if (get_gametime() - g_Phantom[id] > 1.25)
+					if (get_gametime() - g_Phantom[id] > 0.30)
 					{
 						if (is_empty_origin(id))
 						{
@@ -99,6 +102,10 @@ public client_PostThink(id)
 							if ( get_distance_f(Origin,g_Phantom_origins[id]) < 5.0 )
 							{
 								activate_phantom_mode(id);
+							}
+							else 
+							{
+								reset_origins(id);
 							}
 						}
 						g_Phantom[id] = get_gametime();
