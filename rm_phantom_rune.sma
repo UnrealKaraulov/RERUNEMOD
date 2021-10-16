@@ -16,7 +16,7 @@ new g_pCommonTr
 public plugin_init()
 {
 	register_plugin("Phantom_rune","1.1","Karaulov"); 
-	rm_register_rune("Призрак","Игрок может ходить сквозь стены!",Float:{255.0,180.0,0.0}, _,"rm_reloaded/phantom.wav");
+	rm_register_rune("Призрак","Игрок может ходить сквозь стены!",Float:{255.0,50.0,200.0}, _,"rm_reloaded/phantom.wav");
 	g_pCommonTr = create_tr2()
 }
 
