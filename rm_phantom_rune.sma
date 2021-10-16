@@ -42,6 +42,7 @@ public rm_give_rune(id)
 {
 	g_Phantom[id] = 1.0;
 	reset_origins(id);
+	rm_base_highlight_player(id);
 }
 
 public rm_drop_rune(id)
@@ -65,7 +66,6 @@ public is_empty_origin(id)
 public activate_phantom_mode(id)
 {
 	entity_set_int(id, EV_INT_movetype, MOVETYPE_NOCLIP);
-	set_rendering(id,kRenderFxGlowShell,255,180,0,kRenderNormal,30);
 	g_Phantom_activated[id] = true;
 }
 
@@ -73,7 +73,6 @@ public deactivate_phantom_mode(id)
 {
 	reset_origins(id);
 	entity_set_int(id, EV_INT_movetype, MOVETYPE_WALK);
-	set_user_rendering(id, kRenderFxNone, 255, 255, 255, kRenderNormal, 255);
 	g_Phantom_activated[id] = false;
 }
 
