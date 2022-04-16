@@ -2,11 +2,14 @@
 #if defined _RUNEMOD_RELOAD
   #endinput
 #endif
+
 #define _RUNEMOD_RELOAD
 
 
 #define HUD_CHANNEL_ID 3
 #define HUD_CHANNEL_ID_2 2
+
+#define RUNE_CLASSNAME "rune_model"
 
 #if !defined _engine_included
 	#include <engine>
@@ -16,7 +19,35 @@
 	#include <reapi>
 #endif
 
-stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "")
+#if !defined _fakemeta_included
+	#include <fakemeta>
+#endif
+
+#if !defined _xs_included
+	#include <xs>
+#endif
+
+
+
+// Maкcимaльнoe кoличecтвo cпaвнoв для pyн
+#define MAX_ACTIVE_RUNES 18
+// Maкcимaльнoe кoличecтвo pyн - плaгинoв
+#define MAX_REGISTER_RUNES 128
+// Koличecтвo pyн кoтopoe бyдeт coздaнo зa oднo oбнoвлeниe cпaвнoв
+#define MAX_RUNES_AT_ONE_TIME_SPAWN 4
+
+
+#define SPAWN_SEARCH_TASK_ID 10000
+
+#define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
+#define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
+
+// Taймep oбнoвлeниe pyн и oбyчeния нoвым cпaвнaм
+#define SPAWN_NEW_RUNE_TIME 10.0
+
+#define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
+
+stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)
 {
 	new BasePluginIndex = rm_base_plugin_id()
 	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex)
@@ -39,13 +70,14 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	callfunc_push_float(RuneColor[2])
 	callfunc_push_str(rModel)
 	callfunc_push_str(rSound)
+	callfunc_push_int(rModelID)
 	return callfunc_end()
 }
 
 
 public rm_base_plugin_id()
 {
-	static pluginid = -1;
+	new pluginid = -1;
 	
 	/*if (pluginid != -1)
 	{	
@@ -169,7 +201,7 @@ stock rm_base_highlight_player(id)
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )
 {
-	new flags = entity_get_int(id, EV_INT_flags);
+	new flags = get_entvar(id, var_flags);
 	if( flags & FL_ONGROUND )
 	{
 		return true;
@@ -186,7 +218,157 @@ stock bool:is_real_player( id )
 
 stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
 {
-	set_entvar(pEntity, var_renderfx, fx)
-	set_entvar(pEntity, var_rendercolor, flColor)
-	set_entvar(pEntity, var_renderamt, iAmount)
+	if (is_user_connected(pEntity))
+	{
+		set_entvar(pEntity, var_renderfx, fx)
+		set_entvar(pEntity, var_rendercolor, flColor)
+		set_entvar(pEntity, var_renderamt, iAmount)
+	}
+}
+
+stock bool:rm_is_hull_vacant(id, Float:origin[3], iHull, g_pCommonTr)
+{
+	engfunc(EngFunc_TraceHull, origin, origin, 0, iHull, id, g_pCommonTr)
+	
+	if (!get_tr2(g_pCommonTr, TR_StartSolid) && !get_tr2(g_pCommonTr, TR_AllSolid) && get_tr2(g_pCommonTr, TR_InOpen))
+		return true
+	
+	return false
+}
+
+stock bool:rm_unstuck_player(id)
+{
+	new g_pCommonTr = create_tr2();
+	new Float:Origin[3];
+	get_entvar(id, var_origin, Origin);
+	
+	new iHull, iSpawnPoint, i;
+	iHull = (get_entvar(id, var_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
+	
+	// fast unstuck 
+	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	{
+		Origin[2] -= 64.0;
+	}
+	else
+	{
+		engfunc(EngFunc_SetOrigin, id, Origin);
+		free_tr2(g_pCommonTr);
+		return true;
+	}
+	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	{
+		Origin[2] += 128.0;
+	}
+	else
+	{
+		engfunc(EngFunc_SetOrigin, id, Origin);
+		return true;
+	}
+	
+	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	{
+		new const Float:RANDOM_OWN_PLACE[][3] =
+		{
+			{ -96.5,   0.0, 0.0 },
+			{  96.5,   0.0, 0.0 },
+			{   0.0, -96.5, 0.0 },
+			{   0.0,  96.5, 0.0 },
+			{ -96.5, -96.5, 0.0 },
+			{ -96.5,  96.5, 0.0 },
+			{  96.5,  96.5, 0.0 },
+			{  96.5, -96.5, 0.0 }
+		};
+		
+		new Float:flOrigin[3], Float:flOriginFinal[3], iSize;
+		get_entvar(id, var_origin, flOrigin);
+		iSize = sizeof(RANDOM_OWN_PLACE);
+		
+		iSpawnPoint = random_num(0, iSize - 1);
+		
+		for (i = iSpawnPoint + 1; /*no condition*/; i++)
+		{
+			if (i >= iSize)
+				i = 0;
+			
+			flOriginFinal[0] = flOrigin[0] + RANDOM_OWN_PLACE[i][0];
+			flOriginFinal[1] = flOrigin[1] + RANDOM_OWN_PLACE[i][1];
+			flOriginFinal[2] = flOrigin[2];
+			
+			engfunc(EngFunc_TraceLine, flOrigin, flOriginFinal, IGNORE_MONSTERS, id, 0);
+			
+			new Float:flFraction;
+			get_tr2(0, TR_flFraction, flFraction);
+			if (flFraction < 1.0)
+			{
+				new Float:vTraceEnd[3], Float:vNormal[3];
+				get_tr2(0, TR_vecEndPos, vTraceEnd);
+				get_tr2(0, TR_vecPlaneNormal, vNormal);
+				
+				TSC_Vector_MA(vTraceEnd, vNormal, 32.5, flOriginFinal);
+			}
+			flOriginFinal[2] -= 35.0;
+			
+			new iZ = 0;
+			do
+			{
+				if (rm_is_hull_vacant(id, flOriginFinal, iHull, g_pCommonTr))
+				{
+					i = iSpawnPoint;
+					engfunc(EngFunc_SetOrigin, id, flOriginFinal);
+					break;
+				}
+				
+				flOriginFinal[2] += 40.0;
+			}
+			while (++iZ <= 2)
+			
+			if (i == iSpawnPoint)
+				break;
+		}
+	}
+	else
+	{
+		engfunc(EngFunc_SetOrigin, id, Origin);
+		return true;
+	}
+	
+	return false;
+}
+
+
+
+
+// Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co cпaвнaми
+stock bool:is_no_spawn_point( Float:coords[3] )
+{
+	new ent = -1, classname[64]
+	while((ent = find_ent_in_sphere(ent, coords, 200.0)))
+	{
+		get_entvar(ent, var_classname,classname,charsmax(classname))
+		if(containi(classname, "info_player_") == 0)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
+stock bool:is_no_player_point( Float:coords[3], Float:dists = 128.0 )
+{
+	new iPlayers[ 32 ], iNum;
+	new Float:fOrigin[3];
+	get_players( iPlayers, iNum, "ach" );
+	for( new i = 0; i < iNum; i++ )
+	{
+		new iPlayer = iPlayers[ i ];
+		if (is_user_onground(iPlayer))
+		{
+			get_entvar(iPlayer, var_origin, fOrigin );
+			if (get_distance_f(fOrigin,coords) < dists)
+				return false;
+		}
+	}
+	return true;
 }

@@ -4,16 +4,23 @@
 #include <fun>
 
 new Float:g_regen[MAX_PLAYERS + 1] = {0.0,...};
+
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
+
+new rune_model_id = -1;
 
 public plugin_init()
 {
 	register_plugin("Regen_rune","1.2","Karaulov"); 
-	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,0.0,120.0}, _,"rm_reloaded/regen.wav");
+	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 }
 
 public plugin_precache()
 {
+	if(file_exists("models/rm_reloaded/rune_pink.mdl"))
+	{
+		rune_model_id = precache_model("models/rm_reloaded/rune_pink.mdl");
+	}
 	if (file_exists("sound/rm_reloaded/regen.wav"))
 	{
 		precache_generic("sound/rm_reloaded/regen.wav");
@@ -34,15 +41,15 @@ public rm_drop_rune(id)
 
 public client_PostThink(id)
 {
-	if (is_user_connected(id) && g_regen[id] > 0.0)
+	if (is_user_alive(id) && g_regen[id] > 0.0)
 	{
-		if (!(entity_get_int(id, EV_INT_button) & MovingBits))
+		if (!(get_entvar(id, var_button) & MovingBits))
 		{
-			if( get_gametime() - g_regen[id] > 0.1)
+			if( get_gametime() - g_regen[id] > 0.05 )
 			{
-				new hp = get_user_health(id);
-				if (hp < 100)
-					set_user_health(id,clamp(hp+1,0,100));
+				new Float:hp = get_entvar(id,var_health);
+				if (hp < 150.0)
+					set_entvar(id,var_health,floatclamp(hp+1.5,5.0,150.0));
 				g_regen[id] = get_gametime();
 			}
 		}

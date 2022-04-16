@@ -9,15 +9,21 @@ new g_protection[MAX_PLAYERS + 1] = {0,...};
 new rune_name[] = "Защита";
 new rune_descr[] = "Дaeт вpeмeннyю зaщитy oт пoлyчeния ypoнa.";
 
+new rune_model_id = -1;
+
 public plugin_init()
 {
-	register_plugin("Protect_rune","1.1","Karaulov"); 
-	rm_register_rune(rune_name,rune_descr,Float:{255.0,64.0,0.0}, _,"rm_reloaded/protect.wav");
+	register_plugin("Protect_rune","1.2","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHam(Ham_TakeDamage, "player", "CPlayer_TakeDamage_Pre")
 }
 
 public plugin_precache()
 {
+	if(file_exists("models/rm_reloaded/rune_red.mdl"))
+	{
+		rune_model_id = precache_model("models/rm_reloaded/rune_red.mdl");
+	}
 	if (file_exists("sound/rm_reloaded/protect.wav"))
 	{
 		precache_generic("sound/rm_reloaded/protect.wav");

@@ -63,10 +63,15 @@ new g_idSparksSpriteBlue, g_idSparksSpriteOrange
 
 new g_iMaxplayers
 
+new rune_model_id = -1
+
+
 public plugin_precache() {
 	g_idPortalModel = precache_model(g_sPortalModel)
 	g_idPortalGunModelV = precache_model(g_sPortalGunModelV)
 	precache_model(g_sPortalGunModelP)
+	
+	rune_model_id = precache_model("models/next_portalgun/w_portalgun.mdl")
 	
 	precache_sound(g_sPortalGunSoundShot1)
 	precache_sound(g_sPortalGunSoundShot2)
@@ -85,7 +90,7 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune("Пopтaльная пушка","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{255.0,255.0,255.0}, _, "rm_reloaded/portal_gun.wav");
+	rm_register_rune("Пopтaльная пушка","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{25.0,25.0,25.0}, "models/next_portalgun/w_portalgun.mdl", "rm_reloaded/portal_gun.wav",rune_model_id);
 	
 	g_pCommonTr = create_tr2()
 	
@@ -180,7 +185,7 @@ public bool:is_player_point( id, Float:coords[3] )
 		new iPlayer = iPlayers[ i ];
 		if (iPlayer != id && is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer))
 		{
-			entity_get_vector(iPlayer, EV_VEC_origin, fOrigin );
+			get_entvar(iPlayer, var_origin, fOrigin );
 			if (get_distance_f(fOrigin,coords) < 256.0)
 				return true;
 		}
