@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "Portal_Gun_Rune"
-#define VERSION "2.1"
+#define VERSION "2.2 NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -185,7 +185,7 @@ public bool:is_player_point( id, Float:coords[3] )
 		new iPlayer = iPlayers[ i ];
 		if (iPlayer != id && is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer))
 		{
-			get_entvar(iPlayer, var_origin, fOrigin );
+			pev(iPlayer, pev_origin, fOrigin );
 			if (get_distance_f(fOrigin,coords) < 256.0)
 				return true;
 		}

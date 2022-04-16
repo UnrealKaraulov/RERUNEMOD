@@ -16,7 +16,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Phantom_rune","1.2","Karaulov"); 
+	register_plugin("Phantom_rune","2.0","Karaulov"); 
 	rm_register_rune("Призрак","Игрок может проходить сквозь стены!",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 }
@@ -108,7 +108,7 @@ public client_PostThink(id)
 		{
 			if (is_user_alive(id))
 			{
-				if (entity_get_int(id, EV_INT_button) & IN_FORWARD)
+				if (get_entvar(id, var_button) & IN_FORWARD)
 				{
 					if (get_gametime() - g_Phantom[id] > 0.2)
 					{

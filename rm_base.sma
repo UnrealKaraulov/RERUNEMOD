@@ -43,11 +43,11 @@ new active_rune[MAX_PLAYERS + 1];
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("Reloaded_RuneMod","1.5","Karaulov");
+	register_plugin("Reloaded_RuneMod","2.0","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
-	create_cvar("rm_runemod", "1.5", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.0", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	register_forward(FM_TraceLine, "FM_TraceLine_HOOK", 1);

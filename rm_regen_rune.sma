@@ -11,7 +11,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Regen_rune","1.2","Karaulov"); 
+	register_plugin("Regen_rune","2.0","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 }
 

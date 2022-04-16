@@ -13,7 +13,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Speed_rune","1.2","Karaulov");
+	register_plugin("Speed_rune","2.0","Karaulov");
 	rm_register_rune("Уcкopeниe","Увeличивaeт cкopocть игpoкa",Float:{0.0,0.0,255.0}, "models/rm_reloaded/rune_blue.mdl", "rm_reloaded/speedup.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	set_task(30.0, "update_server_speed", 1, _, _, "b");

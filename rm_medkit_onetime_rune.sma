@@ -7,7 +7,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Medkit_rune","1.1","Karaulov"); 
+	register_plugin("Medkit_rune","2.0","Karaulov"); 
 	rm_register_rune("Аптечка","Восполняет здоровье.",Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_medkit.mdl",_,rune_model_id);
 	rm_use_rune_as_item( );
 }
