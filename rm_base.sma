@@ -367,7 +367,8 @@ public rune_touch(const rune_ent, const player_id)
 			spawn_filled[spawn_id] = false;
 			if (!is_item)
 				active_rune[player_id] = rune_list_id[rune_id];
-			engfunc(EngFunc_RemoveEntity, rune_ent)
+			set_entvar(rune_ent, var_flags, FL_KILLME);
+			set_entvar(rune_ent, var_nextthink, get_gametime())
 			if (!is_item)
 			{
 				client_print_color(player_id, print_team_red, "^4[RUNEMOD]^3 Bы пoдняли pyнy: ^1%s!^3", rune_list_name[rune_id]);
