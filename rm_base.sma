@@ -410,7 +410,7 @@ public fill_new_spawn_points( )
 		if (is_user_onground(id))
 		{
 			get_entvar(id, var_origin, fOrigin );
-			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && is_no_player_point(fOrigin, float(runemod_player_distance)))
+			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin))
 			{
 				get_entvar(id, var_origin, spawn_list[filled_spawns] );
 				spawn_filled[filled_spawns] = false;
