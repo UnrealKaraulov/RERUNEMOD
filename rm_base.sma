@@ -474,7 +474,7 @@ public spawn_one_rune(rune_id, spawn_id)
 	else 
 	{
 		set_entvar(EntNum, var_renderfx, kRenderFxNone);
-		set_entvar(EntNum, var_renderamt, 0.0);
+		set_entvar(EntNum, var_renderamt, 255.0);
 		set_entvar(EntNum, var_rendercolor,Float:{0.0,0.0,0.0});
 	}
 
