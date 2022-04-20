@@ -585,7 +585,7 @@ public spawn_runes( )
 		if (spawn_filled[i])
 			continue;
 		
-		if (is_no_player_point(spawn_list[i]),float(runemod_player_distance))
+		if (is_no_player_point(spawn_list[i],float(runemod_player_distance)))
 		{
 			new rune_id = random_num(1, filled_runes) - 1;
 			
