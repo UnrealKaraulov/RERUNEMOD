@@ -419,7 +419,7 @@ public fill_new_spawn_points( )
 	for( new i = 0; i < iNum; i++ )
 	{
 		new id = iPlayers[ i ];
-		if (is_user_onground(id) || is_user_bot(id))
+		if (is_user_bot(id) || is_user_onground(id))
 		{
 			get_entvar(id, var_origin, fOrigin );
 			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
