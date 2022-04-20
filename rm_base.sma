@@ -475,8 +475,8 @@ public spawn_one_rune(rune_id, spawn_id)
 	set_entvar(EntNum, var_solid, SOLID_TRIGGER );
 
 	set_entvar(EntNum, var_iuser4, RUNEMODE_MAGIC_NUMBER);
-	set_entvar(EntNum, var_fuser3,float(spawn_id));
-	set_entvar(EntNum, var_fuser4,float(rune_id));
+	set_entvar(EntNum, var_fuser3, float(spawn_id));
+	set_entvar(EntNum, var_fuser4, float(rune_id));
 
 	set_entvar(EntNum, var_movetype, MOVETYPE_FLY);
 	
@@ -494,6 +494,8 @@ public spawn_one_rune(rune_id, spawn_id)
 	
 	set_entvar(EntNum, var_sequence, ACT_IDLE);
 	set_entvar(EntNum, var_framerate, 1.0);
+	
+	set_entvar(EntNum, var_groupinfo, 1);
 		
 	SetTouch(EntNum,"rune_touch");
 	SetThink(EntNum,"rune_think");
@@ -513,7 +515,7 @@ public rune_think(const rune_ent)
 	new Float:fOrigin[3];
 	get_entvar(rune_ent,var_origin,fOrigin);
 	
-	if (is_no_player_point(fOrigin, 64.0))
+	if (is_no_player_point(fOrigin, 100.0))
 	{
 		set_entvar(rune_ent, var_solid, SOLID_BBOX )
 	}
@@ -683,9 +685,8 @@ public RM_SHOW_RUNE_INFO( id, rune_ent )
 			if (equal(clentname,RUNE_CLASSNAME))
 			{
 				RM_UPDATE_HUD_RUNE( id, get_rune_runeid( rune_ent ) );
+				g_fLastUpdateHUD[id] = get_gametime();
 			}
-			
-			g_fLastUpdateHUD[id] = get_gametime();
 		}
 	}
 }
@@ -693,10 +694,10 @@ public RM_SHOW_RUNE_INFO( id, rune_ent )
 // Поиск entity на прицеле
 public TraceAimRune(const Float:start[3], const Float:end[3], cond, id, tr)
 {
-	if (runemod_active && is_real_player(id))
+	if (runemod_active)
 	{
 		new iHitEnt = get_tr(TR_pHit)
-		if (!iHitEnt || is_nullent(iHitEnt))
+		if (!iHitEnt || !is_real_player(id) || is_nullent(iHitEnt))
 			return FMRES_IGNORED;
 		RM_SHOW_RUNE_INFO(id,iHitEnt);
 	}
