@@ -27,13 +27,14 @@
 	#include <xs>
 #endif
 
-
+// Магическое число для быстрого детекта руны
+#define RUNEMODE_MAGIC_NUMBER 14343390
 
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
 
-#define SPAWN_SEARCH_TASK_ID 10000
 
+#define SPAWN_SEARCH_TASK_ID 10000
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 

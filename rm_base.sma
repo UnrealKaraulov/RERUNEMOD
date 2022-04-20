@@ -105,27 +105,27 @@ public plugin_init()
 					.description = "Cleanup runes after round end"
 	),	runemod_restart_cleanup);
 		
-	bind_pcvar_num(create_cvar("runemod_spawntime", "30",
+	bind_pcvar_num(create_cvar("runemod_spawntime", "10",
 					.description = "Timer for add new rune"
 	),	runemod_spawntime);
 		
-	bind_pcvar_num(create_cvar("runemod_perspawn", "2",
+	bind_pcvar_num(create_cvar("runemod_perspawn", "1",
 					.description = "Number of spawn runes at one time"
 	),	runemod_perspawn);
 	
-	bind_pcvar_num(create_cvar("runemod_spawncount", "2",
+	bind_pcvar_num(create_cvar("runemod_spawncount", "20",
 					.description = "Max runes at map"
 	),	runemod_spawncount);
 		
-	bind_pcvar_num(create_cvar("runemod_respawn_distance", "1",
+	bind_pcvar_num(create_cvar("runemod_respawn_distance", "500",
 					.description = "Min spawn distance from info_player_start/deathmath"
 	),	runemod_respawn_distance);
 		
-	bind_pcvar_num(create_cvar("runemod_player_distance", "1",
+	bind_pcvar_num(create_cvar("runemod_player_distance", "300",
 					.description = "Min spawn distance from players"
 	),	runemod_player_distance);
 		
-	bind_pcvar_num(create_cvar("runemod_spawn_distance", "1",
+	bind_pcvar_num(create_cvar("runemod_spawn_distance", "300",
 					.description = "Min distance between spawns"
 	),	runemod_spawn_distance);
 	
@@ -134,11 +134,10 @@ public plugin_init()
 
 	server_cmd("exec %s/plugins/runemod.cfg", configsDir);
 	server_exec();
-	
 }
 
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
-stock bool:is_no_player_point( Float:coords[3] , Float:dist = 128.0)
+bool:is_no_player_point( Float:coords[3] , Float:dist = 128.0)
 {
 	new iPlayers[ 32 ], iNum;
 	new Float:fOrigin[3];
@@ -411,7 +410,7 @@ public fill_new_spawn_points( )
 		if (is_user_onground(id))
 		{
 			get_entvar(id, var_origin, fOrigin );
-			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin))
+			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && is_no_player_point(fOrigin, float(runemod_player_distance)))
 			{
 				get_entvar(id, var_origin, spawn_list[filled_spawns] );
 				spawn_filled[filled_spawns] = false;
@@ -473,8 +472,9 @@ public spawn_one_rune(rune_id, spawn_id)
 	set_entvar(EntNum, var_mins, Float:{-15.0,-15.0,0.0});
 	set_entvar(EntNum, var_maxs, Float:{15.0,15.0,15.0});
 
-	set_entvar(EntNum, var_solid, SOLID_TRIGGER )
+	set_entvar(EntNum, var_solid, SOLID_TRIGGER );
 
+	set_entvar(EntNum, var_iuser4, RUNEMODE_MAGIC_NUMBER);
 	set_entvar(EntNum, var_fuser3,float(spawn_id));
 	set_entvar(EntNum, var_fuser4,float(rune_id));
 
@@ -487,7 +487,7 @@ public spawn_one_rune(rune_id, spawn_id)
 
 	set_entvar(EntNum,var_nextthink, get_gametime() + 0.1);
 	
-	entity_set_origin(EntNum, spawn_list[spawn_id])
+	entity_set_origin(EntNum, spawn_list[spawn_id]);
 	
 	if (rune_list_isItem[rune_id])
 		drop_to_floor(EntNum);
@@ -676,7 +676,7 @@ public RM_SHOW_RUNE_INFO( id, rune_ent )
 {
 	if (runemod_active && get_gametime() - g_fLastUpdateHUD[id] > UPDATE_RUNE_DESCRIPTION_HUD_TIME)
 	{
-		if (!is_nullent(rune_ent))
+		if (get_entvar(rune_ent,var_iuser4) == RUNEMODE_MAGIC_NUMBER)
 		{
 			new clentname[32];
 			get_entvar(rune_ent,var_classname,clentname,charsmax(clentname));
@@ -684,9 +684,10 @@ public RM_SHOW_RUNE_INFO( id, rune_ent )
 			{
 				RM_UPDATE_HUD_RUNE( id, get_rune_runeid( rune_ent ) );
 			}
+			
+			g_fLastUpdateHUD[id] = get_gametime();
 		}
 	}
-	g_fLastUpdateHUD[id] = get_gametime();
 }
 
 // Поиск entity на прицеле
@@ -695,7 +696,7 @@ public TraceAimRune(const Float:start[3], const Float:end[3], cond, id, tr)
 	if (runemod_active && is_real_player(id))
 	{
 		new iHitEnt = get_tr(TR_pHit)
-		if (!iHitEnt)
+		if (!iHitEnt || is_nullent(iHitEnt))
 			return FMRES_IGNORED;
 		RM_SHOW_RUNE_INFO(id,iHitEnt);
 	}
