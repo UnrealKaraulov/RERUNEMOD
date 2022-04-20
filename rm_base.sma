@@ -484,7 +484,7 @@ public spawn_one_rune(rune_id, spawn_id)
 		set_entvar(EntNum, var_rendercolor,Float:{0.0,0.0,0.0});
 	}
 
-	set_entvar(EntNum, var_rendermode, kRenderTransAdd);
+	set_entvar(EntNum, var_rendermode, kRenderTransTexture);
 
 	set_entvar(EntNum, var_mins, Float:{-15.0,-15.0,0.0});
 	set_entvar(EntNum, var_maxs, Float:{15.0,15.0,15.0});
