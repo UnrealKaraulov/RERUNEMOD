@@ -88,7 +88,8 @@ public plugin_init()
 	set_task(float(runemod_spawntime), "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID);
 	set_task(UPDATE_RUNE_DESCRIPTION_HUD_TIME, "UPDATE_RUNE_DESCRIPTION", UPDATE_RUNE_DESCRIPTION_HUD_ID, _, _, "b");
 	
-	RegisterHookChain(RG_RoundEnd, "DropAllRunes", false);
+	RegisterHookChain(RG_RoundEnd, "DropAllRunes", .post = false);
+	RegisterHookChain(RG_CSGameRules_RestartRound, "RemoveAllRunes", .post = false)
 	
 	register_concmd( "drop", "cmd_drop" );
 	
@@ -192,9 +193,9 @@ new Float:player_drop_time[MAX_PLAYERS + 1];
 // Выбрать нож и нажать 2 раза DROP что бы выбросить руну
 public cmd_drop(id)
 {
-	if (get_gametime() - player_drop_time[id] < 0.25 && get_user_weapon(id) == CSW_KNIFE)
+	if (get_user_weapon(id) == CSW_KNIFE)
 	{
-		if (active_rune[id] != 0)
+		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune[id] != 0)
 		{
 			player_drop_rune( id );
 		}
@@ -209,27 +210,28 @@ public DropAllRunes( )
 	{
 		player_drop_rune(i);
 	}
-	
+}
+
+// Удалить руны в начале раунда если требуется
+public RemoveAllRunes()
+{
 	if (runemod_restart_cleanup)
 	{
-		RemoveAllRunes();
+		new pEnt = MaxClients;
+		
+		while ((pEnt = rg_find_ent_by_class(pEnt, RUNE_CLASSNAME)))
+		{
+			new rune_id = get_rune_runeid(pEnt);
+			if (rune_id >= 0 && rune_id < runes_registered)
+				rune_list_count[rune_id]--;
+			set_entvar(pEnt, var_flags, FL_KILLME);
+			set_entvar(pEnt, var_nextthink, get_gametime());
+		}
+		
 		for(new i = 0; i < filled_spawns; i++)
 		{
 			spawn_filled[i] = false;
 		}
-	}
-}
-
-public RemoveAllRunes()
-{
-	new pEnt = MaxClients;
-	while ((pEnt = rg_find_ent_by_class(pEnt, RUNE_CLASSNAME)))
-	{
-		new rune_id = get_rune_runeid(pEnt);
-		if (rune_id >= 0 && rune_id < runes_registered)
-			rune_list_count[rune_id]--;
-		set_entvar(pEnt, var_flags, FL_KILLME);
-		set_entvar(pEnt, var_nextthink, get_gametime());
 	}
 }
 
@@ -467,7 +469,7 @@ public spawn_one_rune(rune_id, spawn_id)
 	set_entvar(EntNum, var_modelindex, rune_list_model_id[rune_id]);
 	set_entvar(EntNum, var_classname, RUNE_CLASSNAME);
 	
-	dllfunc(DLLFunc_Spawn, EntNum)
+	//dllfunc(DLLFunc_Spawn, EntNum)
 	
 	set_entvar(EntNum, var_gravity, 0.0 )
 
