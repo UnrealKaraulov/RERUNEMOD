@@ -419,7 +419,7 @@ public fill_new_spawn_points( )
 	for( new i = 0; i < iNum; i++ )
 	{
 		new id = iPlayers[ i ];
-		if (is_user_onground(id))
+		if (is_user_onground(id) || is_user_bot(id))
 		{
 			get_entvar(id, var_origin, fOrigin );
 			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
@@ -478,15 +478,16 @@ public spawn_one_rune(rune_id, spawn_id)
 		set_entvar(EntNum, var_renderfx, kRenderFxGlowShell);
 		set_entvar(EntNum, var_rendercolor,rune_list_model_color[rune_id]);
 		set_entvar(EntNum, var_renderamt, 190.0);
+		set_entvar(EntNum, var_rendermode, kRenderTransAdd);
 	}
 	else 
 	{
 		set_entvar(EntNum, var_renderfx, kRenderFxNone);
 		set_entvar(EntNum, var_renderamt, 255.0);
 		set_entvar(EntNum, var_rendercolor,Float:{0.0,0.0,0.0});
+		set_entvar(EntNum, var_rendermode, kRenderTransTexture);
 	}
 
-	set_entvar(EntNum, var_rendermode, kRenderTransTexture);
 
 	set_entvar(EntNum, var_mins, Float:{-15.0,-15.0,0.0});
 	set_entvar(EntNum, var_maxs, Float:{15.0,15.0,15.0});
