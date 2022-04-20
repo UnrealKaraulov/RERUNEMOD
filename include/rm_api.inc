@@ -220,7 +220,7 @@ stock bool:is_user_onground( id )
 	new flags = get_entvar(id, var_flags);
 	if( flags & FL_ONGROUND )
 	{
-		return true;
+		return get_entvar(id,var_groundentity) == 0;
 	}
 	return false;
 }
