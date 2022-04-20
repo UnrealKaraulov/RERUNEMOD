@@ -46,7 +46,7 @@ new active_rune[MAX_PLAYERS + 1];
 new runemod_prefix[64];
 
 // Возможность отключить RUNEMOD на определенных картах или раундах
-new runemod_active;
+new runemod_active, runemod_active_status = 1;
 
 // Очистка рун после завершения раунда
 new runemod_restart_cleanup;
@@ -69,17 +69,21 @@ new runemod_player_distance;
 // Расстояние между спавнами
 new runemod_spawn_distance;
 
+// Минимальное и максимальное количество игроков
+new runemod_min_players,runemod_max_players;
+
 new g_pCommonTr;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("RM_BASEPLUGIN","2.3","Karaulov");
+	register_plugin("RM_BASEPLUGIN","2.4","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
-	create_cvar("rm_runemod", "2.3", FCVAR_SERVER | FCVAR_SPONLY);
+	
+	create_cvar("rm_runemod", "2.4", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -87,6 +91,7 @@ public plugin_init()
 	
 	set_task(float(runemod_spawntime), "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID);
 	set_task(UPDATE_RUNE_DESCRIPTION_HUD_TIME, "UPDATE_RUNE_DESCRIPTION", UPDATE_RUNE_DESCRIPTION_HUD_ID, _, _, "b");
+	set_task(10.0, "REMOVE_RUNE_MONITOR", UPDATE_RUNE_DESCRIPTION_HUD_ID+1, _, _, "b");
 	
 	RegisterHookChain(RG_RoundEnd, "DropAllRunes", .post = false);
 	RegisterHookChain(RG_CSGameRules_RestartRound, "RemoveAllRunes", .post = false)
@@ -134,6 +139,14 @@ public plugin_init()
 					.description = "Min distance between spawns"
 	),	runemod_spawn_distance);
 	
+	bind_pcvar_num(create_cvar("runemod_min_players", "0",
+					.description = "Min players for spawn runes"
+	),	runemod_min_players);
+	
+	bind_pcvar_num(create_cvar("runemod_max_players", "32",
+					.description = "Max players for spawn runes"
+	),	runemod_max_players);
+	
 	new configsDir[PLATFORM_MAX_PATH];
 	get_configsdir(configsDir, charsmax(configsDir));
 
@@ -144,6 +157,16 @@ public plugin_init()
 public plugin_end()
 {
 	free_tr2(g_pCommonTr);
+}
+
+public REMOVE_RUNE_MONITOR()
+{
+	if (runemod_active_status != runemod_active)
+	{
+		runemod_active_status = runemod_active;
+		if (!runemod_active)
+			RemoveAllRunes();
+	}
 }
 
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
@@ -596,7 +619,10 @@ public spawn_runes( )
 	new need_runes = runemod_perspawn;
 	
 	new iPlayers[ 32 ], iNum;
-	get_players( iPlayers, iNum  );
+	get_players( iPlayers, iNum ,"ah" );
+	
+	if (iNum < runemod_min_players || iNum > runemod_max_players)
+		return;
 	
 	new cur_runes_count = 0;
 	
