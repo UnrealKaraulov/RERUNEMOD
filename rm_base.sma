@@ -75,11 +75,11 @@ new g_pCommonTr;
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("RM_BASEPLUGIN","2.2","Karaulov");
+	register_plugin("RM_BASEPLUGIN","2.3","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
-	create_cvar("rm_runemod", "2.0", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.3", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -412,6 +412,7 @@ public fill_new_spawn_points( )
 		return;
 	new iPlayers[ 32 ], iNum;
 	new Float:fOrigin[3];
+	new Float:fMins[3];
 	get_players( iPlayers, iNum, "ah" );
 	for( new i = 0; i < iNum; i++ )
 	{
@@ -421,7 +422,12 @@ public fill_new_spawn_points( )
 			get_entvar(id, var_origin, fOrigin );
 			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
 			{
-				get_entvar(id, var_origin, spawn_list[filled_spawns] );
+				get_entvar(id, var_absmin, fMins );
+				
+				fOrigin[2] = fMins[2] + 1.0;
+				
+				spawn_list[filled_spawns] = fOrigin;
+				
 				spawn_filled[filled_spawns] = false;
 				filled_spawns++;
 				if (filled_spawns >= runemod_spawncount)
@@ -496,13 +502,14 @@ public spawn_one_rune(rune_id, spawn_id)
 	
 	if (!rune_list_isItem[rune_id])
 		set_entvar(EntNum, var_avelocity,Float:{0.0,125.0,0.0});
-
-	entity_set_origin(EntNum, spawn_list[spawn_id]);
-	
-	if (rune_list_isItem[rune_id])
-		drop_to_floor(EntNum);
 		
-	get_entvar(EntNum, var_origin, spawn_list[spawn_id]);
+	new Float:fOrigin[3];
+	fOrigin = spawn_list[spawn_id];
+	
+	if (!rune_list_isItem[rune_id])
+		fOrigin[2] += 50.0;
+	
+	entity_set_origin(EntNum, fOrigin);
 	
 	set_entvar(EntNum, var_sequence, ACT_IDLE);
 	set_entvar(EntNum, var_framerate, 1.0);
