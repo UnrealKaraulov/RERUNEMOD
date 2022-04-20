@@ -11,16 +11,13 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Regen_rune","2.0","Karaulov"); 
+	register_plugin("RM_REGEN","2.0","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 }
 
 public plugin_precache()
 {
-	if(file_exists("models/rm_reloaded/rune_pink.mdl"))
-	{
-		rune_model_id = precache_model("models/rm_reloaded/rune_pink.mdl");
-	}
+	rune_model_id = precache_model("models/rm_reloaded/rune_pink.mdl");
 	if (file_exists("sound/rm_reloaded/regen.wav"))
 	{
 		precache_generic("sound/rm_reloaded/regen.wav");

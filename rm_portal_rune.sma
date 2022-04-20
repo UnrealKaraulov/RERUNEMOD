@@ -8,7 +8,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <xs>
 #include <rm_api>
 
-#define PLUGIN "Portal_Gun_Rune"
+#define PLUGIN "RM_PORTAL"
 #define VERSION "2.2 NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 

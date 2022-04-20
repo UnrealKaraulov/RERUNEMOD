@@ -13,17 +13,14 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("Protect_rune","2.0","Karaulov"); 
+	register_plugin("RM_PROTECT","2.0","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHam(Ham_TakeDamage, "player", "CPlayer_TakeDamage_Pre")
 }
 
 public plugin_precache()
 {
-	if(file_exists("models/rm_reloaded/rune_red.mdl"))
-	{
-		rune_model_id = precache_model("models/rm_reloaded/rune_red.mdl");
-	}
+	rune_model_id = precache_model("models/rm_reloaded/rune_red.mdl");
 	if (file_exists("sound/rm_reloaded/protect.wav"))
 	{
 		precache_generic("sound/rm_reloaded/protect.wav");

@@ -29,63 +29,49 @@
 
 
 
-// Maкcимaльнoe кoличecтвo cпaвнoв для pyн
-#define MAX_ACTIVE_RUNES 18
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
-// Koличecтвo pyн кoтopoe бyдeт coздaнo зa oднo oбнoвлeниe cпaвнoв
-#define MAX_RUNES_AT_ONE_TIME_SPAWN 4
-
 
 #define SPAWN_SEARCH_TASK_ID 10000
 
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 
-// Taймep oбнoвлeниe pyн и oбyчeния нoвым cпaвнaм
-#define SPAWN_NEW_RUNE_TIME 10.0
-
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)
 {
-	new BasePluginIndex = rm_base_plugin_id()
-	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex)
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
-		log_amx("NO BASE FUNC FOUND")
-		return PLUGIN_HANDLED	
+		log_amx("NO BASE FUNC FOUND");
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
-		log_amx("CALL BASE FUNC ERROR")
-		return PLUGIN_HANDLED		
+		log_amx("CALL BASE FUNC ERROR");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(rm_current_plugin_id())
-	callfunc_push_str(RuneName)
-	callfunc_push_str(RuneDesc)
-	callfunc_push_float(RuneColor[0])
-	callfunc_push_float(RuneColor[1])
-	callfunc_push_float(RuneColor[2])
-	callfunc_push_str(rModel)
-	callfunc_push_str(rSound)
-	callfunc_push_int(rModelID)
-	return callfunc_end()
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_str(RuneName);
+	callfunc_push_str(RuneDesc);
+	callfunc_push_float(RuneColor[0]);
+	callfunc_push_float(RuneColor[1]);
+	callfunc_push_float(RuneColor[2]);
+	callfunc_push_str(rModel);
+	callfunc_push_str(rSound);
+	callfunc_push_int(rModelID);
+	return callfunc_end();
 }
 
 
 public rm_base_plugin_id()
 {
 	new pluginid = -1;
+	new num_of_plugins = get_pluginsnum();
 	
-	/*if (pluginid != -1)
-	{	
-		log_amx("USE STATIC! %d", pluginid); 
-		return pluginid;
-	}*/
-	
-	new num_of_plugins = get_pluginsnum()
 	for (new i = 0; i < num_of_plugins; ++i)
 	{
 		if (get_func_id("RM_RegisterPlugin",i) >= 0)
@@ -100,102 +86,131 @@ public rm_base_plugin_id()
 
 stock rm_current_plugin_id()
 {
-	return get_plugin(-1)
+	return get_plugin(-1);
 }
 
+// Событие происходит когда игрок поднимает руну
 stock rm_give_rune_callback(OwnIndex, id)
 {
-	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex)
+	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex);
 	if(PluginReqFunc == -1)
 	{
-		return PLUGIN_HANDLED		
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex)
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
 	if(Temp != 1)
 	{
-		log_amx("rm_give_rune error")
-		return PLUGIN_HANDLED		
+		log_amx("rm_give_rune error");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(id)
+	callfunc_push_int(id);
 	return callfunc_end();
 }
 
+// Событие происходит когда игрок теряет руну
 stock rm_drop_rune_callback(OwnIndex, id)
 {
-	new PluginReqFunc = get_func_id("rm_drop_rune",OwnIndex)
+	new PluginReqFunc = get_func_id("rm_drop_rune",OwnIndex);
 	if(PluginReqFunc == -1)
 	{
-		return PLUGIN_HANDLED		
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex)
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
 	if(Temp != 1)
 	{
-		log_amx("rm_drop_rune error")
-		return PLUGIN_HANDLED		
+		log_amx("rm_drop_rune error");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(id)
+	callfunc_push_int(id);
 	return callfunc_end();
 }
 
+// Заставить выбросить руну
 stock rm_base_drop_plugin(id)
 {
-	new BasePluginIndex = rm_base_plugin_id()
-	new BasePluginRegFunc = get_func_id("rm_drop_rune_api",BasePluginIndex)
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_drop_rune_api",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
-		log_amx("NO BASE FUNC FOUND 2")
-		return PLUGIN_HANDLED	
+		log_amx("NO BASE FUNC FOUND 2");
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
-		log_amx("CALL BASE FUNC ERROR 2")
-		return PLUGIN_HANDLED		
+		log_amx("CALL BASE FUNC ERROR 2");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(rm_current_plugin_id())
-	callfunc_push_int(id)
-	return callfunc_end()
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
+	return callfunc_end();
 }
 
-stock rm_use_rune_as_item( )
+// Указать класс: предмет
+stock rm_base_use_rune_as_item( )
 {
-	new BasePluginIndex = rm_base_plugin_id()
-	new BasePluginRegFunc = get_func_id("rm_rune_set_item",BasePluginIndex)
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_rune_set_item",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
-		log_amx("NO BASE FUNC FOUND 3")
-		return PLUGIN_HANDLED	
+		log_amx("NO BASE FUNC FOUND 3");
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
-		log_amx("CALL BASE FUNC ERROR 3")
-		return PLUGIN_HANDLED		
+		log_amx("CALL BASE FUNC ERROR 3");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(rm_current_plugin_id())
-	return callfunc_end()
+	callfunc_push_int(rm_current_plugin_id());
+	return callfunc_end();
 }
 
+// Активировать свечение игрока с заданным заранее цветом
 stock rm_base_highlight_player(id)
 {
-	new BasePluginIndex = rm_base_plugin_id()
-	new BasePluginRegFunc = get_func_id("rm_highlight_player",BasePluginIndex)
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_highlight_player",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
-		log_amx("NO BASE FUNC FOUND 4")
-		return PLUGIN_HANDLED	
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
 	}
-	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex)
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
-		log_amx("CALL BASE FUNC ERROR 4")
-		return PLUGIN_HANDLED		
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(rm_current_plugin_id())
-	callfunc_push_int(id)
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
 	
-	return callfunc_end()
+	return callfunc_end();
 }
+
+// Максимальное количество рун которое может быть на карте одновременно
+stock rm_base_set_max_count(num = MAX_REGISTER_RUNES)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("RM_MaxRunesAtOneTime",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(num);
+	
+	return callfunc_end();
+}
+
+
 
 
 // Функция проверяет не находится ли игрок на земле
@@ -220,20 +235,20 @@ stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, const Float:flCo
 {
 	if (is_user_connected(pEntity))
 	{
-		set_entvar(pEntity, var_renderfx, fx)
-		set_entvar(pEntity, var_rendercolor, flColor)
-		set_entvar(pEntity, var_renderamt, iAmount)
+		set_entvar(pEntity, var_renderfx, fx);
+		set_entvar(pEntity, var_rendercolor, flColor);
+		set_entvar(pEntity, var_renderamt, iAmount);
 	}
 }
 
 stock bool:rm_is_hull_vacant(id, Float:origin[3], iHull, g_pCommonTr)
 {
-	engfunc(EngFunc_TraceHull, origin, origin, 0, iHull, id, g_pCommonTr)
+	engfunc(EngFunc_TraceHull, origin, origin, 0, iHull, id, g_pCommonTr);
 	
 	if (!get_tr2(g_pCommonTr, TR_StartSolid) && !get_tr2(g_pCommonTr, TR_AllSolid) && get_tr2(g_pCommonTr, TR_InOpen))
-		return true
+		return true;
 	
-	return false
+	return false;
 }
 
 stock bool:rm_unstuck_player(id)
@@ -336,39 +351,3 @@ stock bool:rm_unstuck_player(id)
 	return false;
 }
 
-
-
-
-// Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co cпaвнaми
-stock bool:is_no_spawn_point( Float:coords[3] )
-{
-	new ent = -1, classname[64]
-	while((ent = find_ent_in_sphere(ent, coords, 200.0)))
-	{
-		get_entvar(ent, var_classname,classname,charsmax(classname))
-		if(containi(classname, "info_player_") == 0)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-// Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
-stock bool:is_no_player_point( Float:coords[3], Float:dists = 128.0 )
-{
-	new iPlayers[ 32 ], iNum;
-	new Float:fOrigin[3];
-	get_players( iPlayers, iNum, "ach" );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new iPlayer = iPlayers[ i ];
-		if (is_user_onground(iPlayer))
-		{
-			get_entvar(iPlayer, var_origin, fOrigin );
-			if (get_distance_f(fOrigin,coords) < dists)
-				return false;
-		}
-	}
-	return true;
-}
