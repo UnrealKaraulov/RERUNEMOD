@@ -68,26 +68,36 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 }
 
 
-public rm_base_plugin_id()
-{
-	new pluginid = -1;
-	new num_of_plugins = get_pluginsnum();
+static g_hBasePlugin = -1;
 	
-	for (new i = 0; i < num_of_plugins; ++i)
+stock rm_base_plugin_id()
+{
+	if (g_hBasePlugin != -1)
+		return g_hBasePlugin;
+	
+	new i = get_plugin(-1);
+	
+	for (; i > 0; i--)
 	{
 		if (get_func_id("RM_RegisterPlugin",i) >= 0)
 		{
-			pluginid = i;
+			g_hBasePlugin = i;
 			break;
 		}
 	}
 	
- 	return pluginid;
+ 	return g_hBasePlugin;
 }
+
+
+static g_hCurrentPlugin = -1;
 
 stock rm_current_plugin_id()
 {
-	return get_plugin(-1);
+	if (g_hCurrentPlugin != -1)
+		return g_hCurrentPlugin;
+	g_hCurrentPlugin = get_plugin(-1);
+	return g_hCurrentPlugin;
 }
 
 // Событие происходит когда игрок поднимает руну
@@ -199,12 +209,14 @@ stock rm_base_set_max_count(num = MAX_REGISTER_RUNES)
 		log_amx("NO BASE FUNC FOUND 4");
 		return PLUGIN_HANDLED;
 	}
+	
 	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
 		log_amx("CALL BASE FUNC ERROR 4");
 		return PLUGIN_HANDLED;
 	}
+	
 	callfunc_push_int(rm_current_plugin_id());
 	callfunc_push_int(num);
 	
@@ -279,6 +291,7 @@ stock bool:rm_unstuck_player(id)
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
+		free_tr2(g_pCommonTr);
 		return true;
 	}
 	
@@ -346,9 +359,11 @@ stock bool:rm_unstuck_player(id)
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
+		free_tr2(g_pCommonTr);
 		return true;
 	}
 	
+	free_tr2(g_pCommonTr);
 	return false;
 }
 
