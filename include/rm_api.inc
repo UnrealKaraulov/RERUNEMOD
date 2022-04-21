@@ -38,6 +38,9 @@
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 
+#define NEED_DROP_RUNE 1
+#define NO_NEED_DROP_RUNE 2
+
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)

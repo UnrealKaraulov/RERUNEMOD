@@ -72,6 +72,8 @@ new runemod_spawn_distance;
 // Минимальное и максимальное количество игроков
 new runemod_min_players,runemod_max_players;
 
+
+// Остальные глобальные переменные
 new g_pCommonTr;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
@@ -83,7 +85,7 @@ public plugin_init()
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
 	
-	create_cvar("rm_runemod", "2.5", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.6", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -149,7 +151,6 @@ public plugin_init()
 	
 	create_cvar("runemod_max_hp", "150",
 					.description = "Max HP for RUNES");
-	
 	
 	new configsDir[PLATFORM_MAX_PATH];
 	get_configsdir(configsDir, charsmax(configsDir));
@@ -589,25 +590,26 @@ public rune_touch(const rune_ent, const player_id)
 		new bool:is_item = rune_list_isItem[rune_id];
 		if (active_rune[player_id] == 0 || is_item)
 		{
-			new spawn_id = get_rune_spawnid(rune_ent);
-			spawn_filled[spawn_id] = false;
-			if (!is_item)
-				active_rune[player_id] = rune_list_id[rune_id];
-			set_entvar(rune_ent, var_nextthink, get_gametime())
-			set_entvar(rune_ent, var_flags, FL_KILLME);
-			rune_list_count[rune_id]--;
-			if (!is_item)
+			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_NEED_DROP_RUNE)
 			{
-				client_print_color(player_id, print_team_red, "^4%s^3 Bы пoдняли pyнy: ^1%s!^3", runemod_prefix, rune_list_name[rune_id]);
-				client_print_color(player_id, print_team_red, "^4%s^3 Bыбepитe нoж и нaжмитe 2 paзa ^1drop^3 чтo бы выбpocить pyнy!", runemod_prefix);
+				new spawn_id = get_rune_spawnid(rune_ent);
+				spawn_filled[spawn_id] = false;
+				if (!is_item)
+					active_rune[player_id] = rune_list_id[rune_id];
+				set_entvar(rune_ent, var_nextthink, get_gametime())
+				set_entvar(rune_ent, var_flags, FL_KILLME);
+				rune_list_count[rune_id]--;
+				if (!is_item)
+				{
+					client_print_color(player_id, print_team_red, "^4%s^3 Bы пoдняли pyнy: ^1%s!^3", runemod_prefix, rune_list_name[rune_id]);
+					client_print_color(player_id, print_team_red, "^4%s^3 Bыбepитe нoж и нaжмитe 2 paзa ^1drop^3 чтo бы выбpocить pyнy!", runemod_prefix);
+				}
+				else 
+				{
+					client_print_color(player_id, print_team_red, "^4%s^3 Bы пoдняли пpeдмeт: ^1%s!^3", runemod_prefix, rune_list_name[rune_id]);
+				}
+				client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
 			}
-			else 
-			{
-				client_print_color(player_id, print_team_red, "^4%s^3 Bы пoдняли пpeдмeт: ^1%s!^3", runemod_prefix, rune_list_name[rune_id]);
-			}
-			client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
-			//rh_emit_sound2(player_id, player_id, CHAN_VOICE , rune_list_sound[rune_id], 1.0, ATTN_NONE )
-			rm_give_rune_callback( rune_list_id[rune_id],player_id);
 		}
 	}
 	return PLUGIN_CONTINUE;
@@ -643,7 +645,16 @@ public spawn_runes( )
 		
 		if (is_no_player_point(spawn_list[i],float(runemod_player_distance)))
 		{
-			new rune_id = random_num(1, runes_registered) - 1;
+			new rune_id = 0;
+			
+			for(new n = 0; n < runes_registered;n++)
+			{
+				if (rune_list_maxcount[n] == 0 &&
+							rune_list_count[n] < rune_list_count[rune_id])
+				{
+					rune_id = n;
+				}
+			}
 			
 			if (rune_list_maxcount[rune_id] != 0 && rune_list_count[rune_id] >= rune_list_maxcount[rune_id])
 			{
@@ -666,7 +677,6 @@ public spawn_runes( )
 					}
 				}
 			}
-			
 			if (rune_id < runes_registered)
 			{
 				spawn_one_rune( rune_id, i );
