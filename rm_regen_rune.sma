@@ -9,10 +9,13 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 
 new rune_model_id = -1;
 
+new max_hp_available_cvar;
+
 public plugin_init()
 {
-	register_plugin("RM_REGEN","2.0","Karaulov"); 
+	register_plugin("RM_REGEN","2.1","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
+	max_hp_available_cvar = get_cvar_pointer("runemod_max_hp");
 }
 
 public plugin_precache()
@@ -44,9 +47,10 @@ public client_PostThink(id)
 		{
 			if( get_gametime() - g_regen[id] > 0.05 )
 			{
+				new Float:maxhp = get_pcvar_float(max_hp_available_cvar);
 				new Float:hp = get_entvar(id,var_health);
-				if (hp < 150.0)
-					set_entvar(id,var_health,floatclamp(hp+1.5,5.0,150.0));
+				if (hp < maxhp)
+					set_entvar(id,var_health,floatclamp(hp+1.5,5.0,maxhp));
 				g_regen[id] = get_gametime();
 			}
 		}

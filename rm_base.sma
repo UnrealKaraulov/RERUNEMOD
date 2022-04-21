@@ -78,12 +78,12 @@ new g_pCommonTr;
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("RM_BASEPLUGIN","2.4","Karaulov");
+	register_plugin("RM_BASEPLUGIN","2.5","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
 	
-	create_cvar("rm_runemod", "2.4", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.5", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -146,6 +146,10 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("runemod_max_players", "32",
 					.description = "Max players for spawn runes"
 	),	runemod_max_players);
+	
+	create_cvar("runemod_max_hp", "150",
+					.description = "Max HP for RUNES");
+	
 	
 	new configsDir[PLATFORM_MAX_PATH];
 	get_configsdir(configsDir, charsmax(configsDir));
