@@ -1,9 +1,10 @@
-
 #if defined _RUNEMOD_RELOAD
   #endinput
 #endif
 
 #define _RUNEMOD_RELOAD
+
+#define RUNEMOD_VERSION "2.8.1"
 
 
 #define HUD_CHANNEL_ID 3
@@ -43,6 +44,20 @@
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
+
+
+/*
+* Регистрации новой руны
+*
+* @param RuneName		Название руны
+* @param RuneDesc		Описание руны
+* @param RuneColor		Цвет руны(подсветка игрока, экрана и модели)
+* @param rModel			Путь к модели, иначе используется стандартная
+* @param rSound			Путь к звуку, иначе используется стандартный
+* @param rModelID		Индекс модели из прекеша (только если указана rModel)
+*
+* @noreturn
+*/
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)
 {
 	new BasePluginIndex = rm_base_plugin_id();
@@ -103,7 +118,14 @@ stock rm_current_plugin_id()
 	return g_hCurrentPlugin;
 }
 
-// Событие происходит когда игрок поднимает руну
+
+/*
+* Вызывается когда игрок поднимает руну
+*
+* @param id				Индекс игрока
+* 
+* @return NEED_DROP_RUNE/NO_NEED_DROP_RUNE или ничего
+*/
 stock rm_give_rune_callback(OwnIndex, id)
 {
 	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex);
@@ -121,7 +143,13 @@ stock rm_give_rune_callback(OwnIndex, id)
 	return callfunc_end();
 }
 
-// Событие происходит когда игрок теряет руну
+/*
+* Вызывается когда игрок теряет руну
+*
+* @param id				Индекс игрока
+* 
+* @noreturn
+*/
 stock rm_drop_rune_callback(OwnIndex, id)
 {
 	new PluginReqFunc = get_func_id("rm_drop_rune",OwnIndex);
@@ -139,7 +167,13 @@ stock rm_drop_rune_callback(OwnIndex, id)
 	return callfunc_end();
 }
 
-// Заставить выбросить руну
+/*
+* Выбросить руну
+*
+* @param id				Индекс игрока
+*
+* @noreturn
+*/
 stock rm_base_drop_rune(id)
 {
 	new BasePluginIndex = rm_base_plugin_id();
@@ -160,7 +194,13 @@ stock rm_base_drop_rune(id)
 	return callfunc_end();
 }
 
-// Сообщение завершилось действие руны
+/*
+* Прервано дейтсвие предмета
+*
+* @param id				Индекс игрока
+*
+* @noreturn
+*/
 stock rm_base_drop_item_notice(id)
 {
 	new BasePluginIndex = rm_base_plugin_id();
@@ -181,7 +221,11 @@ stock rm_base_drop_item_notice(id)
 	return callfunc_end();
 }
 
-// Указать класс: предмет
+/*
+* Указать класс руны : предмет
+*
+* @noreturn
+*/
 stock rm_base_use_rune_as_item( )
 {
 	new BasePluginIndex = rm_base_plugin_id();
@@ -201,7 +245,11 @@ stock rm_base_use_rune_as_item( )
 	return callfunc_end();
 }
 
-// Активировать свечение игрока с заданным заранее цветом
+/*
+* Активировать свечение игрока
+*
+* @noreturn
+*/
 stock rm_base_highlight_player(id)
 {
 	new BasePluginIndex = rm_base_plugin_id();
@@ -223,7 +271,13 @@ stock rm_base_highlight_player(id)
 	return callfunc_end();
 }
 
-// Максимальное количество рун которое может быть на карте одновременно
+/*
+* Ограничить количество рун
+*
+* @param num			Максимальное количество данного типа рун.
+*
+* @noreturn
+*/
 stock rm_base_set_max_count(num = MAX_REGISTER_RUNES)
 {
 	new BasePluginIndex = rm_base_plugin_id();
