@@ -75,17 +75,18 @@ new runemod_min_players,runemod_max_players;
 
 // Остальные глобальные переменные
 new g_pCommonTr;
+new rune_last_created = 0;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("RM_BASEPLUGIN","2.7","Karaulov");
+	register_plugin("RM_BASEPLUGIN","2.8","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
 	
-	create_cvar("rm_runemod", "2.7", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.8", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -624,6 +625,61 @@ public rune_touch(const rune_ent, const player_id)
 	return PLUGIN_CONTINUE;
 }
 
+rm_get_next_rune( bool:First = true)
+{
+	static search_iters;
+	if (First)
+		search_iters = 0;
+	search_iters++;
+	
+	new rune_id = random_num(1,runes_registered) - 1;
+			
+	for(new n = 0; n < runes_registered;n++)
+	{
+		if (n != rune_last_created && rune_list_maxcount[n] == 0 &&
+					rune_list_count[n] < rune_list_count[rune_id])
+		{
+			rune_id = n;
+		}
+	}
+
+	// Поиск предмета с доступным количеством
+	if (rune_list_maxcount[rune_id] != 0 && rune_list_count[rune_id] >= rune_list_maxcount[rune_id])
+	{
+		for(rune_id = 0;rune_id < runes_registered;rune_id++)
+		{
+			if (rune_list_count[rune_id] < rune_list_maxcount[rune_id])
+			{
+				break;
+			}
+		}
+		
+		if (rune_id >= runes_registered)
+		{
+			for(rune_id = 0;rune_id < runes_registered;rune_id++)
+			{
+				if (rune_list_maxcount[rune_id] == 0)
+				{
+					break;
+				}
+			}
+		}
+	}
+	
+	
+	if (rune_id == rune_last_created)
+	{
+		if (search_iters == 5)
+			return rune_id;
+		return rm_get_next_rune(false);
+	}
+	
+	rune_last_created = rune_id;
+	
+	return rune_id;
+}
+
+
 // Фyнкция coздaющaя pyны
 public spawn_runes( )
 {
@@ -654,38 +710,8 @@ public spawn_runes( )
 		
 		if (is_no_player_point(spawn_list[i],float(runemod_player_distance)))
 		{
-			new rune_id = 0;
+			new rune_id = rm_get_next_rune();
 			
-			for(new n = 0; n < runes_registered;n++)
-			{
-				if (rune_list_maxcount[n] == 0 &&
-							rune_list_count[n] < rune_list_count[rune_id])
-				{
-					rune_id = n;
-				}
-			}
-			
-			if (rune_list_maxcount[rune_id] != 0 && rune_list_count[rune_id] >= rune_list_maxcount[rune_id])
-			{
-				for(;rune_id < runes_registered;rune_id++)
-				{
-					if (rune_list_count[rune_id] < rune_list_maxcount[rune_id])
-					{
-						break;
-					}
-				}
-				
-				if (rune_id >= runes_registered)
-				{
-					for(rune_id = 0;rune_id < runes_registered;rune_id++)
-					{
-						if (rune_list_count[rune_id] < rune_list_maxcount[rune_id])
-						{
-							break;
-						}
-					}
-				}
-			}
 			if (rune_id < runes_registered)
 			{
 				spawn_one_rune( rune_id, i );
