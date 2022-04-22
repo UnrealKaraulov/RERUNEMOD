@@ -1,12 +1,7 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <fun>
 #include <screenfade_util>
 #include <rm_api>
-
-
-#define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
-
 
 new Float:g_Phantom[MAX_PLAYERS + 1] = {0.0,...};
 new Float:g_Phantom_origins[MAX_PLAYERS + 1][3];

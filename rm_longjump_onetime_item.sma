@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
-#include <fun>
 
 new rune_model_id = -1;
 

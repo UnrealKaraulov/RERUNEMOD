@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
-#include <fun>
 #include <hamsandwich>
 
 new g_protection[MAX_PLAYERS + 1] = {0,...};

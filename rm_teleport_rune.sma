@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
-#include <fun>
 #include <fakemeta>
 
 new Float:g_Teleport[MAX_PLAYERS + 1] = {0.0,...};

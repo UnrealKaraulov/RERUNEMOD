@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
-#include <fun>
 
 new Float:g_regen[MAX_PLAYERS + 1] = {0.0,...};
 

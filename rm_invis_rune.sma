@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
-#include <fun>
 
 new bool:g_invis[MAX_PLAYERS + 1] = {false,...};
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
@@ -35,11 +34,11 @@ public rm_drop_rune(id)
 	g_invis[id] = false;
 	if (is_user_connected(id))
 	{
-		set_user_rendering(id, kRenderFxNone, 255, 255, 255, kRenderNormal, 255)
+		rg_set_rendering(id);
 		new iFlags = get_entvar( id, var_flags );
 		if (iFlags & FL_NOTARGET)
 		{
-			set_entvar( id, var_flags, iFlags - FL_NOTARGET )
+			set_entvar( id, var_flags, iFlags - FL_NOTARGET );
 		}
 	}
 }
@@ -54,9 +53,9 @@ public client_PostThink(id)
 			set_entvar( id, var_flags, iFlags + FL_NOTARGET )
 		}
 		if (get_entvar(id, var_button) & MovingBits)
-			set_user_rendering(id, kRenderFxNone, 254, 254, 254, kRenderTransAlpha, 40)
+			rg_set_rendering(id, kRenderFxNone, kRenderTransAlpha, Float: {255.0, 255.0, 255.0}, 40.0)
 		else 
-			set_user_rendering(id, kRenderFxNone, 254, 254, 254, kRenderTransAlpha, 0)
+			rg_set_rendering(id, kRenderFxNone, kRenderTransAlpha, Float: {255.0, 255.0, 255.0}, 0.0)
 	}
 }
 

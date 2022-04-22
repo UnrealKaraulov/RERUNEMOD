@@ -301,9 +301,6 @@ stock rm_base_set_max_count(num = MAX_REGISTER_RUNES)
 	return callfunc_end();
 }
 
-
-
-
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )
 {
@@ -315,18 +312,18 @@ stock bool:is_user_onground( id )
 	return false;
 }
 
-
 // Пpoвepкa peaльный ли игpoк
 stock bool:is_real_player( id )
 {
 	return id > 0 && id < 33;
 }
 
-stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
+stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, mode = kRenderNormal, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
 {
 	if (is_user_connected(pEntity))
 	{
 		set_entvar(pEntity, var_renderfx, fx);
+		set_entvar(pEntity, var_rendermode, mode);
 		set_entvar(pEntity, var_rendercolor, flColor);
 		set_entvar(pEntity, var_renderamt, iAmount);
 	}

@@ -433,7 +433,7 @@ public rm_highlight_player(plug_id, id)
 	{
 		new rune_id = get_runeid_by_pluginid(active_rune[id]);
 		if (rune_id >= 0)
-			rg_set_rendering(id, kRenderFxGlowShell, rune_list_model_color[rune_id], 10.0);
+			rg_set_rendering(id, kRenderFxGlowShell, _, rune_list_model_color[rune_id], 10.0);
 	}
 }
 
