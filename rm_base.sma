@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <csx>
-#include <hamsandwich>
 #include <fakemeta>
 #include <xs>
 #include <rm_api>
@@ -75,11 +74,14 @@ new runemod_min_players,runemod_max_players;
 
 // Текст 
 
-new runemod_hintdrop_rune_phrase[256];
-new runemod_pickup_rune_phrase[256];
-new runemod_pickup_item_phrase[256];
-new runemod_drop_rune_phrase[256];
-new runemod_drop_item_phrase[256];
+new runemod_hintdrop_rune_phrase[190];
+new runemod_pickup_rune_phrase[190];
+new runemod_pickup_item_phrase[190];
+new runemod_drop_rune_phrase[190];
+new runemod_drop_item_phrase[190];
+
+new runemod_hud_rune_name_phrase[64];
+new runemod_hud_rune_description_phrase[190];
 
 // Остальные глобальные переменные
 new g_pCommonTr;
@@ -93,7 +95,7 @@ public plugin_init()
 	
 	create_cvar("rm_runemod", RUNEMOD_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 	
-	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
+	RegisterHookChain(RG_CBasePlayer_Spawn, "client_respawned", true);
 	
 	register_forward(FM_TraceLine, "TraceAimRune", 1);
 	
@@ -157,34 +159,53 @@ public plugin_init()
 	
 	create_cvar("runemod_max_hp", "150",
 					.description = "Max HP for RUNES");
-					
-					
-					
-	bind_pcvar_string(create_cvar("runemod_pickup_rune_phrase", "Вы получили руну:",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_pickup_rune_phrase, charsmax(runemod_pickup_rune_phrase));
 	
-	bind_pcvar_string(create_cvar("runemod_drop_rune_phrase", "Завершилось действие руны:",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_drop_rune_phrase, charsmax(runemod_drop_rune_phrase));
-	
-	bind_pcvar_string(create_cvar("runemod_pickup_item_phrase", "Вы получили предмет:",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_pickup_item_phrase, charsmax(runemod_pickup_item_phrase));
-	
-	bind_pcvar_string(create_cvar("runemod_drop_item_phrase", "Завершилось действие предмета:",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_drop_item_phrase, charsmax(runemod_drop_item_phrase));
-	
-	bind_pcvar_string(create_cvar("runemod_hintdrop_rune_phrase", "Снять руну можно выбрав нож и нажав 2 раза ^1drop",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_hintdrop_rune_phrase, charsmax(runemod_hintdrop_rune_phrase));
 	
 	new configsDir[PLATFORM_MAX_PATH];
 	get_configsdir(configsDir, charsmax(configsDir));
 
 	server_cmd("exec %s/plugins/runemod.cfg", configsDir);
 	server_exec();
+	
+	register_dictionary("rm_runemod.txt");
+	
+	
+	new lng = LANG_SERVER;
+					
+	if (!LookupLangKey(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"runemod_pickup_rune_phrase",lng) || runemod_pickup_rune_phrase[0] == EOS)
+	{
+		copy(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"Вы получили руну:");
+	}	
+	
+	if (!LookupLangKey(runemod_drop_rune_phrase,charsmax(runemod_drop_rune_phrase),"runemod_drop_rune_phrase",lng) || runemod_drop_rune_phrase[0] == EOS)
+	{
+		copy(runemod_drop_rune_phrase,charsmax(runemod_drop_rune_phrase),"Завершилось действие руны:");
+	}		
+	
+	if (!LookupLangKey(runemod_pickup_item_phrase,charsmax(runemod_pickup_item_phrase),"runemod_pickup_item_phrase",lng) || runemod_pickup_item_phrase[0] == EOS)
+	{
+		copy(runemod_pickup_item_phrase,charsmax(runemod_pickup_item_phrase),"Вы получили предмет:");
+	}				
+	
+	if (!LookupLangKey(runemod_drop_item_phrase,charsmax(runemod_drop_item_phrase),"runemod_drop_item_phrase",lng) || runemod_drop_item_phrase[0] == EOS)
+	{
+		copy(runemod_drop_item_phrase,charsmax(runemod_drop_item_phrase),"Завершилось действие предмета:");
+	}
+	
+	if (!LookupLangKey(runemod_hintdrop_rune_phrase,charsmax(runemod_hintdrop_rune_phrase),"runemod_hintdrop_rune_phrase",lng) || runemod_hintdrop_rune_phrase[0] == EOS)
+	{
+		copy(runemod_hintdrop_rune_phrase,charsmax(runemod_hintdrop_rune_phrase),"Снять руну можно выбрав нож и нажав 2 раза ^1drop");
+	}
+	
+	if (!LookupLangKey(runemod_hud_rune_name_phrase,charsmax(runemod_hud_rune_name_phrase),"runemod_hud_rune_name_phrase",lng) || runemod_hud_rune_name_phrase[0] == EOS)
+	{
+		copy(runemod_hud_rune_name_phrase,charsmax(runemod_hud_rune_name_phrase),"Название:");
+	}
+	
+	if (!LookupLangKey(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"runemod_hud_rune_description_phrase",lng) || runemod_hud_rune_description_phrase[0] == EOS)
+	{
+		copy(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"Описание:");
+	}
 }
 
 public plugin_end()
@@ -397,7 +418,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 }
 
 // 3aбpaть pyнy пpи пoявлeнии игpoкa
-public client_respawned(id)
+public client_respawned(const id)
 {
 	if (is_real_player(id))
 	{
@@ -778,7 +799,7 @@ public RM_UPDATE_HUD_RUNE( id, rune_id )
 	if (rune_id >= 0 && rune_id < runes_registered)
 	{
 		set_hudmessage(0, 50, 200, -1.0, 0.16, 0, 0.1, 3.0, 0.02, 0.02, HUD_CHANNEL_ID);
-		ShowSyncHudMsg(id, HUD_SYNS_1, "Haзвaниe: %s^nОпиcaниe: %s^n",rune_list_name[rune_id],rune_list_descr[rune_id]);
+		ShowSyncHudMsg(id, HUD_SYNS_1, "%s %s^n%s %s^n",runemod_hud_rune_name_phrase, rune_list_name[rune_id], runemod_hud_rune_description_phrase, rune_list_descr[rune_id]);
 	}
 }
 
