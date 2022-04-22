@@ -140,10 +140,31 @@ stock rm_drop_rune_callback(OwnIndex, id)
 }
 
 // Заставить выбросить руну
-stock rm_base_drop_plugin(id)
+stock rm_base_drop_rune(id)
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("rm_drop_rune_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 2");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 2");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
+// Сообщение завершилось действие руны
+stock rm_base_drop_item_notice(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_drop_item_api",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
 		log_amx("NO BASE FUNC FOUND 2");

@@ -80,12 +80,12 @@ new g_pCommonTr;
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
 {
-	register_plugin("RM_BASEPLUGIN","2.5","Karaulov");
+	register_plugin("RM_BASEPLUGIN","2.7","Karaulov");
 	
 	//https://www.gametracker.com/search/?search_by=server_variable&search_by2=rm_runemod&query=&loc=_all&sort=&order=
 	//https://gs-monitor.com/?searchType=2&variableName=rm_runemod&variableValue=&submit=&mode=
 	
-	create_cvar("rm_runemod", "2.6", FCVAR_SERVER | FCVAR_SPONLY);
+	create_cvar("rm_runemod", "2.7", FCVAR_SERVER | FCVAR_SPONLY);
 	
 	RegisterHam(Ham_Spawn, "player", "client_respawned", 1);
 	
@@ -406,6 +406,15 @@ public player_drop_rune(id)
 			rg_set_rendering(id);
 		set_task(0.2,"reset_rendering",id);
 		active_rune[id] = 0;
+	}
+}
+
+public rm_drop_item_api(plug_id,id)
+{
+	new rune_id = get_runeid_by_pluginid(plug_id);
+	if (rune_id >= 0)
+	{
+		client_print_color(id, print_team_red, "^4%s^3 Действие предмета ^1%s!^3 завершилось.",runemod_prefix, rune_list_name[rune_id]);
 	}
 }
 

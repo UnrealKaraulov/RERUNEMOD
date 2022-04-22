@@ -64,6 +64,6 @@ public CPlayer_TakeDamage_Post(iVictim, iInflictor, iAttacker, Float:flDamage, i
 {
     if (is_real_player(iAttacker) && g_invis[iAttacker])
 	{
-		rm_base_drop_plugin( iAttacker );
+		rm_base_drop_rune( iAttacker );
 	}
 }
