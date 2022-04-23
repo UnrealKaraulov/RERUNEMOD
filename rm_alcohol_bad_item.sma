@@ -3,7 +3,6 @@
 #include <rm_api>
 #include <fakemeta>
 #include <fun>
-#include <screenfade_util>
 
 new g_bHasAlcohol[MAX_PLAYERS + 1] = {false,...};
 
@@ -11,8 +10,8 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_VODKA","2.1","Karaulov");
-	rm_register_rune("Бутылка водки","Игрок будет под мухой 30 секунд.",Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_butilka_vodki.mdl", _,rune_model_id);
+	register_plugin("RM_VODKA","2.3","Karaulov");
+	rm_register_rune("Бутылка водки","Игрок будет под мухой 30 секунд.",Float:{255.0,0.0,255.0}, "models/rm_reloaded/w_butilka_vodki.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post=false);
@@ -92,7 +91,7 @@ public rm_give_rune(id)
 		remove_task(id);
 	g_bHasAlcohol[id] = true;
 	set_task(30.0,"reset_vodka",id);
-	UTIL_ScreenFade(id, { 255, 0, 255 }, 1.0, 0.0, 70, FFADE_STAYOUT, true);
+	rm_base_highlight_screen(id, 70);
 }
 
 public reset_vodka(id)
@@ -102,9 +101,9 @@ public reset_vodka(id)
 		g_bHasAlcohol[id] = false;
 		if (is_user_connected(id))
 		{
-			UTIL_ScreenFade(id, { 0, 0, 0 }, 1.0, 1.0);
 			if (is_user_alive(id))
 				rm_base_drop_item_notice(id);
+			rm_base_disable_highlight(id);
 		}
 	}
 }

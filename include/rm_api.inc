@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "2.8.2"
+#define RUNEMOD_VERSION "2.9.2"
 
 
 #define HUD_CHANNEL_ID 3
@@ -26,6 +26,10 @@
 
 #if !defined _xs_included
 	#include <xs>
+#endif
+
+#if !defined _screenfade_util_included
+	#include <screenfade_util>
 #endif
 
 // Магическое число для быстрого детекта руны
@@ -246,7 +250,9 @@ stock rm_base_use_rune_as_item( )
 }
 
 /*
-* Активировать свечение игрока
+* Активировать свечение модели игрока
+*
+* @param id				Индекс игрока
 *
 * @noreturn
 */
@@ -254,6 +260,64 @@ stock rm_base_highlight_player(id)
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("rm_highlight_player",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
+	
+	return callfunc_end();
+}
+
+/*
+* Активировать подсветку экрана игрока
+*
+* @param id						Индекс игрока
+* @param hpower(optional)		Сила подсветки
+*
+* @noreturn
+*/
+stock rm_base_highlight_screen(id, hpower = 35)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_highlight_screen",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
+	callfunc_push_int(hpower);
+	
+	return callfunc_end();
+}
+
+/*
+* Сбросить подсветку игрока
+*
+* @param id				Индекс игрока
+*
+* @noreturn
+*/
+stock rm_base_disable_highlight(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_reset_highlight",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
 		log_amx("NO BASE FUNC FOUND 4");

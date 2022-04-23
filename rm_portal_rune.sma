@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.2 NOREAPI"
+#define VERSION "2.3 NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -118,6 +118,7 @@ public rm_give_rune(id)
 {
 	native_give(id)
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)

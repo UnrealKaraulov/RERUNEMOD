@@ -12,7 +12,7 @@ new max_hp_available_cvar;
 
 public plugin_init()
 {
-	register_plugin("RM_REGEN","2.1","Karaulov"); 
+	register_plugin("RM_REGEN","2.2","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 	max_hp_available_cvar = get_cvar_pointer("runemod_max_hp");
 }
@@ -30,6 +30,7 @@ public rm_give_rune(id)
 {
 	g_regen[id] = 1.0;
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)

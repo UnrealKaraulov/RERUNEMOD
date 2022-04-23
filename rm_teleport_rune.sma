@@ -15,7 +15,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.0","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.1","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, "models/rm_reloaded/rune_green.mdl", "rm_reloaded/teleport.wav",rune_model_id);
 	g_pCommonTr = create_tr2();
 }
@@ -41,6 +41,7 @@ public rm_give_rune(id)
 {
 	g_Teleport[id] = 1.0;
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)

@@ -72,6 +72,12 @@ new runemod_spawn_distance;
 // Минимальное и максимальное количество игроков
 new runemod_min_players,runemod_max_players;
 
+// Активировать свечение модели игрока
+new runemod_player_highlight;
+
+// Активировать подсветку экрана игрока
+new runemod_screen_highlight;
+
 // Текст 
 
 new runemod_hintdrop_rune_phrase[190];
@@ -156,6 +162,14 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("runemod_max_players", "32",
 					.description = "Max players for spawn runes"
 	),	runemod_max_players);
+		
+	bind_pcvar_num(create_cvar("runemod_player_highlight", "1",
+					.description = "Enable player model highlight"
+	),	runemod_player_highlight);
+		
+	bind_pcvar_num(create_cvar("runemod_screen_highlight", "1",
+					.description = "Enable player screen highlight"
+	),	runemod_screen_highlight);
 	
 	create_cvar("runemod_max_hp", "150",
 					.description = "Max HP for RUNES");
@@ -426,14 +440,31 @@ public client_respawned(const id)
 	}
 }
 
-// Подсветка игрока 
+// Подсветка модели игрока 
 public rm_highlight_player(plug_id, id)
 {
-	if (active_rune[id] == plug_id && is_real_player(id))
+	if (runemod_player_highlight && is_real_player(id))
 	{
-		new rune_id = get_runeid_by_pluginid(active_rune[id]);
+		new rune_id = get_runeid_by_pluginid(plug_id);
 		if (rune_id >= 0)
 			rg_set_rendering(id, kRenderFxGlowShell, _, rune_list_model_color[rune_id], 10.0);
+	}
+}
+
+// Подсветка экрана игрока
+public rm_highlight_screen(plug_id, id, hpower)
+{
+	if (runemod_screen_highlight && is_real_player(id))
+	{
+		new rune_id = get_runeid_by_pluginid(plug_id);
+		new bColor[3];
+		bColor[0] = floatround(rune_list_model_color[rune_id][0]);
+		bColor[1] = floatround(rune_list_model_color[rune_id][1]);
+		bColor[2] = floatround(rune_list_model_color[rune_id][2]);
+		if (rune_id >= 0)
+		{	
+			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT, true);
+		}
 	}
 }
 
@@ -453,10 +484,8 @@ public player_drop_rune(id)
 				rm_drop_rune_callback(active_rune[id], id);
 			}
 		}
-		if (is_user_connected(id))
-			rg_set_rendering(id);
-		set_task(0.2,"reset_rendering",id);
 		active_rune[id] = 0;
+		rm_reset_highlight(id);
 	}
 }
 
@@ -471,10 +500,36 @@ public rm_drop_item_api(plug_id,id)
 }
 
 // Сбросить подсветку игрока
-public reset_rendering(id)
+public rm_reset_highlight(id)
 {
 	if (is_user_connected(id))
-		rg_set_rendering(id);
+	{
+		if (active_rune[id] == 0)
+		{
+			rg_set_rendering(id);
+			UTIL_ScreenFade(id, { 0, 0, 0 }, 1.0, 1.0);
+		}
+		else 
+		{
+			new rune_id = get_runeid_by_pluginid(active_rune[id]);
+			if (runemod_player_highlight)
+			{
+				if (rune_id >= 0)
+					rg_set_rendering(id, kRenderFxGlowShell, _, rune_list_model_color[rune_id], 10.0);
+			}
+			if (runemod_screen_highlight)
+			{
+				new bColor[3];
+				bColor[0] = floatround(rune_list_model_color[rune_id][0]);
+				bColor[1] = floatround(rune_list_model_color[rune_id][1]);
+				bColor[2] = floatround(rune_list_model_color[rune_id][2]);
+				if (rune_id >= 0)
+				{	
+					UTIL_ScreenFade(id, bColor , 1.0, 0.0, 35, FFADE_STAYOUT, true);
+				}
+			}
+		}
+	}
 }
 
 // Фyнкция вызывaeтcя в плaгинax pyн, пoзвoляeт пpинyдитeльнo зacтaвить бaзoвый плaгин oтключить pyнy игpoкy.
@@ -655,12 +710,12 @@ public rune_touch(const rune_ent, const player_id)
 		new bool:is_item = rune_list_isItem[rune_id];
 		if (active_rune[player_id] == 0 || is_item)
 		{
+			if (!is_item)
+				active_rune[player_id] = rune_list_id[rune_id];
 			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_NEED_DROP_RUNE)
 			{
 				new spawn_id = get_rune_spawnid(rune_ent);
 				spawn_filled[spawn_id] = false;
-				if (!is_item)
-					active_rune[player_id] = rune_list_id[rune_id];
 				set_entvar(rune_ent, var_nextthink, get_gametime())
 				set_entvar(rune_ent, var_flags, FL_KILLME);
 				rune_list_count[rune_id]--;
@@ -674,6 +729,11 @@ public rune_touch(const rune_ent, const player_id)
 					client_print_color(player_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
 				}
 				client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
+			}
+			else 
+			{
+				if (!is_item)
+					active_rune[player_id] = 0;
 			}
 		}
 	}

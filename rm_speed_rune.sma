@@ -13,7 +13,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_SPEED","2.1","Karaulov");
+	register_plugin("RM_SPEED","2.2","Karaulov");
 	rm_register_rune("Уcкopeниe","Увeличивaeт cкopocть игpoкa",Float:{0.0,0.0,255.0}, "models/rm_reloaded/rune_skyblue.mdl", "rm_reloaded/speedup.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	set_task(30.0, "update_server_speed", 1, _, _, "b");
@@ -60,6 +60,7 @@ public rm_give_rune(id)
 		remove_task(id)
 	g_iSpeed[id] = 1;
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)

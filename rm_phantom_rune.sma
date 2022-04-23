@@ -1,6 +1,5 @@
 #include <amxmodx>
 #include <amxmisc>
-#include <screenfade_util>
 #include <rm_api>
 
 new Float:g_Phantom[MAX_PLAYERS + 1] = {0.0,...};
@@ -11,7 +10,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PHANTOM","2.0","Karaulov"); 
+	register_plugin("RM_PHANTOM","2.1","Karaulov"); 
 	rm_register_rune("Призрак","Игрок может проходить сквозь стены!",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 }
@@ -48,6 +47,7 @@ public rm_give_rune(id)
 {
 	g_Phantom[id] = 1.0;
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 	reset_origins(id);
 }
 

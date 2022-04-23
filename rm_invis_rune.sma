@@ -9,7 +9,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_INVIS","2.0","Karaulov"); 
+	register_plugin("RM_INVIS","2.1","Karaulov"); 
 	rm_register_rune("Heвидимocть","Игpoк нeвидимый ecли нe aтaкyeт.^nЧacтичнo пpoзpaчный пpи движeнии.",Float:{99.0, 197.0, 218.0}, "models/rm_reloaded/rune_sky.mdl", "rm_reloaded/invis.wav", rune_model_id);
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, "CPlayer_TakeDamage_Post", .post = true);
 }
@@ -27,6 +27,7 @@ public plugin_precache()
 public rm_give_rune(id)
 {
 	g_invis[id] = true;
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)

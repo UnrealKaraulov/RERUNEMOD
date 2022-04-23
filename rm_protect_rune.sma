@@ -12,7 +12,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.0","Karaulov"); 
+	register_plugin("RM_PROTECT","2.1","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHam(Ham_TakeDamage, "player", "CPlayer_TakeDamage_Pre")
 }
@@ -30,6 +30,7 @@ public rm_give_rune(id)
 {
 	g_protection[id] = 7;
 	rm_base_highlight_player(id);
+	rm_base_highlight_screen(id);
 }
 
 public rm_drop_rune(id)
