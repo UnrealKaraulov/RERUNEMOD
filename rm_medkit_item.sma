@@ -26,8 +26,8 @@ public rm_give_rune(id)
 	if (hp < get_pcvar_float(max_hp_available_cvar))
 	{
 		set_entvar(id,var_health,floatclamp(hp + 50.0,100.0,get_pcvar_float(max_hp_available_cvar)));
-		return NEED_DROP_RUNE;
+		return RUNE_PICKUP_SUCCESS;
 	}
 	else 
-		return NO_NEED_DROP_RUNE;
+		return NO_RUNE_PICKUP_SUCCESS;
 }

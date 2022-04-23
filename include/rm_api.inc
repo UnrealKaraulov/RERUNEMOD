@@ -43,8 +43,8 @@
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 
-#define NEED_DROP_RUNE 1
-#define NO_NEED_DROP_RUNE 2
+#define RUNE_PICKUP_SUCCESS 1
+#define NO_RUNE_PICKUP_SUCCESS 2
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
@@ -128,7 +128,7 @@ stock rm_current_plugin_id()
 *
 * @param id				Индекс игрока
 * 
-* @return NEED_DROP_RUNE/NO_NEED_DROP_RUNE или ничего
+* @return RUNE_PICKUP_SUCCESS/NO_RUNE_PICKUP_SUCCESS или ничего
 */
 stock rm_give_rune_callback(OwnIndex, id)
 {
@@ -329,10 +329,65 @@ stock rm_base_disable_highlight(id)
 		log_amx("CALL BASE FUNC ERROR 4");
 		return PLUGIN_HANDLED;
 	}
-	callfunc_push_int(rm_current_plugin_id());
 	callfunc_push_int(id);
 	
 	return callfunc_end();
+}
+
+/*
+* Заблокиовать игрок возможность поднимать руны и предметы
+*
+* @param id				Индекс игрока
+* @param iBlock			1 что бы заблокировать, 0 для разблокировки
+*
+* @noreturn
+*/
+stock rm_base_lock_pickup(id, iBlock)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_lock_pickup",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(id);
+	callfunc_push_int(iBlock);
+	new retval = callfunc_end();
+	return retval;
+}
+
+/*
+* Есть ли у игрока активная руна?
+*
+* @param id				Индекс игрока
+* 
+* @return true / false 
+*/
+
+stock bool:rm_base_player_has_rune(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_is_player_has_rune",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return false;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return false;
+	}
+	callfunc_push_int(id);
+	return callfunc_end() == RUNEMODE_MAGIC_NUMBER;
 }
 
 /*

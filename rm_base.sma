@@ -42,6 +42,9 @@ new Float:g_fLastUpdateHUD[33] = {0.0,...};
 // Aктивнaя pyнa игpoкa - нoмep плaгинa
 new active_rune[MAX_PLAYERS + 1];
 
+// Блокировка возможности поднять руну или предмет
+new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
+
 // Префикс в чате
 new runemod_prefix[64];
 
@@ -287,7 +290,7 @@ public cmd_drop(id)
 {
 	if (get_user_weapon(id) == CSW_KNIFE)
 	{
-		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune[id] != 0)
+		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune[id] != 0 && lock_rune_pickup[id] == 0)
 		{
 			player_drop_rune( id );
 		}
@@ -418,6 +421,7 @@ public client_death(killer, victim, wpnindex, hitplace, TK)
 {
 	if (is_real_player(victim))
 	{
+		lock_rune_pickup[victim] = 0;
 		player_drop_rune(victim);
 	}
 }
@@ -427,6 +431,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 {
 	if (is_real_player(id))
 	{
+		lock_rune_pickup[id] = 0;
 		player_drop_rune(id);
 	}
 }
@@ -436,6 +441,7 @@ public client_respawned(const id)
 {
 	if (is_real_player(id))
 	{
+		lock_rune_pickup[id] = 0;
 		player_drop_rune(id);
 	}
 }
@@ -499,36 +505,33 @@ public rm_drop_item_api(plug_id,id)
 	}
 }
 
+// Заблокировать возможность поднять руну или предмет
+public rm_lock_pickup(id, iBlock)
+{
+	if (is_real_player(id))
+	{
+		lock_rune_pickup[id] = iBlock;
+	}
+}
+
+// Игрок находится под действием руны?
+public rm_is_player_has_rune(id, iBlock)
+{
+	if (is_real_player(id))
+	{
+		if (active_rune[id] != 0)
+			return RUNEMODE_MAGIC_NUMBER;
+	}
+	return 0;
+}
+
 // Сбросить подсветку игрока
 public rm_reset_highlight(id)
 {
 	if (is_user_connected(id))
 	{
-		if (active_rune[id] == 0)
-		{
-			rg_set_rendering(id);
-			UTIL_ScreenFade(id, { 0, 0, 0 }, 1.0, 1.0);
-		}
-		else 
-		{
-			new rune_id = get_runeid_by_pluginid(active_rune[id]);
-			if (runemod_player_highlight)
-			{
-				if (rune_id >= 0)
-					rg_set_rendering(id, kRenderFxGlowShell, _, rune_list_model_color[rune_id], 10.0);
-			}
-			if (runemod_screen_highlight)
-			{
-				new bColor[3];
-				bColor[0] = floatround(rune_list_model_color[rune_id][0]);
-				bColor[1] = floatround(rune_list_model_color[rune_id][1]);
-				bColor[2] = floatround(rune_list_model_color[rune_id][2]);
-				if (rune_id >= 0)
-				{	
-					UTIL_ScreenFade(id, bColor , 1.0, 0.0, 35, FFADE_STAYOUT, true);
-				}
-			}
-		}
+		rg_set_rendering(id);
+		UTIL_ScreenFade(id, { 0, 0, 0 }, 1.0, 1.0);
 	}
 }
 
@@ -701,7 +704,7 @@ public rune_think(const rune_ent)
 // Coбытиe пpoиcxoдит пpи cтoлкнoвeнии игpoкa c pyнoй, ecли pyны нeт, дaeм игpoкy нoвyю, ocвoбoждaeм cпaвн и yдaляeм мoдeль pyны
 public rune_touch(const rune_ent, const player_id)
 {
-	if (!is_nullent(rune_ent) && is_real_player(player_id))
+	if (!is_nullent(rune_ent) && is_real_player(player_id) && !lock_rune_pickup[player_id])
 	{
 		new rune_id = get_rune_runeid(rune_ent)
 		if (rune_id < 0 || rune_id >= runes_registered || !is_user_alive(player_id))
@@ -712,7 +715,7 @@ public rune_touch(const rune_ent, const player_id)
 		{
 			if (!is_item)
 				active_rune[player_id] = rune_list_id[rune_id];
-			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_NEED_DROP_RUNE)
+			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_RUNE_PICKUP_SUCCESS)
 			{
 				new spawn_id = get_rune_spawnid(rune_ent);
 				spawn_filled[spawn_id] = false;

@@ -48,6 +48,6 @@ public bool:ReloadWeapons(const pPlayer)
 public rm_give_rune(id)
 {
 	if (!ReloadWeapons(id))
-		return NO_NEED_DROP_RUNE;
-	return NEED_DROP_RUNE;
+		return NO_RUNE_PICKUP_SUCCESS;
+	return RUNE_PICKUP_SUCCESS;
 }

@@ -21,8 +21,8 @@ public rm_give_rune(id)
 	if (!rg_has_item_by_name(id,"item_longjump"))
 	{
 		rg_give_item(id, "item_longjump" );
-		return NEED_DROP_RUNE;
+		return RUNE_PICKUP_SUCCESS;
 	}
 	else 
-		return NO_NEED_DROP_RUNE;
+		return NO_RUNE_PICKUP_SUCCESS;
 }

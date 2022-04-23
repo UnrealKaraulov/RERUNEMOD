@@ -87,11 +87,15 @@ public client_disconnected(id)
 
 public rm_give_rune(id)
 {
+	if (rm_base_player_has_rune(id))
+		return NO_RUNE_PICKUP_SUCCESS;
 	if (task_exists(id))
 		remove_task(id);
 	g_bHasAlcohol[id] = true;
 	set_task(30.0,"reset_vodka",id);
 	rm_base_highlight_screen(id, 70);
+	rm_base_lock_pickup(id, 1);
+	return RUNE_PICKUP_SUCCESS;
 }
 
 public reset_vodka(id)
@@ -101,6 +105,7 @@ public reset_vodka(id)
 		g_bHasAlcohol[id] = false;
 		if (is_user_connected(id))
 		{
+			rm_base_lock_pickup(id, 0);
 			if (is_user_alive(id))
 				rm_base_drop_item_notice(id);
 			rm_base_disable_highlight(id);

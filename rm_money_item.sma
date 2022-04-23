@@ -25,8 +25,8 @@ public rm_give_rune(id)
 	if (get_member(id,m_iAccount) < get_pcvar_num(mp_maxmoney))
 	{
 		rg_add_account(id,clamp(get_member(id,m_iAccount)+5000,0,get_pcvar_num(mp_maxmoney)),AS_SET);
-		return NEED_DROP_RUNE;
+		return RUNE_PICKUP_SUCCESS;
 	}
 	else 
-		return NO_NEED_DROP_RUNE;
+		return NO_RUNE_PICKUP_SUCCESS;
 }
