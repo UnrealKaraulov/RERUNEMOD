@@ -2,6 +2,7 @@
 #include <amxmisc>
 #include <rm_api>
 #include <fakemeta>
+#include <hamsandwich>
 
 new Float:g_Teleport[MAX_PLAYERS + 1] = {0.0,...};
 
@@ -15,9 +16,10 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.1","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.2","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, "models/rm_reloaded/rune_green.mdl", "rm_reloaded/teleport.wav",rune_model_id);
 	g_pCommonTr = create_tr2();
+	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
 }
 
 public plugin_end()
@@ -121,9 +123,22 @@ public bool:get_teleport_point(iPlayer, Float:newTeleportPoint[3])
 	return false;
 }
 
-public client_PostThink(id)
+public knife_attack_pressed(iWeaponEnt)
 {
-	if (is_user_connected(id) && g_Teleport[id] > 0.0)
+	if(!is_nullent(iWeaponEnt))
+	{
+		new iOwner = get_entvar(iWeaponEnt, var_owner);
+		if (is_real_player(iOwner))
+		{
+			try_teleport(iOwner);
+		}
+	}
+	return HAM_IGNORED;
+}
+
+public try_teleport(id)
+{
+	if (g_Teleport[id] > 0.0)
 	{
 		if ((get_entvar(id, var_button) & IN_ATTACK) && get_user_weapon(id) == CSW_KNIFE)
 		{

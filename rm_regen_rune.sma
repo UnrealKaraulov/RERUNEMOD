@@ -2,8 +2,6 @@
 #include <amxmisc>
 #include <rm_api>
 
-new Float:g_regen[MAX_PLAYERS + 1] = {0.0,...};
-
 const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 
 new rune_model_id = -1;
@@ -12,7 +10,7 @@ new max_hp_available_cvar;
 
 public plugin_init()
 {
-	register_plugin("RM_REGEN","2.2","Karaulov"); 
+	register_plugin("RM_REGEN","2.3","Karaulov"); 
 	rm_register_rune("Регенерация","Быстрое восстановление если игрок не двигается.",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 	max_hp_available_cvar = get_cvar_pointer("runemod_max_hp");
 }
@@ -28,35 +26,27 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	g_regen[id] = 1.0;
 	rm_base_highlight_player(id);
 	rm_base_highlight_screen(id);
+	if (task_exists(id))
+		remove_task(id);
+	set_task(0.1,"regen_think",id, _, _, "b");
 }
 
 public rm_drop_rune(id)
 {
-	g_regen[id] = 0.0;
+	if (task_exists(id))
+		remove_task(id);
 }
 
-
-public client_PostThink(id)
+// Регенерировать игрока и держать минимум 20хп 10 раз в секунду.
+public regen_think(id)
 {
-	if (is_user_alive(id) && g_regen[id] > 0.0)
+	if (!(get_entvar(id, var_button) & MovingBits))
 	{
-		if (!(get_entvar(id, var_button) & MovingBits))
-		{
-			if( get_gametime() - g_regen[id] > 0.05 )
-			{
-				new Float:maxhp = get_pcvar_float(max_hp_available_cvar);
-				new Float:hp = get_entvar(id,var_health);
-				if (hp < maxhp)
-					set_entvar(id,var_health,floatclamp(hp+1.5,5.0,maxhp));
-				g_regen[id] = get_gametime();
-			}
-		}
-		else
-		{
-			g_regen[id] = get_gametime();
-		}
+		new Float:maxhp = get_pcvar_float(max_hp_available_cvar);
+		new Float:hp = get_entvar(id,var_health);
+		if (hp < maxhp)
+			set_entvar(id,var_health,floatclamp(hp+3.0,20.0,maxhp));
 	}
 }

@@ -9,7 +9,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_INVIS","2.1","Karaulov"); 
+	register_plugin("RM_INVIS","2.2","Karaulov"); 
 	rm_register_rune("Heвидимocть","Игpoк нeвидимый ecли нe aтaкyeт.^nЧacтичнo пpoзpaчный пpи движeнии.",Float:{99.0, 197.0, 218.0}, "models/rm_reloaded/rune_sky.mdl", "rm_reloaded/invis.wav", rune_model_id);
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, "CPlayer_TakeDamage_Post", .post = true);
 }
@@ -28,11 +28,16 @@ public rm_give_rune(id)
 {
 	g_invis[id] = true;
 	rm_base_highlight_screen(id);
+	if (task_exists(id))
+		remove_task(id);
+	set_task(0.1,"update_invis_state",id, _, _, "b");
 }
 
 public rm_drop_rune(id)
 {
 	g_invis[id] = false;
+	if (task_exists(id))
+		remove_task(id);
 	if (is_user_connected(id))
 	{
 		rg_set_rendering(id);
@@ -44,7 +49,8 @@ public rm_drop_rune(id)
 	}
 }
 
-public client_PostThink(id)
+// Таск срабатывает 10 раз в секунду. Если игрок держит нажатой клавишу движения, становится частично видимым.
+public update_invis_state(id)
 {
 	if ( is_real_player(id) && g_invis[id] )
 	{
