@@ -859,32 +859,32 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 public user_think(id)
 {
 	if (is_user_alive(id))
-	{
-		if (runemod_active)
-		{
-			new iOriginStart[3];
-			new iOriginEnd[3];
-			get_user_origin( id, iOriginStart, Origin_Eyes );
-			get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
-			new Float:fOriginStart[ 3 ];
-			IVecFVec( iOriginStart, fOriginStart );
-			new Float:fOriginEnd[ 3 ];
-			IVecFVec( iOriginEnd, fOriginEnd );
-	
-			
-			for(new i = 0; i < filled_spawns;i++)
-			{
-				new iEnt = spawn_filled[i];
-				if (iEnt > 0 && !is_nullent(iEnt))
-				{
-					engfunc(EngFunc_TraceModel,fOriginStart,fOriginEnd,HULL_POINT,iEnt,g_pCommonTr);
-					if (get_tr2(g_pCommonTr, TR_pHit) == iEnt)
-					{
-						RM_UPDATE_HUD_RUNE(id,iEnt);
-						break;
-					}
-				}
-			}
-		}
-	}
+    {
+        if (runemod_active)
+        {
+            new iOriginStart[3];
+            new iOriginEnd[3];
+            get_user_origin( id, iOriginStart, Origin_Eyes );
+            get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
+            new Float:fOriginStart[ 3 ];
+            IVecFVec( iOriginStart, fOriginStart );
+            new Float:fOriginEnd[ 3 ];
+            IVecFVec( iOriginEnd, fOriginEnd );
+    
+            
+            for(new i = 0; i < filled_spawns;i++)
+            {
+                new iEnt = spawn_filled[i];
+                if (iEnt > 0 && !is_nullent(iEnt))
+                {
+                    engfunc(EngFunc_TraceModel,fOriginStart,fOriginEnd,HULL_POINT,iEnt,g_pCommonTr);
+                    if (get_tr2(g_pCommonTr, TR_pHit) == iEnt)
+                    {
+                        RM_UPDATE_HUD_RUNE(id,iEnt);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
