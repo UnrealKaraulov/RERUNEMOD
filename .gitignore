@@ -52,7 +52,6 @@ include/custom_player_models.inc
 include/cvars.inc
 include/datapack.inc
 include/dbi.inc
-include/dhudmessage.inc
 include/dodconst.inc
 include/dodfun.inc
 include/dodstats.inc
@@ -167,3 +166,4 @@ include/nvault_array.inc
 include/ultimate_stats.inc
 include/unixtime.inc
 RERUNEMOD.zip
+include/dhudmessage.inc

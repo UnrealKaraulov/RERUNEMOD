@@ -1,0 +1,30 @@
+[ru]
+rm_invis_rune_name = Невидимость
+rm_invis_rune_desc = Игрок не видимый если не двигается и не атакует
+rm_phantom_rune_name = Призрак
+rm_phantom_rune_desc = Игрок может проходить сквозь твердые предметы
+rm_portal_rune_name = Портал
+rm_portal_rune_desc = Игрок может открывать порталы и ходить по ним
+rm_protect_rune_name = Защита
+rm_protect_rune_desc = Щит блокирующий 10 попаданий
+rm_regen_rune_name = Восстановление
+rm_regen_rune_desc = Игрок быстро восстанавливает ХП если не двигается
+rm_speed_rune_name = Ускорение
+rm_speed_rune_desc = Игрок двигается очень быстро
+rm_teleport_rune_name = Телепорт
+rm_teleport_rune_desc = Игрок может быстро телепортироваться(нож)
+[en]
+rm_invis_rune_name = Invisible
+rm_invis_rune_desc = Make player invisibled when not moving
+rm_phantom_rune_name = Phantom
+rm_phantom_rune_desc = Player can move throw walls
+rm_portal_rune_name = Portal
+rm_portal_rune_desc = Player can use PORTAL weapon
+rm_protect_rune_name = Protect
+rm_protect_rune_desc = Protect from 10 attacks
+rm_regen_rune_name = Regeneration
+rm_regen_rune_desc = Regenerate HP if not moving
+rm_speed_rune_name = Speed
+rm_speed_rune_desc = Big increase speed
+rm_teleport_rune_name = Teleport
+rm_teleport_rune_desc = Player can use teleport (with knife)

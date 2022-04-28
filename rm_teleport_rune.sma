@@ -6,8 +6,10 @@
 
 new Float:g_Teleport[MAX_PLAYERS + 1] = {0.0,...};
 
-new rune_name[] = "Телепорт";
-new rune_descr[] = "Возьми нож и телепортируйся куда угодно! (+attack)";
+new Float:g_MsgTime[MAX_PLAYERS + 1] = {0.0,...};
+
+new rune_name[] = "rm_teleport_rune_name";
+new rune_descr[] = "rm_teleport_rune_desc";
 
 new g_spriteid_steam1;
 new g_pCommonTr;
@@ -16,7 +18,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.2","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.3","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, "models/rm_reloaded/rune_green.mdl", "rm_reloaded/teleport.wav",rune_model_id);
 	g_pCommonTr = create_tr2();
 	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
@@ -51,7 +53,6 @@ public rm_drop_rune(id)
 	g_Teleport[id] = 0.0;
 }
 
-
 public bool:is_player_point( id, Float:coords[3] )
 {
 	new iPlayers[ 32 ], iNum;
@@ -69,7 +70,6 @@ public bool:is_player_point( id, Float:coords[3] )
 	}
 	return false;
 }
-
 
 public bool:get_teleport_point(iPlayer, Float:newTeleportPoint[3])
 {
@@ -147,24 +147,40 @@ public try_teleport(id)
 				new Float:TeleportPoint[3];
 				if (get_teleport_point(id,TeleportPoint))
 				{
+					client_cmd(id,"spk ^"%s^"", "buttons/button9.wav");
 					teleportPlayer(id,TeleportPoint);
 					g_Teleport[id] = get_gametime();
 				}
 				else 
 				{
-					set_hudmessage(220, 20, 20, -1.0, 0.80, 0, 0.1, 2.7, 0.02, 0.02, HUD_CHANNEL_ID_2);
-					show_hudmessage(id, "%s: не могу телепороваться сюда!!",rune_name);
+					cant_teleport_msg(id,1);
 				}
 			}
 			else 
 			{
-				set_hudmessage(220, 20, 20, -1.0, 0.80, 0, 0.1, 2.7, 0.02, 0.02, HUD_CHANNEL_ID_2);
-				show_hudmessage(id, "%s: перезарядка!",rune_name);
+				cant_teleport_msg(id,0);
 			}
 		}
 	}
 }
 
+public cant_teleport_msg(id,type)
+{
+	if (get_gametime() - g_MsgTime[id] > 1.0)
+	{
+		if (type == 0)
+		{
+			set_dhudmessage(255, 221, 0, -1.0, 0.55, 0, 0.0, 0.0, 1.1, 0.0)
+			show_dhudmessage(id, "COOLDOWN");
+		}
+		else 
+		{
+			set_dhudmessage(238, 255, 0, -1.0, 0.55, 0, 0.0, 0.0, 1.1, 0.0);
+			show_dhudmessage(id, "NO ACCESS");
+		}
+		g_MsgTime[id] = get_gametime();
+	}
+}
 
 
 public teleportPlayer(id, Float:TeleportPoint[3])

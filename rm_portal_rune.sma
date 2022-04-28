@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.3 NOREAPI"
+#define VERSION "2.4 NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -90,7 +90,7 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune("Пopтaльная пушка","Oткpoйтe двa пopтaлa для пepeмeщeния!^n +attack, +attack2",Float:{25.0,25.0,25.0}, "models/next_portalgun/w_portalgun.mdl", "rm_reloaded/portal_gun.wav",rune_model_id);
+	rm_register_rune("rm_portal_rune_name","rm_portal_rune_desc",Float:{25.0,25.0,25.0}, "models/next_portalgun/w_portalgun.mdl", "rm_reloaded/portal_gun.wav",rune_model_id);
 	
 	g_pCommonTr = create_tr2()
 	

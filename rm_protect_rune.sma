@@ -5,14 +5,14 @@
 
 new g_protection[MAX_PLAYERS + 1] = {0,...};
 
-new rune_name[] = "Защита";
-new rune_descr[] = "Дaeт вpeмeннyю зaщитy oт пoлyчeния ypoнa.";
+new rune_name[] = "rm_protect_rune_name";
+new rune_descr[] = "rm_protect_rune_desc";
 
 new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.1","Karaulov"); 
+	register_plugin("RM_PROTECT","2.2","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHam(Ham_TakeDamage, "player", "CPlayer_TakeDamage_Pre")
 }
@@ -28,14 +28,25 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	g_protection[id] = 7;
+	g_protection[id] = 10;
 	rm_base_highlight_player(id);
 	rm_base_highlight_screen(id);
+	if (task_exists(id))
+		remove_task(id);
+	set_task(1.0,"update_protect_state",id, _, _, "b");
 }
 
 public rm_drop_rune(id)
 {
-	g_protection[id] = false;
+	g_protection[id] = false;	
+	if (task_exists(id))
+		remove_task(id);
+}
+
+public update_protect_state(id)
+{
+	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.5, 0.0);
+	show_dhudmessage(id, "CHARGE: [ %d / 10 ]", g_protection[id]);
 }
 
 public CPlayer_TakeDamage_Pre(iVictim, iInflictor, iAttacker, Float:flDamage, iDamageBits)
@@ -45,8 +56,6 @@ public CPlayer_TakeDamage_Pre(iVictim, iInflictor, iAttacker, Float:flDamage, iD
 		g_protection[iVictim]--;
 		if (g_protection[iVictim] <= 0)
 			rm_base_drop_rune( iVictim );
-		set_hudmessage(220, 20, 20, -1.0, 0.65, 0, 0.1, 2.7, 0.02, 0.02, HUD_CHANNEL_ID);
-		show_hudmessage(iVictim, "Осталось:%d!", g_protection[iVictim]);
 		return HAM_SUPERCEDE;
 	}
 	return HAM_IGNORED;

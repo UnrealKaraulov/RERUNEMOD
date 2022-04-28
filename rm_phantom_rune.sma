@@ -11,7 +11,7 @@ new rune_model_id = -1;
 public plugin_init()
 {
 	register_plugin("RM_PHANTOM","2.2","Karaulov"); 
-	rm_register_rune("Призрак","Игрок может проходить сквозь стены!",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
+	rm_register_rune("rm_phantom_rune_name","rm_phantom_rune_desc",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 }
 

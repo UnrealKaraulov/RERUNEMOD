@@ -94,6 +94,8 @@ new runemod_hud_rune_description_phrase[190];
 new g_pCommonTr;
 new rune_last_created = 0;
 
+new g_hServerLanguage = LANG_SERVER;
+
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
@@ -181,41 +183,41 @@ public plugin_init()
 	server_exec();
 	
 	register_dictionary("rm_runemod.txt");
+	register_dictionary("rm_runemod_runes.txt");
+	register_dictionary("rm_runemod_items.txt");
 	
-	
-	new lng = LANG_SERVER;
-					
-	if (!LookupLangKey(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"runemod_pickup_rune_phrase",lng) || runemod_pickup_rune_phrase[0] == EOS)
+
+	if (!LookupLangKey(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"runemod_pickup_rune_phrase",g_hServerLanguage) || runemod_pickup_rune_phrase[0] == EOS)
 	{
 		copy(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"Вы получили руну:");
 	}	
 	
-	if (!LookupLangKey(runemod_drop_rune_phrase,charsmax(runemod_drop_rune_phrase),"runemod_drop_rune_phrase",lng) || runemod_drop_rune_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_drop_rune_phrase,charsmax(runemod_drop_rune_phrase),"runemod_drop_rune_phrase",g_hServerLanguage) || runemod_drop_rune_phrase[0] == EOS)
 	{
 		copy(runemod_drop_rune_phrase,charsmax(runemod_drop_rune_phrase),"Завершилось действие руны:");
 	}		
 	
-	if (!LookupLangKey(runemod_pickup_item_phrase,charsmax(runemod_pickup_item_phrase),"runemod_pickup_item_phrase",lng) || runemod_pickup_item_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_pickup_item_phrase,charsmax(runemod_pickup_item_phrase),"runemod_pickup_item_phrase",g_hServerLanguage) || runemod_pickup_item_phrase[0] == EOS)
 	{
 		copy(runemod_pickup_item_phrase,charsmax(runemod_pickup_item_phrase),"Вы получили предмет:");
 	}				
 	
-	if (!LookupLangKey(runemod_drop_item_phrase,charsmax(runemod_drop_item_phrase),"runemod_drop_item_phrase",lng) || runemod_drop_item_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_drop_item_phrase,charsmax(runemod_drop_item_phrase),"runemod_drop_item_phrase",g_hServerLanguage) || runemod_drop_item_phrase[0] == EOS)
 	{
 		copy(runemod_drop_item_phrase,charsmax(runemod_drop_item_phrase),"Завершилось действие предмета:");
 	}
 	
-	if (!LookupLangKey(runemod_hintdrop_rune_phrase,charsmax(runemod_hintdrop_rune_phrase),"runemod_hintdrop_rune_phrase",lng) || runemod_hintdrop_rune_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_hintdrop_rune_phrase,charsmax(runemod_hintdrop_rune_phrase),"runemod_hintdrop_rune_phrase",g_hServerLanguage) || runemod_hintdrop_rune_phrase[0] == EOS)
 	{
 		copy(runemod_hintdrop_rune_phrase,charsmax(runemod_hintdrop_rune_phrase),"Снять руну можно выбрав нож и нажав 2 раза ^1drop");
 	}
 	
-	if (!LookupLangKey(runemod_hud_rune_name_phrase,charsmax(runemod_hud_rune_name_phrase),"runemod_hud_rune_name_phrase",lng) || runemod_hud_rune_name_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_hud_rune_name_phrase,charsmax(runemod_hud_rune_name_phrase),"runemod_hud_rune_name_phrase",g_hServerLanguage) || runemod_hud_rune_name_phrase[0] == EOS)
 	{
 		copy(runemod_hud_rune_name_phrase,charsmax(runemod_hud_rune_name_phrase),"Название:");
 	}
 	
-	if (!LookupLangKey(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"runemod_hud_rune_description_phrase",lng) || runemod_hud_rune_description_phrase[0] == EOS)
+	if (!LookupLangKey(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"runemod_hud_rune_description_phrase",g_hServerLanguage) || runemod_hud_rune_description_phrase[0] == EOS)
 	{
 		copy(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"Описание:");
 	}
@@ -374,19 +376,27 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	runes_registered++;
 	
 	rune_list_id[i] = PluginIndex;
-	formatex(rune_list_name[i],charsmax(rune_list_name[]),"%s", RuneName);
-	formatex(rune_list_descr[i],charsmax(rune_list_descr[]),"%s", RuneDesc);
-
+	
+	
+	if (!LookupLangKey(rune_list_name[i],charsmax(rune_list_name[]),RuneName,g_hServerLanguage) || rune_list_name[i][0] == EOS)
+	{
+		copy(rune_list_name[i],charsmax(rune_list_name[]), RuneName);
+	}
+	if (!LookupLangKey(rune_list_descr[i],charsmax(rune_list_descr[]),RuneDesc,g_hServerLanguage) || rune_list_descr[i][0] == EOS)
+	{
+		copy(rune_list_descr[i],charsmax(rune_list_descr[]), RuneDesc);
+	}
+	
 	if( rModelID != -1 && strlen(rModel) > 0 && file_exists(rModel,true))
 	{
 		//server_print("INIT RUNE: MODEL FOUND");
-		formatex(rune_list_model[i],charsmax(rune_list_model[]),"%s", rModel);
+		copy(rune_list_model[i],charsmax(rune_list_model[]),rModel);
 		rune_list_model_id[i] = rModelID;
 	}
 	else 
 	{
 		//server_print("INIT RUNE: MODEL NOT FOUND");
-		formatex(rune_list_model[i],charsmax(rune_list_model[]),"%s", rune_default_model);
+		copy(rune_list_model[i],charsmax(rune_list_model[]),rune_default_model);
 		rune_list_model_id[i] = rune_default_model_id;
 	}
 	
@@ -395,12 +405,12 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	if( strlen(rSound) > 0 && file_exists( rune_list_sound[i], true ) )
 	{
 		//server_print("INIT RUNE: SOUND FOUND");
-		formatex(rune_list_sound[i],charsmax(rune_list_sound[]),"%s", rSound);
+		copy(rune_list_sound[i],charsmax(rune_list_sound[]), rSound);
 	}
 	else 
 	{
 		//server_print("INIT RUNE: SOUND NOT FOUND");
-		formatex(rune_list_sound[i],charsmax(rune_list_sound[]),"%s", rune_default_pickup_sound);
+		copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound);
 	}
 	
 	rune_list_model_color[i][0] = RuneColor1;
@@ -469,7 +479,7 @@ public rm_highlight_screen(plug_id, id, hpower)
 		bColor[2] = floatround(rune_list_model_color[rune_id][2]);
 		if (rune_id >= 0)
 		{	
-			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT, true,true);
+			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT | FFADE_MODULATE, true,true);
 		}
 	}
 }

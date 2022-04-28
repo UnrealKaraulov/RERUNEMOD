@@ -2,14 +2,14 @@
 #include <amxmisc>
 #include <rm_api>
 
-new rune_name[] = "Тихий шаг";
-new rune_descr[] = "Бесшумные шаги на 20 секунд";
+new rune_name[] = "rm_silentstep_item_name";
+new rune_descr[] = "rm_silentstep_item_desc";
 
 new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_SILENT","2.0","Karaulov"); 
+	register_plugin("RM_SILENT","2.1","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_botinok.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
 }

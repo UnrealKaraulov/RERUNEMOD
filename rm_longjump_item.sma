@@ -6,8 +6,8 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_LONGJUMP","2.1","Karaulov"); 
-	rm_register_rune("Прыжок","Возможность прыгать дальше нажимая CTRL.",Float:{255.0,255.0,255.0}, "models/w_longjump.mdl",_,rune_model_id);
+	register_plugin("RM_LONGJUMP","2.2","Karaulov"); 
+	rm_register_rune("rm_longjump_item_name","rm_longjump_item_desc",Float:{255.0,255.0,255.0}, "models/w_longjump.mdl",_,rune_model_id);
 	rm_base_use_rune_as_item( );
 }
 

@@ -285,7 +285,7 @@ stock rm_base_highlight_player(id)
 *
 * @noreturn
 */
-stock rm_base_highlight_screen(id, hpower = 35)
+stock rm_base_highlight_screen(id, hpower = 100)
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("rm_highlight_screen",BasePluginIndex);

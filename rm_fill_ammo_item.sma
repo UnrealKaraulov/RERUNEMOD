@@ -6,8 +6,8 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_AMMO","2.2","Karaulov"); 
-	rm_register_rune("Боеприпасы","Восполняет количество патронов.",Float:{255.0,255.0,255.0}, "models/w_weaponbox.mdl",_,rune_model_id);
+	register_plugin("RM_AMMO","2.3","Karaulov"); 
+	rm_register_rune("rm_fill_ammo_item_name","rm_fill_ammo_item_desc",Float:{255.0,255.0,255.0}, "models/w_weaponbox.mdl",_,rune_model_id);
 	rm_base_use_rune_as_item( );
 }
 
