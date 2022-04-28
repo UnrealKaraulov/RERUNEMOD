@@ -78,7 +78,7 @@ public is_empty_origin(id)
 
 public activate_phantom_mode(id)
 {
-	UTIL_ScreenFade(id,{0,0,255},1.0,6.0,20);
+	UTIL_ScreenFade(id,{0,0,255},1.0,6.0,20,_,true,true);
 	set_entvar(id, var_movetype, MOVETYPE_NOCLIP);
 	g_Phantom_activated[id] = true;
 	set_entvar(id, var_speed, 500.0);
@@ -89,7 +89,7 @@ public deactivate_phantom_mode(id)
 {
 	if (is_user_connected(id))
 	{
-		UTIL_ScreenFade(id);
+		UTIL_ScreenFade(id, _, _, _,_,true,true);
 		set_entvar(id, var_movetype, MOVETYPE_WALK);
 		g_Phantom_activated[id] = false;
 		reset_origins(id);

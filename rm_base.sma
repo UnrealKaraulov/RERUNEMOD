@@ -469,7 +469,7 @@ public rm_highlight_screen(plug_id, id, hpower)
 		bColor[2] = floatround(rune_list_model_color[rune_id][2]);
 		if (rune_id >= 0)
 		{	
-			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT, true);
+			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT, true,true);
 		}
 	}
 }
@@ -531,7 +531,7 @@ public rm_reset_highlight(id)
 	if (is_user_connected(id))
 	{
 		rg_set_rendering(id);
-		UTIL_ScreenFade(id, { 0, 0, 0 }, 1.0, 1.0);
+		UTIL_ScreenFade(id, _, _, _,_,true,true);
 	}
 }
 
