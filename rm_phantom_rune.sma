@@ -10,7 +10,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PHANTOM","2.2","Karaulov"); 
+	register_plugin("RM_PHANTOM","2.3","Karaulov"); 
 	rm_register_rune("rm_phantom_rune_name","rm_phantom_rune_desc",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 }
@@ -78,7 +78,7 @@ public is_empty_origin(id)
 
 public activate_phantom_mode(id)
 {
-	UTIL_ScreenFade(id,{0,0,255},1.0,6.0,20,_,true,true);
+	UTIL_ScreenFade(id,{0,0,255},1.0,6.0,240,FFADE_MODULATE,true,true);
 	set_entvar(id, var_movetype, MOVETYPE_NOCLIP);
 	g_Phantom_activated[id] = true;
 	set_entvar(id, var_speed, 500.0);

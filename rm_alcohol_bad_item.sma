@@ -10,7 +10,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_VODKA","2.4","Karaulov");
+	register_plugin("RM_VODKA","2.5","Karaulov");
 	rm_register_rune("rm_alcohol_bad_item_name","rm_alcohol_bad_item_desc",Float:{255.0,0.0,255.0}, "models/rm_reloaded/w_butilka_vodki.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
@@ -41,7 +41,7 @@ public PM_Move(const id)
 		{
 			if (fPunchAngles[2] < 70.0)
 			{
-				fPunchAngles[2]+=1.5;
+				fPunchAngles[2]+=1.0;
 			}
 			
 			if (fPunchAngles[2] < 5.0)
@@ -53,7 +53,7 @@ public PM_Move(const id)
 		{
 			if (fPunchAngles[2] > -70.0)
 			{
-				fPunchAngles[2]-=1.5;
+				fPunchAngles[2]-=1.0;
 			}
 			
 			if (fPunchAngles[2] > -5.0)
@@ -94,7 +94,7 @@ public rm_give_rune(id)
 		remove_task(id);
 	g_bHasAlcohol[id] = true;
 	set_task(30.0,"reset_vodka",id);
-	rm_base_highlight_screen(id, 255);
+	rm_base_highlight_screen(id, 220);
 	rm_base_lock_pickup(id, 1);
 	return RUNE_PICKUP_SUCCESS;
 }
