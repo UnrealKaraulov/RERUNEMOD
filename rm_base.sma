@@ -90,10 +90,12 @@ new runemod_drop_item_phrase[190];
 new runemod_hud_rune_name_phrase[64];
 new runemod_hud_rune_description_phrase[190];
 
+new runemod_print_need_register_phrase[128128];
+
 // Остальные глобальные переменные
 new g_pCommonTr;
 new rune_last_created = 0;
-
+new Float:g_fLastRegisterPrint[MAX_PLAYERS + 1] = {0.0,...};
 new g_hServerLanguage = LANG_SERVER;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
@@ -221,6 +223,11 @@ public plugin_init()
 	{
 		copy(runemod_hud_rune_description_phrase,charsmax(runemod_hud_rune_description_phrase),"Описание:");
 	}
+	
+	if (!LookupLangKey(runemod_print_need_register_phrase,charsmax(runemod_print_need_register_phrase),"runemod_print_need_register_phrase",g_hServerLanguage) || runemod_print_need_register_phrase[0] == EOS)
+	{
+		copy(runemod_print_need_register_phrase,charsmax(runemod_print_need_register_phrase),"Требуется регистрация!");
+	}
 }
 
 public plugin_end()
@@ -244,6 +251,17 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	{
 		lock_rune_pickup[id] = 0;
 		player_drop_rune(id);
+	}
+}
+
+// Предупредить игрока о необходимости зарегистрироваться на веб сайте
+public rm_print_register_api(id)
+{
+	if (get_gametime() - g_fLastRegisterPrint[id] > 1.0)
+	{
+		g_fLastRegisterPrint[id] = get_gametime();
+		set_dhudmessage(50, 255, 100, -1.0, 0.61, 0, 0.0, 0.0, 1.5, 0.0);
+		show_dhudmessage(id, "%s: %s",runemod_prefix, runemod_print_need_register_phrase);
 	}
 }
 

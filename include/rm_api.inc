@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "2.9.6"
+#define RUNEMOD_VERSION "2.9.7"
 
 
 #define HUD_CHANNEL_ID 3
@@ -388,6 +388,34 @@ stock bool:rm_base_player_has_rune(id)
 	}
 	callfunc_push_int(id);
 	return callfunc_end() == RUNEMODE_MAGIC_NUMBER;
+}
+
+/*
+* Предупредить игрока о необходимости зарегистрироваться на сайте!
+*
+* @param id			Индекс игрока
+*
+* @noreturn
+*
+* Можно вызывать часто, обновление надписи 1 раз в секунду внутри базового плагина.
+*/
+stock rm_print_need_register(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_print_register_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return false;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return false;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
 }
 
 /*

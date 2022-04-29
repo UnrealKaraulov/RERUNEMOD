@@ -6,6 +6,7 @@ runemod_drop_item_phrase = Завершилось действие предме�
 runemod_hintdrop_rune_phrase = Снять руну можно выбрав нож и нажав 2 раза ^1drop
 runemod_hud_rune_name_phrase = Название:
 runemod_hud_rune_description_phrase = Описание:
+runemod_print_need_register_phrase = Требуется регистрация на сайте!
 [en]
 runemod_pickup_rune_phrase = You pick up [rune]:
 runemod_drop_rune_phrase = Rune expired:
@@ -14,3 +15,4 @@ runemod_drop_item_phrase = Item expired:
 runemod_hintdrop_rune_phrase = You can drop rune by select KNIFE and press ^1drop^3 two times
 runemod_hud_rune_name_phrase = Name:
 runemod_hud_rune_description_phrase = Description:
+runemod_print_need_register_phrase = Please join to website!
