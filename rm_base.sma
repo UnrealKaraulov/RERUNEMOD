@@ -49,6 +49,12 @@ new runemod_prefix[64];
 // Возможность отключить RUNEMOD на определенных картах или раундах
 new runemod_active, runemod_active_status = 1;
 
+// Только предметы!
+new runemod_only_items;
+
+// Начальный раунд
+new runemod_start_round;
+
 // Очистка рун после завершения раунда
 new runemod_restart_cleanup;
 
@@ -97,6 +103,7 @@ new g_pCommonTr;
 new rune_last_created = 0;
 new Float:g_fLastRegisterPrint[MAX_PLAYERS + 1] = {0.0,...};
 new g_hServerLanguage = LANG_SERVER;
+new g_iRoundLeft = 0;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
@@ -133,6 +140,14 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("runemod_restart_cleanup", "0",
 					.description = "Cleanup runes after round end"
 	),	runemod_restart_cleanup);
+		
+	bind_pcvar_num(create_cvar("runemod_start_round", "0",
+					.description = "Startup round"
+	),	runemod_start_round);
+		
+	bind_pcvar_num(create_cvar("runemod_only_items", "0",
+					.description = "Only items!"
+	),	runemod_only_items);
 		
 	bind_pcvar_num(create_cvar("runemod_spawntime", "10",
 					.description = "Timer for add new rune"
@@ -336,6 +351,7 @@ public cmd_drop(id)
 // 3aбpaть pyны в конце payндa
 public DropAllRunes( )
 {
+	g_iRoundLeft++;
 	for(new i = 1; i < MAX_PLAYERS + 1;i++)
 	{
 		player_drop_rune(i);
@@ -753,13 +769,34 @@ rm_get_next_rune( bool:First = true)
 	search_iters++;
 	
 	new rune_id = random_num(1,runes_registered) - 1;
-			
+	
+	// Если активирован режим "Только предметы", но выпала руна
+	// ищем первый предмет.
+	if (runemod_only_items && !rune_list_isItem[rune_id])
+	{
+		for(new n = 0; n < runes_registered;n++)
+		{
+			if (rune_list_isItem[n])
+			{
+				rune_id = n;
+				break;
+			}
+		}
+	}
+	
+	// Теперь проверяем, если есть более подходящий "кандидат", выбираем его.
 	for(new n = 0; n < runes_registered;n++)
 	{
 		if (n != rune_last_created && rune_list_maxcount[n] == 0 &&
 					rune_list_count[n] < rune_list_count[rune_id])
 		{
+			if (runemod_only_items && !rune_list_isItem[n])
+			{
+				continue;
+			}
 			rune_id = n;
+			if (random_num(0,100) > 50)
+				break;
 		}
 	}
 
@@ -773,16 +810,26 @@ rm_get_next_rune( bool:First = true)
 				break;
 			}
 		}
-		
+	}
+	
+	// Срабатывает только если поиск предмета не завершился успехом, выбираем первый попавшийся предмет или руну.
+	if (rune_id >= runes_registered)
+	{
+		for(rune_id = 0;rune_id < runes_registered;rune_id++)
+		{
+			if (runemod_only_items && !rune_list_isItem[rune_id])
+			{
+				continue;
+			}
+			if (rune_list_maxcount[rune_id] == 0)
+			{
+				break;
+			}
+		}
+		// Возникла неизвестная ошибка
 		if (rune_id >= runes_registered)
 		{
-			for(rune_id = 0;rune_id < runes_registered;rune_id++)
-			{
-				if (rune_list_maxcount[rune_id] == 0)
-				{
-					break;
-				}
-			}
+			rune_id = 0;
 		}
 	}
 	
@@ -802,7 +849,7 @@ rm_get_next_rune( bool:First = true)
 // Фyнкция coздaющaя pyны
 public spawn_runes( )
 {
-	if (runes_registered == 0 || runemod_active == 0)
+	if (runes_registered == 0 || runemod_active == 0 || g_iRoundLeft < runemod_start_round)
 		return
 	
 	new i = 0;

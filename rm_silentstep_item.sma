@@ -7,6 +7,8 @@ new rune_descr[] = "rm_silentstep_item_desc";
 
 new rune_model_id = -1;
 
+new bool:g_bSilentStep[MAX_PLAYERS + 1] = {false,...};
+
 public plugin_init()
 {
 	register_plugin("RM_SILENT","2.1","Karaulov"); 
@@ -23,24 +25,33 @@ public client_putinserver(id)
 {
 	if (task_exists(id))
 		remove_task(id);
+	g_bSilentStep[id] = false;
 }
 
 public client_disconnected(id)
 {
 	if (task_exists(id))
 		remove_task(id);
+	g_bSilentStep[id] = false;
 }
 
 public rm_give_rune(id)
 {
+	if (g_bSilentStep[id])
+	{
+		return NO_RUNE_PICKUP_SUCCESS;
+	}
+	g_bSilentStep[id] = true;
 	if (task_exists(id))
 		remove_task(id);
 	set_member(id,m_flTimeStepSound,999.0);
 	set_task(20.0,"reset_silent",id);
+	return RUNE_PICKUP_SUCCESS;
 }
 
 public reset_silent(id)
 {
+	g_bSilentStep[id] = false;
 	if (is_user_connected(id))
 	{
 		set_member(id,m_flTimeStepSound,0.0);
