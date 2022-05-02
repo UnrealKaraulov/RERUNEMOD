@@ -45,6 +45,7 @@ new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
 
 // Префикс в чате
 new runemod_prefix[64];
+new runemod_ignore_prefix_list[256];
 
 // Возможность отключить RUNEMOD на определенных картах или раундах
 new runemod_active, runemod_active_status = 1;
@@ -104,7 +105,7 @@ new rune_last_created = 0;
 new Float:g_fLastRegisterPrint[MAX_PLAYERS + 1] = {0.0,...};
 new g_hServerLanguage = LANG_SERVER;
 new g_iRoundLeft = 0;
-
+new bool:g_bCurrentMapIgnored = false;
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
@@ -132,6 +133,10 @@ public plugin_init()
 	bind_pcvar_string(create_cvar("runemod_prefix", "[RUNEMOD]",
 					.description = "Prefix for RUNEMOD in chat"
 	),	runemod_prefix, charsmax(runemod_prefix));
+	
+	bind_pcvar_string(create_cvar("runemod_ignore_prefix_list", "",
+					.description = "Ignore map list"
+	),	runemod_ignore_prefix_list, charsmax(runemod_ignore_prefix_list));
 	
 	bind_pcvar_num(create_cvar("runemod_active", "1",
 					.description = "Activate runemod"
@@ -242,6 +247,25 @@ public plugin_init()
 	if (!LookupLangKey(runemod_print_need_register_phrase,charsmax(runemod_print_need_register_phrase),"runemod_print_need_register_phrase",g_hServerLanguage) || runemod_print_need_register_phrase[0] == EOS)
 	{
 		copy(runemod_print_need_register_phrase,charsmax(runemod_print_need_register_phrase),"Требуется регистрация!");
+	}
+	
+	// Часть кода отвечающая за отключения мода при совпадении префикса или названия карты
+	new sMapName[32];
+	rh_get_mapname(sMapName, charsmax(sMapName), MNT_TRUE);
+	
+	add(runemod_ignore_prefix_list,charsmax(runemod_ignore_prefix_list)," ");
+	
+	new sMapPrefix[32];
+	new i = 0, iPos = 0;
+	while((iPos = split_string(runemod_ignore_prefix_list[i], " ", sMapPrefix, charsmax(sMapPrefix))) > 0)
+	{
+		i += iPos;
+		if (containi(sMapName,sMapPrefix) >= 0)
+		{
+			g_bCurrentMapIgnored = true;
+			log_amx("[runemod_ignore_prefix_list]: Disable RuneMod Reloaded for current map. Match prefix %s for map %s.", sMapPrefix, sMapName);
+			break;
+		}
 	}
 }
 
@@ -849,10 +873,8 @@ rm_get_next_rune( bool:First = true)
 // Фyнкция coздaющaя pyны
 public spawn_runes( )
 {
-	if (runes_registered == 0 || runemod_active == 0 || g_iRoundLeft < runemod_start_round)
-		return
-	
 	new i = 0;
+	new bool:reversed = random_num(0,100) > 50;
 	new need_runes = runemod_perspawn;
 	
 	new iPlayers[ 32 ], iNum;
@@ -861,34 +883,59 @@ public spawn_runes( )
 	if (iNum < runemod_min_players || iNum > runemod_max_players)
 		return;
 	
-	for(i = 0; i < filled_spawns; i++)
+	if (!reversed)
 	{
-		if (spawn_filled[i] > 0)
-			continue;
-		
-		if (is_no_player_point(spawn_list[i],float(runemod_player_distance)))
+		for(i = 0; i < filled_spawns; i++)
 		{
-			new rune_id = rm_get_next_rune();
-			
-			if (rune_id < runes_registered)
+			if (spawn_runes_internal(i))
 			{
-				spawn_one_rune( rune_id, i );
-				
 				need_runes--;
-				if (need_runes == 0)
-					break;
 			}
+			
+			if (need_runes <= 0)
+				return;
 		}
 	}
+	else 
+	{
+		for(i = filled_spawns - 1; i >= 0; i--)
+		{
+			if (spawn_runes_internal(i))
+			{
+				need_runes--;
+			}
+			
+			if (need_runes <= 0)
+				return;
+		}
+	}
+}
+
+public bool:spawn_runes_internal(spawn_id)
+{
+	if (spawn_filled[spawn_id] > 0)
+		return false;
+	if (is_no_player_point(spawn_list[spawn_id],float(runemod_player_distance)))
+	{
+		new rune_id = rm_get_next_rune();
+		
+		if (rune_id < runes_registered)
+		{
+			spawn_one_rune( rune_id, spawn_id );
+			return true;
+		}
+	}
+	return false;
 }
 
 // Taймep coздaния cпaвнoв и зaпoлнeния иx pyнaми
 public RM_SPAWN_RUNE( id )
 {
-	if (runemod_active)
+	if (runemod_active && !g_bCurrentMapIgnored)
 	{
 		fill_new_spawn_points( );
-		spawn_runes( );
+		if (runes_registered > 0 && g_iRoundLeft >= runemod_start_round)
+			spawn_runes( );
 	}
 	
 	set_task(float(runemod_spawntime), "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID);
@@ -912,7 +959,7 @@ public RM_UPDATE_HUD( id, rune_id )
 // Обновляет описание рун всем игрокам
 public UPDATE_RUNE_DESCRIPTION(taskid)
 {
-	if (runemod_active)
+	if (runemod_active && !g_bCurrentMapIgnored)
 	{
 		new iPlayers[ 32 ], iNum;
 		get_players( iPlayers, iNum, "ach" );
@@ -933,10 +980,10 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 
 public user_think(id)
 {
-	if (is_user_alive(id))
-    {
-        if (runemod_active)
-        {
+	if (runemod_active && !g_bCurrentMapIgnored)
+	{
+		if (is_user_alive(id))
+		{
             new iOriginStart[3];
             new iOriginEnd[3];
             get_user_origin( id, iOriginStart, Origin_Eyes );
