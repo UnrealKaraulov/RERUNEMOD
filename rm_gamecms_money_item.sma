@@ -17,8 +17,6 @@ native cmsapi_add_user_money(id, Float:fAmmount);
 
 new rune_model_id = -1;
 
-new bool:g_bRegGameCMS[MAX_PLAYERS + 1];
-
 public plugin_init()
 {
 	register_plugin("RM_GAMECMS_CASH","2.2","Karaulov"); 
@@ -26,6 +24,8 @@ public plugin_init()
 	rm_base_use_rune_as_item( );
 	// Максимальное количество предметов/рун которые могут быть на карте в одно время
 	rm_base_set_max_count( 1 );
+	// Предмет может поднять только зарегистрированный в GAMECMS
+	rm_need_gamecms_register( );
 }
 
 public plugin_precache()
@@ -33,30 +33,10 @@ public plugin_precache()
 	rune_model_id = precache_model("models/rm_reloaded/w_rubel.mdl");
 }
 
-public client_disconnected(id)
-{
-    g_bRegGameCMS[id] = false;
-}
-
-public OnAPIMemberConnected(id, memberId, memberName[])
-{
-    g_bRegGameCMS[id] = true;
-}
-
 public rm_give_rune(id)
 {
-	if (g_bRegGameCMS[id])
-	{
-		cmsapi_add_user_money(id, 5.0)
-		return RUNE_PICKUP_SUCCESS;
-	}
-	else 
-	{
-		rm_print_need_register(id);
-		return NO_RUNE_PICKUP_SUCCESS;
-	}
+	cmsapi_add_user_money(id, 5.0);
 }
-
 
 public plugin_natives() 
 {

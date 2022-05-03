@@ -18,6 +18,7 @@ new runes_registered = 0;
 // Дaнныe o pyнax
 new rune_list_id[MAX_REGISTER_RUNES];
 new bool:rune_list_isItem[MAX_REGISTER_RUNES] = {false,...};
+new bool:rune_list_gamecms[MAX_REGISTER_RUNES] = {false,...};
 new rune_list_name[MAX_REGISTER_RUNES][128];
 new rune_list_descr[MAX_REGISTER_RUNES][256];
 new rune_list_model[MAX_REGISTER_RUNES][256];
@@ -86,6 +87,9 @@ new runemod_player_highlight;
 // Активировать подсветку экрана игрока
 new runemod_screen_highlight;
 
+// Только для пользователей GAMECMS
+new runemod_only_gamecms;
+
 // Текст 
 
 new runemod_hintdrop_rune_phrase[190];
@@ -106,6 +110,9 @@ new Float:g_fLastRegisterPrint[MAX_PLAYERS + 1] = {0.0,...};
 new g_hServerLanguage = LANG_SERVER;
 new g_iRoundLeft = 0;
 new bool:g_bCurrentMapIgnored = false;
+
+new bool:g_bRegGameCMS[MAX_PLAYERS + 1] = {false,...};
+
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
 public plugin_init()
@@ -193,6 +200,10 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("runemod_screen_highlight", "1",
 					.description = "Enable player screen highlight"
 	),	runemod_screen_highlight);
+	
+	bind_pcvar_num(create_cvar("runemod_only_gamecms", "1",
+					.description = "Only GAMECMS users!"
+	),	runemod_only_gamecms);
 	
 	create_cvar("runemod_max_hp", "150",
 					.description = "Max HP for RUNES");
@@ -283,25 +294,17 @@ public client_putinserver(id)
 	set_task(0.5, "user_think", id, _, _, "b");
 }
 
+public client_connect(id)
+{
+	g_bRegGameCMS[id] = false;
+}
+
 // 3aбpaть pyнy пpи oтключeнии игpoкa
 public client_disconnected(id, bool:drop, message[], maxlen)
 {
-	if (is_real_player(id))
-	{
-		lock_rune_pickup[id] = 0;
-		player_drop_rune(id);
-	}
-}
-
-// Предупредить игрока о необходимости зарегистрироваться на веб сайте
-public rm_print_register_api(id)
-{
-	if (get_gametime() - g_fLastRegisterPrint[id] > 1.0)
-	{
-		g_fLastRegisterPrint[id] = get_gametime();
-		set_dhudmessage(50, 255, 100, -1.0, 0.61, 0, 0.0, 0.0, 1.5, 0.0);
-		show_dhudmessage(id, "%s: %s",runemod_prefix, runemod_print_need_register_phrase);
-	}
+	g_bRegGameCMS[id] = false;
+	lock_rune_pickup[id] = 0;
+	player_drop_rune(id);
 }
 
 // Удаление всех рун при отключении RUNEMOD
@@ -483,6 +486,32 @@ public RM_MaxRunesAtOneTime(PluginIndex, num)
 	if (runeid >= 0)
 	{
 		rune_list_maxcount[runeid] = num;
+	}
+}
+
+public OnAPIMemberConnected(id, memberId, memberName[])
+{
+    g_bRegGameCMS[id] = true;
+}
+
+// Предупредить игрока о необходимости зарегистрироваться на веб сайте
+public rm_print_register_api(id)
+{
+	if (get_gametime() - g_fLastRegisterPrint[id] > 1.0)
+	{
+		g_fLastRegisterPrint[id] = get_gametime();
+		set_dhudmessage(50, 255, 100, -1.0, 0.61, 0, 0.0, 0.0, 1.5, 0.0);
+		show_dhudmessage(id, "%s: %s",runemod_prefix, runemod_print_need_register_phrase);
+	}
+}
+
+// Необходимо зарегистрироваться на веб сайте (GAMECMS) для того что бы поднять руну
+public rm_need_gamecms_register_api(PluginIndex)
+{
+	new runeid = get_runeid_by_pluginid(PluginIndex);
+	if (runeid >= 0)
+	{
+		rune_list_gamecms[runeid] = true;
 	}
 }
 
@@ -752,8 +781,15 @@ public rune_touch(const rune_ent, const player_id)
 		new bool:is_item = rune_list_isItem[rune_id];
 		if (active_rune[player_id] == 0 || is_item)
 		{
+			if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
+			{
+				rm_print_register_api(player_id);
+				return PLUGIN_CONTINUE;
+			}
+			
 			if (!is_item)
 				active_rune[player_id] = rune_list_id[rune_id];
+				
 			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_RUNE_PICKUP_SUCCESS)
 			{
 				new spawn_id = get_rune_spawnid(rune_ent);

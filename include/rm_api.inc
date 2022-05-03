@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.0.0"
+#define RUNEMOD_VERSION "3.0.1"
 
 
 #define HUD_CHANNEL_ID 3
@@ -415,6 +415,31 @@ stock rm_print_need_register(id)
 		return false;
 	}
 	callfunc_push_int(id);
+	return callfunc_end();
+}
+
+
+/*
+* Запрет поднятия руны незарегистрированному в GAMECMS игроку
+*
+* @noreturn
+*/
+stock rm_need_gamecms_register()
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_need_gamecms_register_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return false;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return false;
+	}
+	callfunc_push_int(rm_current_plugin_id());
 	return callfunc_end();
 }
 
