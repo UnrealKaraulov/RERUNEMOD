@@ -29,11 +29,20 @@ new rune_list_maxcount[MAX_REGISTER_RUNES] = {0,...};
 new rune_list_count[MAX_REGISTER_RUNES];
 
 // Cтaндapтнaя мoдeль pyны. Иcпoльзyeтcя ecли зaгpyжeнa. Пo yмoлчaнию "models/rm_reloaded/rune_black.mdl"
-new rune_default_model[256];
+new rune_default_model[64];
 new rune_default_model_id;
 
 // Cтaндapтный звyк пoднятия pyны.
-new rune_default_pickup_sound[256];
+new rune_default_pickup_sound[64];
+
+// Список карт недоступных для RuneMod
+new runemod_ignore_prefix_list[256];
+
+// Стандартная модель руны
+new runemod_default_model_path[64];
+
+// Стандартный звук поднятия руны
+new runemod_default_pickup_path[64];
 
 // Очередь HUD сообщений
 new HUD_SYNS_1,HUD_SYNS_2; 
@@ -43,10 +52,6 @@ new active_rune[MAX_PLAYERS + 1];
 
 // Блокировка возможности поднять руну или предмет
 new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
-
-// Префикс в чате
-new runemod_prefix[64];
-new runemod_ignore_prefix_list[256];
 
 // Возможность отключить RUNEMOD на определенных картах или раундах
 new runemod_active, runemod_active_status = 1;
@@ -90,7 +95,12 @@ new runemod_screen_highlight;
 // Только для пользователей GAMECMS
 new runemod_only_gamecms;
 
+// Режим неизвестных рун
+new runemod_random_mode;
+
 // Текст 
+
+new runemod_prefix[64];
 
 new runemod_hintdrop_rune_phrase[190];
 new runemod_pickup_rune_phrase[190];
@@ -101,7 +111,9 @@ new runemod_drop_item_phrase[190];
 new runemod_hud_rune_name_phrase[64];
 new runemod_hud_rune_description_phrase[190];
 
-new runemod_print_need_register_phrase[128128];
+new runemod_print_need_register_phrase[128];
+
+
 
 // Остальные глобальные переменные
 new g_pCommonTr;
@@ -110,7 +122,7 @@ new Float:g_fLastRegisterPrint[MAX_PLAYERS + 1] = {0.0,...};
 new g_hServerLanguage = LANG_SERVER;
 new g_iRoundLeft = 0;
 new bool:g_bCurrentMapIgnored = false;
-
+new g_sConfigDirPath[PLATFORM_MAX_PATH];
 new bool:g_bRegGameCMS[MAX_PLAYERS + 1] = {false,...};
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
@@ -136,84 +148,14 @@ public plugin_init()
 	
 	HUD_SYNS_1 = CreateHudSyncObj();
 	HUD_SYNS_2 = CreateHudSyncObj();
-
-	bind_pcvar_string(create_cvar("runemod_prefix", "[RUNEMOD]",
-					.description = "Prefix for RUNEMOD in chat"
-	),	runemod_prefix, charsmax(runemod_prefix));
 	
-	bind_pcvar_string(create_cvar("runemod_ignore_prefix_list", "",
-					.description = "Ignore map list"
-	),	runemod_ignore_prefix_list, charsmax(runemod_ignore_prefix_list));
-	
-	bind_pcvar_num(create_cvar("runemod_active", "1",
-					.description = "Activate runemod"
-	),	runemod_active);
-		
-	bind_pcvar_num(create_cvar("runemod_restart_cleanup", "0",
-					.description = "Cleanup runes after round end"
-	),	runemod_restart_cleanup);
-		
-	bind_pcvar_num(create_cvar("runemod_start_round", "0",
-					.description = "Startup round"
-	),	runemod_start_round);
-		
-	bind_pcvar_num(create_cvar("runemod_only_items", "0",
-					.description = "Only items!"
-	),	runemod_only_items);
-		
-	bind_pcvar_num(create_cvar("runemod_spawntime", "10",
-					.description = "Timer for add new rune"
-	),	runemod_spawntime);
-		
-	bind_pcvar_num(create_cvar("runemod_perspawn", "1",
-					.description = "Number of spawn runes at one time"
-	),	runemod_perspawn);
-	
-	bind_pcvar_num(create_cvar("runemod_spawncount", "20",
-					.description = "Max runes at map"
-	),	runemod_spawncount);
-		
-	bind_pcvar_num(create_cvar("runemod_respawn_distance", "500",
-					.description = "Min spawn distance from info_player_start/deathmath"
-	),	runemod_respawn_distance);
-		
-	bind_pcvar_num(create_cvar("runemod_player_distance", "300",
-					.description = "Min spawn distance from players"
-	),	runemod_player_distance);
-		
-	bind_pcvar_num(create_cvar("runemod_spawn_distance", "300",
-					.description = "Min distance between spawns"
-	),	runemod_spawn_distance);
-	
-	bind_pcvar_num(create_cvar("runemod_min_players", "0",
-					.description = "Min players for spawn runes"
-	),	runemod_min_players);
-	
-	bind_pcvar_num(create_cvar("runemod_max_players", "32",
-					.description = "Max players for spawn runes"
-	),	runemod_max_players);
-		
-	bind_pcvar_num(create_cvar("runemod_player_highlight", "1",
-					.description = "Enable player model highlight"
-	),	runemod_player_highlight);
-		
-	bind_pcvar_num(create_cvar("runemod_screen_highlight", "1",
-					.description = "Enable player screen highlight"
-	),	runemod_screen_highlight);
-	
-	bind_pcvar_num(create_cvar("runemod_only_gamecms", "1",
-					.description = "Only GAMECMS users!"
-	),	runemod_only_gamecms);
-	
-	create_cvar("runemod_max_hp", "150",
-					.description = "Max HP for RUNES");
-	
-	
-	new configsDir[PLATFORM_MAX_PATH];
-	get_configsdir(configsDir, charsmax(configsDir));
-
-	server_cmd("exec %s/plugins/runemod.cfg", configsDir);
+	// Silent execute cfg 
+	new HookChain:g_hConPrintf = RegisterHookChain(RH_Con_Printf, "RH_ConPrintf_Pre", 0)
+	// Read server lang
+	server_cmd("exec %s/amxx.cfg", g_sConfigDirPath);
 	server_exec();
+	
+	DisableHookChain(g_hConPrintf);
 	
 	register_dictionary("rm_runemod.txt");
 	register_dictionary("rm_runemod_runes.txt");
@@ -278,6 +220,103 @@ public plugin_init()
 			break;
 		}
 	}
+}
+
+public RH_ConPrintf_Pre(const szBuffer[])
+{
+	return HC_SUPERCEDE;
+}
+
+public rm_config_execute()
+{
+	bind_pcvar_string(create_cvar("runemod_prefix", "[RUNEMOD]",
+					.description = "Prefix for RUNEMOD in chat"
+	),	runemod_prefix, charsmax(runemod_prefix));
+	
+	bind_pcvar_string(create_cvar("runemod_ignore_prefix_list", "",
+					.description = "Ignore map list"
+	),	runemod_ignore_prefix_list, charsmax(runemod_ignore_prefix_list));
+	
+	bind_pcvar_num(create_cvar("runemod_active", "1",
+					.description = "Activate runemod"
+	),	runemod_active);
+		
+	bind_pcvar_num(create_cvar("runemod_restart_cleanup", "0",
+					.description = "Cleanup runes after round end"
+	),	runemod_restart_cleanup);
+		
+	bind_pcvar_num(create_cvar("runemod_start_round", "0",
+					.description = "Startup round"
+	),	runemod_start_round);
+		
+	bind_pcvar_num(create_cvar("runemod_only_items", "0",
+					.description = "Only items!"
+	),	runemod_only_items);
+		
+	bind_pcvar_num(create_cvar("runemod_spawntime", "10",
+					.description = "Timer for add new rune"
+	),	runemod_spawntime);
+		
+	bind_pcvar_num(create_cvar("runemod_perspawn", "1",
+					.description = "Number of spawn runes at one time"
+	),	runemod_perspawn);
+	
+	bind_pcvar_num(create_cvar("runemod_spawncount", "20",
+					.description = "Max runes at map"
+	),	runemod_spawncount);
+		
+	bind_pcvar_num(create_cvar("runemod_respawn_distance", "500",
+					.description = "Min spawn distance from info_player_start/deathmath"
+	),	runemod_respawn_distance);
+		
+	bind_pcvar_num(create_cvar("runemod_player_distance", "300",
+					.description = "Min spawn distance from players"
+	),	runemod_player_distance);
+		
+	bind_pcvar_num(create_cvar("runemod_spawn_distance", "300",
+					.description = "Min distance between spawns"
+	),	runemod_spawn_distance);
+	
+	bind_pcvar_num(create_cvar("runemod_min_players", "0",
+					.description = "Min players for spawn runes"
+	),	runemod_min_players);
+	
+	bind_pcvar_num(create_cvar("runemod_max_players", "32",
+					.description = "Max players for spawn runes"
+	),	runemod_max_players);
+		
+	bind_pcvar_num(create_cvar("runemod_player_highlight", "1",
+					.description = "Enable player model highlight"
+	),	runemod_player_highlight);
+		
+	bind_pcvar_num(create_cvar("runemod_screen_highlight", "1",
+					.description = "Enable player screen highlight"
+	),	runemod_screen_highlight);
+	
+	bind_pcvar_num(create_cvar("runemod_only_gamecms", "0",
+					.description = "Only GAMECMS users!"
+	),	runemod_only_gamecms);
+	
+	bind_pcvar_num(create_cvar("runemod_random_mode", "0",
+					.description = "Random mode"
+	),	runemod_random_mode);
+	
+	bind_pcvar_string(create_cvar("runemod_default_model_path", "models/rm_reloaded/rune_black.mdl",
+					.description = "Default model for RuneMod"
+	),	runemod_default_model_path, charsmax(runemod_default_model_path));
+	
+	
+	bind_pcvar_string(create_cvar("runemod_default_pickup_path", "models/rm_reloaded/rune_black.mdl",
+					.description = "Default sound for RuneMod"
+	),	runemod_default_pickup_path, charsmax(runemod_default_pickup_path));
+	
+	
+	create_cvar("runemod_max_hp", "150",
+					.description = "Max HP for RUNES");
+	
+	get_configsdir(g_sConfigDirPath, charsmax(g_sConfigDirPath));
+	server_cmd("exec %s/plugins/runemod.cfg", g_sConfigDirPath);
+	server_exec();
 }
 
 public plugin_end()
@@ -404,27 +443,32 @@ public RemoveAllRunes()
 }
 
 
-// Пpeкeш мoдeли pyны "models/rm_reloaded/rune_black.mdl" или иcпoльзoвaниe cтaндapтнoй пpeдзaгpyжeннoй мoдeли "models/w_weaponbox.mdl"
+// Пpeкeш мoдeли pyны и звука поднятия
 public plugin_precache()
 {
-	if(file_exists("models/rm_reloaded/rune_black.mdl",true))
+	rm_config_execute();
+	
+	if(file_exists(runemod_default_model_path,true))
 	{
-		formatex(rune_default_model,charsmax(rune_default_model),"%s","models/rm_reloaded/rune_black.mdl");
-		rune_default_model_id = precache_model(rune_default_model);
+		copy(rune_default_model,charsmax(rune_default_model),runemod_default_model_path);
 	}
 	else 
 	{
-		formatex(rune_default_model,charsmax(rune_default_model),"%s","models/w_weaponbox.mdl");
+		copy(rune_default_model,charsmax(rune_default_model),"models/w_weaponbox.mdl");
 	}
 	
-	if(file_exists("sound/rm_reloaded/pickup.wav",true))
+	rune_default_model_id = precache_model(rune_default_model);
+	
+	if(contain(runemod_default_pickup_path,"sound/") == 0 && file_exists(runemod_default_pickup_path,true))
 	{
-		formatex(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"%s","rm_reloaded/pickup.wav");
-		precache_generic("sound/rm_reloaded/pickup.wav");
+		// replace first sound/
+		replace_stringex(runemod_default_pickup_path,charsmax(runemod_default_pickup_path),"sound/","");
+		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),runemod_default_pickup_path);
+		precache_generic(rune_default_pickup_sound);
 	}
-	else 
+	else
 	{
-		formatex(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"%s","items/nvg_on.wav");
+		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"items/nvg_on.wav");
 	}
 }
 
@@ -715,15 +759,25 @@ public spawn_one_rune(rune_id, spawn_id)
 	
 	rune_list_count[rune_id]++;
 
-	set_entvar(iEnt, var_model,rune_list_model[rune_id]);
-	set_entvar(iEnt, var_modelindex, rune_list_model_id[rune_id]);
 	set_entvar(iEnt, var_classname, RUNE_CLASSNAME);
 	
+	if (runemod_random_mode > 0)
+	{
+		set_entvar(iEnt, var_model,rune_default_model);
+		set_entvar(iEnt, var_modelindex,rune_default_model_id);
+	}
+	else 
+	{
+		set_entvar(iEnt, var_model,rune_list_model[rune_id]);
+		set_entvar(iEnt, var_modelindex, rune_list_model_id[rune_id]);
+	}
+	
+	// Не нужно
 	dllfunc(DLLFunc_Spawn, iEnt)
 	
 	set_entvar(iEnt, var_gravity, 0.0 )
 
-	if (!rune_list_isItem[rune_id])
+	if (!rune_list_isItem[rune_id] && runemod_random_mode == 0)
 	{
 		set_entvar(iEnt, var_renderfx, kRenderFxGlowShell);
 		set_entvar(iEnt, var_rendercolor,rune_list_model_color[rune_id]);
@@ -752,13 +806,13 @@ public spawn_one_rune(rune_id, spawn_id)
 	
 	set_entvar(iEnt, var_velocity,Float:{0.0,0.0,0.0});
 	
-	if (!rune_list_isItem[rune_id])
+	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
 		set_entvar(iEnt, var_avelocity,Float:{0.0,125.0,0.0});
 		
 	new Float:fOrigin[3];
 	fOrigin = spawn_list[spawn_id];
 	
-	if (!rune_list_isItem[rune_id])
+	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
 		fOrigin[2] += 50.0;
 	
 	set_entvar(iEnt, var_sequence, ACT_IDLE);
@@ -1016,7 +1070,7 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 
 public user_think(id)
 {
-	if (runemod_active && !g_bCurrentMapIgnored)
+	if (runemod_active && !g_bCurrentMapIgnored && runemod_random_mode == 0)
 	{
 		if (is_user_alive(id))
 		{
