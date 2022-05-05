@@ -11,7 +11,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_VODKA","2.5","Karaulov");
+	register_plugin("RM_VODKA","1.0","Karaulov");
 	rm_register_dictionary("runemod_mj_item.txt");
 	rm_register_rune("rm_multijump_item_name","rm_multijump_item_desc",Float:{0.0,255.0,0.0}, "models/rm_reloaded/w_multijump.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
