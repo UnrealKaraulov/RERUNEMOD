@@ -462,9 +462,9 @@ public plugin_precache()
 	if(contain(runemod_default_pickup_path,"sound/") == 0 && file_exists(runemod_default_pickup_path,true))
 	{
 		// replace first sound/
+		precache_generic(runemod_default_pickup_path);
 		replace_stringex(runemod_default_pickup_path,charsmax(runemod_default_pickup_path),"sound/","");
 		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),runemod_default_pickup_path);
-		precache_generic(rune_default_pickup_sound);
 	}
 	else
 	{
