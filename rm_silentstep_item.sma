@@ -12,13 +12,13 @@ new bool:g_bSilentStep[MAX_PLAYERS + 1] = {false,...};
 public plugin_init()
 {
 	register_plugin("RM_SILENT","2.1","Karaulov"); 
-	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_botinok.mdl", _,rune_model_id);
+	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_botinok_2.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
 }
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/w_botinok.mdl");
+	rune_model_id = precache_model("models/rm_reloaded/w_botinok_2.mdl");
 }
 
 public client_putinserver(id)

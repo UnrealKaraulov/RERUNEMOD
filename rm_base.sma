@@ -346,6 +346,12 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	player_drop_rune(id);
 }
 
+// Зарегистрировать словарь в RUNEMOD
+public rm_register_dictionary_api(const dictname[])
+{
+	register_dictionary(dictname);
+}
+
 // Удаление всех рун при отключении RUNEMOD
 public REMOVE_RUNE_MONITOR()
 {

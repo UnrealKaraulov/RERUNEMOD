@@ -1,0 +1,6 @@
+[ru]
+rm_multijump_item_name = Прыжок
+rm_multijump_item_desc = Игрок получает возможность прыгать в воздухе!
+[en]
+rm_multijump_item_name = MEGA JUMP
+rm_multijump_item_desc = Player can jump in fly!

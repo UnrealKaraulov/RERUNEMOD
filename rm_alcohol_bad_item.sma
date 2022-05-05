@@ -4,7 +4,7 @@
 #include <fakemeta>
 #include <fun>
 
-new g_bHasAlcohol[MAX_PLAYERS + 1] = {false,...};
+new bool:g_bHasAlcohol[MAX_PLAYERS + 1] = {false,...};
 
 new rune_model_id = -1;
 

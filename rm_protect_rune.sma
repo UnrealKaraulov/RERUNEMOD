@@ -45,7 +45,7 @@ public rm_drop_rune(id)
 
 public update_protect_state(id)
 {
-	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.5, 0.0);
+	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
 	show_dhudmessage(id, "CHARGE: [ %d / 10 ]", g_protection[id]);
 }
 

@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.1.1"
+#define RUNEMOD_VERSION "3.1.2"
 
 
 #define HUD_CHANNEL_ID 3
@@ -89,39 +89,32 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	return callfunc_end();
 }
 
-
-static g_hBasePlugin = -1;
-	
-stock rm_base_plugin_id()
+/*
+* Регистрации нового ланг файла (словарь)
+*
+* @param dictname		Название файла словаря
+*
+* @noreturn
+*/
+public rm_register_dictionary(const dictname[])
 {
-	if (g_hBasePlugin != -1)
-		return g_hBasePlugin;
-	
-	new i = get_plugin(-1);
-	
-	for (; i > 0; i--)
+	register_dictionary(dictname);
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_register_dictionary_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
 	{
-		if (get_func_id("RM_RegisterPlugin",i) >= 0)
-		{
-			g_hBasePlugin = i;
-			break;
-		}
+		log_amx("NO BASE FUNC FOUND 2");
+		return PLUGIN_HANDLED;
 	}
-	
- 	return g_hBasePlugin;
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 2");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_str(dictname);
+	return callfunc_end();
 }
-
-
-static g_hCurrentPlugin = -1;
-
-stock rm_current_plugin_id()
-{
-	if (g_hCurrentPlugin != -1)
-		return g_hCurrentPlugin;
-	g_hCurrentPlugin = get_plugin(-1);
-	return g_hCurrentPlugin;
-}
-
 
 /*
 * Вызывается когда игрок поднимает руну
@@ -612,5 +605,38 @@ stock bool:rm_unstuck_player(id)
 	
 	free_tr2(g_pCommonTr);
 	return false;
+}
+
+
+static g_hBasePlugin = -1;
+	
+stock rm_base_plugin_id()
+{
+	if (g_hBasePlugin != -1)
+		return g_hBasePlugin;
+	
+	new i = get_plugin(-1);
+	
+	for (; i > 0; i--)
+	{
+		if (get_func_id("RM_RegisterPlugin",i) >= 0)
+		{
+			g_hBasePlugin = i;
+			break;
+		}
+	}
+	
+ 	return g_hBasePlugin;
+}
+
+
+static g_hCurrentPlugin = -1;
+
+stock rm_current_plugin_id()
+{
+	if (g_hCurrentPlugin != -1)
+		return g_hCurrentPlugin;
+	g_hCurrentPlugin = get_plugin(-1);
+	return g_hCurrentPlugin;
 }
 
