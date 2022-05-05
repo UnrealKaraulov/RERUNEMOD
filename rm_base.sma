@@ -330,7 +330,7 @@ public client_putinserver(id)
 	if (task_exists(id))
 		remove_task(id);
 	if (!is_user_bot(id))
-		set_task(0.5, "user_think", id, _, _, "b");
+		set_task(0.4, "user_think", id, _, _, "b");
 }
 
 public client_connect(id)
@@ -1099,7 +1099,7 @@ public RM_SPAWN_RUNE( id )
 public RM_UPDATE_HUD_RUNE( id, rune_ent )
 {
 	new rune_id = floatround(get_entvar(rune_ent, var_fuser4));
-	set_hudmessage(0, 50, 255, -1.0, 0.16, 0, 0.1, UPDATE_RUNE_DESCRIPTION_HUD_TIME, 0.02, 0.02, HUD_CHANNEL_ID);
+	set_hudmessage(0, 50, 255, -1.0, 0.16, 0, 0.1, 0.5, 0.02, 0.02, HUD_CHANNEL_ID);
 	ShowSyncHudMsg(id, HUD_SYNS_1, "%s %s^n%s %s^n",runemod_hud_rune_name_phrase, rune_list_name[rune_id], runemod_hud_rune_description_phrase, rune_list_descr[rune_id]);
 }
 

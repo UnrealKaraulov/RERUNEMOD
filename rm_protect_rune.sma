@@ -14,7 +14,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.2","Karaulov"); 
+	register_plugin("RM_PROTECT","2.3","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg", .post = false)
 }
@@ -40,13 +40,25 @@ public rm_give_rune(id)
 
 public rm_drop_rune(id)
 {
-	g_protection[id] = false;	
+	g_protection[id] = 0;	
 	if (task_exists(id))
 		remove_task(id);
 }
 
 public update_protect_state(id)
 {
+	// Поддержка ботов, при смерти забрать руну.
+	if (is_user_bot(id))
+	{
+		if (!is_user_alive(id))
+		{
+			g_protection[id] = 0;	
+			if (task_exists(id))
+				remove_task(id);
+			rm_base_drop_rune( id );
+			return;
+		}
+	}
 	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
 	show_dhudmessage(id, "CHARGE: [ %d / 10 ]", g_protection[id]);
 	
