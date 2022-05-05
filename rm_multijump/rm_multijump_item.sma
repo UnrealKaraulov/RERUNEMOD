@@ -74,7 +74,7 @@ public update_jump_state(id)
 		new specTarget = get_entvar(spec_id, var_iuser2);
 		if (specTarget == id)
 		{
-			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
+			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 0.7, 0.0);
 			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
 		}
 	}
