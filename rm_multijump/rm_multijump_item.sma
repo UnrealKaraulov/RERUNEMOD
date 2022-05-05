@@ -53,6 +53,20 @@ public update_jump_state(id)
 {
 	set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.0, 0.7, 0.0);
 	show_dhudmessage(id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
+	
+		
+	new iPlayers[ 32 ], iNum;
+	get_players( iPlayers, iNum, "bch" );
+	for( new i = 0; i < iNum; i++ )
+	{
+		new spec_id = iPlayers[ i ];
+		new specTarget = get_entvar(spec_id, var_iuser2);
+		if (specTarget == id)
+		{
+			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
+			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
+		}
+	}
 }
 
 public HC_CBasePlayer_Jump_Pre(id) 

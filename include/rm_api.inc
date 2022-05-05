@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.1.2"
+#define RUNEMOD_VERSION "3.1.3"
 
 
 #define HUD_CHANNEL_ID 3
@@ -38,6 +38,7 @@
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
 
+#define RUNEMODE_DEFAULT_HIGHLIGHT_POWER 100
 
 #define SPAWN_SEARCH_TASK_ID 10000
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
@@ -278,7 +279,7 @@ stock rm_base_highlight_player(id)
 *
 * @noreturn
 */
-stock rm_base_highlight_screen(id, hpower = 100)
+stock rm_base_highlight_screen(id, hpower = RUNEMODE_DEFAULT_HIGHLIGHT_POWER)
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("rm_highlight_screen",BasePluginIndex);

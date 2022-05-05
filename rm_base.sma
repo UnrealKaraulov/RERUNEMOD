@@ -68,7 +68,7 @@ new runemod_restart_cleanup;
 // Таймер добавления рун
 new runemod_spawntime = 10;
 
-// Максимальное количество рун на карте
+// Максимальное спавн точек для рун
 new runemod_spawncount;
 
 // Количество появляемых рун за 1 спавн
@@ -257,7 +257,7 @@ public rm_config_execute()
 					.description = "Timer for add new rune"
 	),	runemod_spawntime);
 		
-	bind_pcvar_num(create_cvar("runemod_perspawn", "1",
+	bind_pcvar_num(create_cvar("runemod_perspawn", "2",
 					.description = "Number of spawn runes at one time"
 	),	runemod_perspawn);
 	
@@ -265,11 +265,11 @@ public rm_config_execute()
 					.description = "Max runes at map"
 	),	runemod_spawncount);
 		
-	bind_pcvar_num(create_cvar("runemod_respawn_distance", "500",
+	bind_pcvar_num(create_cvar("runemod_respawn_distance", "250",
 					.description = "Min spawn distance from info_player_start/deathmath"
 	),	runemod_respawn_distance);
 		
-	bind_pcvar_num(create_cvar("runemod_player_distance", "300",
+	bind_pcvar_num(create_cvar("runemod_player_distance", "250",
 					.description = "Min spawn distance from players"
 	),	runemod_player_distance);
 		
@@ -329,8 +329,8 @@ public client_putinserver(id)
 {
 	if (task_exists(id))
 		remove_task(id);
-	
-	set_task(0.5, "user_think", id, _, _, "b");
+	if (!is_user_bot(id))
+		set_task(0.5, "user_think", id, _, _, "b");
 }
 
 public client_connect(id)
@@ -631,9 +631,26 @@ public player_drop_rune(id)
 			new rune_id = get_runeid_by_pluginid(active_rune[id]);
 			if (rune_id >= 0)
 			{
-				new is_item = rune_list_isItem[rune_id];
-				if (!is_item && is_user_connected(id))
-					client_print_color(id, print_team_red, "^4%s^3 %s ^1%s!^3",runemod_prefix, runemod_drop_rune_phrase, rune_list_name[rune_id]);
+				if (is_user_connected(id))
+				{
+					new is_item = rune_list_isItem[rune_id];
+					if (!is_item)
+					{
+						client_print_color(id, print_team_red, "^4%s^3 %s ^1%s!^3",runemod_prefix, runemod_drop_rune_phrase, rune_list_name[rune_id]);
+						
+						new iPlayers[ 32 ], iNum;
+						get_players( iPlayers, iNum, "bch" );
+						for( new i = 0; i < iNum; i++ )
+						{
+							new spec_id = iPlayers[ i ];
+							new specTarget = get_entvar(spec_id, var_iuser2);
+							if (specTarget == id)
+							{
+								client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3",runemod_prefix, runemod_drop_rune_phrase, rune_list_name[rune_id]);
+							}
+						}
+					}
+				}
 				rm_drop_rune_callback(active_rune[id], id);
 			}
 		}
@@ -646,9 +663,21 @@ public player_drop_rune(id)
 public rm_drop_item_api(plug_id,id)
 {
 	new rune_id = get_runeid_by_pluginid(plug_id);
-	if (rune_id >= 0)
+	if (rune_id >= 0 && is_user_connected(id))
 	{
 		client_print_color(id, print_team_red, "^4%s^3 %s ^1%s!^3.",runemod_prefix, runemod_drop_item_phrase, rune_list_name[rune_id]);
+		
+		new iPlayers[ 32 ], iNum;
+		get_players( iPlayers, iNum, "bch" );
+		for( new i = 0; i < iNum; i++ )
+		{
+			new spec_id = iPlayers[ i ];
+			new specTarget = get_entvar(spec_id, var_iuser2);
+			if (specTarget == id)
+			{
+				client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3.",runemod_prefix, runemod_drop_item_phrase, rune_list_name[rune_id]);
+			}
+		}
 	}
 }
 
@@ -705,7 +734,7 @@ public bool:is_no_rune_point( Float:coords[3] )
 // Пpeимeщecтвo в тoм чтo кaждый paз coздaютcя нoвыe cпaвны.
 public fill_new_spawn_points( )
 {
-	if (filled_spawns >= runemod_spawncount)
+	if (filled_spawns >= MAX_REGISTER_RUNES || filled_spawns >= runemod_spawncount)
 		return;
 	new iPlayers[ 32 ], iNum;
 	new Float:fOrigin[3];
@@ -727,7 +756,7 @@ public fill_new_spawn_points( )
 				spawn_filled[filled_spawns] = 0;
 				
 				filled_spawns++;
-				if (filled_spawns >= runemod_spawncount)
+				if (filled_spawns >= MAX_REGISTER_RUNES || filled_spawns >= runemod_spawncount)
 					return;
 			}
 		}
@@ -866,6 +895,28 @@ public rune_touch(const rune_ent, const player_id)
 				{
 					client_print_color(player_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
 				}
+				
+					
+				new iPlayers[ 32 ], iNum;
+				get_players( iPlayers, iNum, "bch" );
+				for( new i = 0; i < iNum; i++ )
+				{
+					new spec_id = iPlayers[ i ];
+					new specTarget = get_entvar(spec_id, var_iuser2);
+					if (specTarget == player_id)
+					{
+						if (!is_item)
+						{
+							client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_rune_phrase, rune_list_name[rune_id]);
+							client_print_color(spec_id, print_team_red, "^4%s^3 %s", runemod_prefix, runemod_hintdrop_rune_phrase);
+						}
+						else 
+						{
+							client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
+						}
+					}
+				}
+				
 				client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
 			}
 			else 
@@ -969,8 +1020,8 @@ rm_get_next_rune( bool:First = true)
 // Фyнкция coздaющaя pyны
 public spawn_runes( )
 {
-	new i = 0;
 	new bool:reversed = random_num(0,100) > 50;
+	new random_spawn = random_num(1,filled_spawns) - 1;
 	new need_runes = runemod_perspawn;
 	
 	new iPlayers[ 32 ], iNum;
@@ -978,10 +1029,17 @@ public spawn_runes( )
 	
 	if (iNum < runemod_min_players || iNum > runemod_max_players)
 		return;
-	
+		
+	if (spawn_runes_internal(random_spawn))
+	{
+		need_runes--;
+		if (need_runes <= 0)
+			return;
+	}
+
 	if (!reversed)
 	{
-		for(i = 0; i < filled_spawns; i++)
+		for(new i = 0; i < filled_spawns; i++)
 		{
 			if (spawn_runes_internal(i))
 			{
@@ -994,7 +1052,7 @@ public spawn_runes( )
 	}
 	else 
 	{
-		for(i = filled_spawns - 1; i >= 0; i--)
+		for(new i = filled_spawns - 1; i >= 0; i--)
 		{
 			if (spawn_runes_internal(i))
 			{
@@ -1071,6 +1129,34 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 				}
 			}
 		}
+		
+		get_players( iPlayers, iNum, "bch" );
+		for( new i = 0; i < iNum; i++ )
+		{
+			new bool:highlightfound = false;
+			new id = iPlayers[ i ];
+			new specTarget = get_entvar(id, var_iuser2);
+			if (is_real_player(specTarget))
+			{
+				if (active_rune[specTarget] != 0)
+				{
+					new rune_id = get_runeid_by_pluginid(active_rune[specTarget]);
+					if (rune_id >= 0)
+					{
+						RM_UPDATE_HUD(id,rune_id);
+						if (!highlightfound && runemod_screen_highlight > 0)
+						{
+							highlightfound = true;
+							rm_highlight_screen(active_rune[specTarget],id,RUNEMODE_DEFAULT_HIGHLIGHT_POWER);
+						}
+					}
+				}
+			}
+			if (!highlightfound && runemod_screen_highlight > 0)
+			{
+				rm_reset_highlight(id);
+			}
+		}
 	}
 }
 
@@ -1080,29 +1166,46 @@ public user_think(id)
 	{
 		if (is_user_alive(id))
 		{
-            new iOriginStart[3];
-            new iOriginEnd[3];
-            get_user_origin( id, iOriginStart, Origin_Eyes );
-            get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
-            new Float:fOriginStart[ 3 ];
-            IVecFVec( iOriginStart, fOriginStart );
-            new Float:fOriginEnd[ 3 ];
-            IVecFVec( iOriginEnd, fOriginEnd );
-    
-            
-            for(new i = 0; i < filled_spawns;i++)
-            {
-                new iEnt = spawn_filled[i];
-                if (iEnt > 0 && !is_nullent(iEnt))
-                {
-                    engfunc(EngFunc_TraceModel,fOriginStart,fOriginEnd,HULL_POINT,iEnt,g_pCommonTr);
-                    if (get_tr2(g_pCommonTr, TR_pHit) == iEnt)
-                    {
-                        RM_UPDATE_HUD_RUNE(id,iEnt);
-                        break;
-                    }
-                }
-            }
+			new iOriginStart[3];
+			get_user_origin( id, iOriginStart, Origin_Eyes );
+
+			new Float:fOriginStart[ 3 ];
+			IVecFVec( iOriginStart, fOriginStart );
+
+			new iOriginEnd[3];
+			get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
+
+			new Float:fOriginEnd[ 3 ];
+			IVecFVec( iOriginEnd, fOriginEnd );
+
+			new fMaxDistance = floatround(get_distance_f(fOriginStart,fOriginEnd));
+
+
+			for(new i = 0; i < filled_spawns;i++)
+			{
+				new iEnt = spawn_filled[i];
+				if (iEnt > 0 && !is_nullent(iEnt))
+				{
+					new Float:fOriginEnt[3];
+					get_entvar(iEnt,var_origin,fOriginEnt);
+					
+					new fCurDistance = floatround(get_distance_f(fOriginStart,fOriginEnt));
+					if (fCurDistance < fMaxDistance)
+					{
+						new Float:fVelocityValue[ 3 ];
+						velocity_by_aim( id, fCurDistance, fVelocityValue );
+						
+						new Float:fTargetEyesOrigin[ 3 ];
+						xs_vec_add( fOriginStart, fVelocityValue, fTargetEyesOrigin );
+						
+						if (get_distance_f(fTargetEyesOrigin,fOriginEnt) < 25.0)
+						{
+							RM_UPDATE_HUD_RUNE(id,iEnt);
+							break;
+						}
+					}
+				}
+			}
         }
     }
 }
