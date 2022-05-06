@@ -2,9 +2,6 @@
 #include <amxmisc>
 #include <rm_api>
 
-// Шанс оглушения
-new const mjolnir_PERCENT = 30;
-
 new bool:g_bHasmjolnir[MAX_PLAYERS + 1] = {false,...};
 new bool:g_bHasstun[MAX_PLAYERS + 1] = {false,...};
 new Float:g_vStunVelocity[MAX_PLAYERS + 1][3];
@@ -16,7 +13,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.0","Karaulov");
+	register_plugin("RM_MJOLNIR","1.1","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
 	rm_register_rune("rm_mjolnir_item_name","rm_mjolnir_item_desc",Float:{0.0,100.0,0.0}, "models/rm_reloaded/w_mjolnir.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
@@ -53,15 +50,22 @@ public rm_give_rune(id)
 	if (task_exists(id))
 		remove_task(id);
 	g_bHasmjolnir[id] = true;
-	set_task(1.5,"update_stun_state",id, _, _, "b");
+	set_task(0.5,"update_stun_state",id, _, _, "b");
 	return RUNE_PICKUP_SUCCESS;
 }
 
 public update_stun_state(id)
 {
-	set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 1.55, 0.0, 0.0);
-	show_dhudmessage(id, "HAMMER: [ %d%% ]", mjolnir_PERCENT);
-	
+	if (get_gametime() - g_fStun_time[id] > 3.0)
+	{
+		set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
+		show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
+	}
+	else 
+	{
+		set_dhudmessage(255, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
+		show_dhudmessage(id, "HAMMER: [  WAIT ]");
+	}
 		
 	new iPlayers[ 32 ], iNum;
 	get_players( iPlayers, iNum, "bch" );
@@ -71,8 +75,16 @@ public update_stun_state(id)
 		new specTarget = get_entvar(spec_id, var_iuser2);
 		if (specTarget == id)
 		{
-			set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 1.55, 0.0, 0.0);
-			show_dhudmessage(specTarget, "HAMMER: [ %d%% ]", mjolnir_PERCENT);
+			if (get_gametime() - g_fStun_time[id] > 3.0)
+			{
+				set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
+				show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
+			}
+			else 
+			{
+				set_dhudmessage(255, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
+				show_dhudmessage(id, "HAMMER: [  WAIT ]");
+			}
 		}
 	}
 }
@@ -81,15 +93,14 @@ public CSGameRules_FPlayerCanTakeDmg_post(const pPlayer, const pAttacker)
 {
 	if (is_real_player(pAttacker) && g_bHasmjolnir[pAttacker] && GetHookChainReturn(ATYPE_INTEGER) > 0)
 	{
-		new rnd = random_num(0,100);
-		if (rnd < mjolnir_PERCENT && get_gametime() - g_fStun_time[pAttacker] > 0.15)
+		if (get_gametime() - g_fStun_time[pAttacker] > 3.0)
 		{
 			if (is_real_player(pPlayer) && is_user_connected(pAttacker))
 			{
 				g_bHasstun[pPlayer] = true;
-				velocity_by_aim(pAttacker,1000,g_vStunVelocity[pPlayer]);
+				velocity_by_aim(pAttacker, random_num(500,1000),g_vStunVelocity[pPlayer]);
+				g_fStun_time[pAttacker] = get_gametime();
 			}
-			g_fStun_time[pAttacker] = get_gametime();
 		}
 	}
 	return HC_CONTINUE;

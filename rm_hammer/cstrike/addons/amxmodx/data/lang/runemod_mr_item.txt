@@ -1,6 +1,6 @@
 [ru]
 rm_mjolnir_item_name = Молот
-rm_mjolnir_item_desc = 30% шанс оглушить игрока
+rm_mjolnir_item_desc = Дает способность оглушать врага
 [en]
-rm_mjolnir_item_name = Hammer
-rm_mjolnir_item_desc = 30% stun
+rm_mjolnir_item_name = Mjolnir
+rm_mjolnir_item_desc = Stun with 3 second cooldown
