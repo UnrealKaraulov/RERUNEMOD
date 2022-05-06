@@ -11,6 +11,8 @@ new filled_spawns = 0;
 new spawn_filled[MAX_REGISTER_RUNES] = {0,...};
 // Koopдинaты cпaвнoв
 new Float:spawn_list[MAX_REGISTER_RUNES][3];
+// Координаты рун для user_think
+new spawn_iEnt_Origin[MAX_REGISTER_RUNES][3];
 
 // Koличecтвo pyн
 new runes_registered = 0;
@@ -217,14 +219,16 @@ public plugin_init()
 		{
 			g_bCurrentMapIgnored = true;
 			log_amx("[runemod_ignore_prefix_list]: Disable RuneMod Reloaded for current map. Match prefix %s for map %s.", sMapPrefix, sMapName);
-			break;
+			return;
 		}
 	}
+	
+	log_amx("RuneMod Reloaded!");
 }
 
 public RH_ConPrintf_Pre(const szBuffer[])
 {
-	return HC_SUPERCEDE;
+	return HC_BREAK;
 }
 
 public rm_config_execute()
@@ -850,12 +854,17 @@ public spawn_one_rune(rune_id, spawn_id)
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
 		fOrigin[2] += 50.0;
 	
+	
 	set_entvar(iEnt, var_sequence, ACT_IDLE);
 	set_entvar(iEnt, var_framerate, 1.0);
 	
 	SetTouch(iEnt,"rune_touch");
 	
 	entity_set_origin(iEnt, fOrigin);
+	
+	spawn_iEnt_Origin[spawn_id][0] = floatround(fOrigin[0]);
+	spawn_iEnt_Origin[spawn_id][1] = floatround(fOrigin[1]);
+	spawn_iEnt_Origin[spawn_id][2] = floatround(fOrigin[2]) + 10;
 }
 
 // Coбытиe пpoиcxoдит пpи cтoлкнoвeнии игpoкa c pyнoй, ecли pyны нeт, дaeм игpoкy нoвyю, ocвoбoждaeм cпaвн и yдaляeм мoдeль pyны
@@ -1098,6 +1107,8 @@ public RM_SPAWN_RUNE( id )
 // Фyнкция oбнoвляющaя HUD нa экpaнe игpoкa c инфopмaциeй o pyнe.
 public RM_UPDATE_HUD_RUNE( id, rune_ent )
 {
+	if (is_nullent(rune_ent))
+		return;
 	new rune_id = floatround(get_entvar(rune_ent, var_fuser4));
 	set_hudmessage(0, 50, 255, -1.0, 0.16, 0, 0.1, 0.5, 0.02, 0.02, HUD_CHANNEL_ID);
 	ShowSyncHudMsg(id, HUD_SYNS_1, "%s %s^n%s %s^n",runemod_hud_rune_name_phrase, rune_list_name[rune_id], runemod_hud_rune_description_phrase, rune_list_descr[rune_id]);
@@ -1162,43 +1173,48 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 
 public user_think(id)
 {
+	static iOriginStart[3];
+	static iOriginEnd[3];
+	
+	static Float:fEntOriginStart[3];
+	
+	static iEntOriginEnd[3];
+	
+	static iMaxDistance;
+	static iCurDistance;
+	
+	static iEnt;
+	
+	static i;
+	
 	if (runemod_active && !g_bCurrentMapIgnored && runemod_random_mode == 0)
 	{
 		if (is_user_alive(id))
 		{
-			new iOriginStart[3];
 			get_user_origin( id, iOriginStart, Origin_Eyes );
-
-			new Float:fOriginStart[ 3 ];
-			IVecFVec( iOriginStart, fOriginStart );
-
-			new iOriginEnd[3];
 			get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
-
-			new Float:fOriginEnd[ 3 ];
-			IVecFVec( iOriginEnd, fOriginEnd );
-
-			new fMaxDistance = floatround(get_distance_f(fOriginStart,fOriginEnd));
-
-
-			for(new i = 0; i < filled_spawns;i++)
+			
+			iMaxDistance = get_distance(iOriginStart,iOriginEnd);
+			
+			if (iMaxDistance > 0.1)
 			{
-				new iEnt = spawn_filled[i];
-				if (iEnt > 0 && !is_nullent(iEnt))
+				fEntOriginStart[0] = (float(iOriginEnd[0] - iOriginStart[0]) / iMaxDistance);
+				fEntOriginStart[1] = (float(iOriginEnd[1] - iOriginStart[1]) / iMaxDistance);
+				fEntOriginStart[2] = (float(iOriginEnd[2] - iOriginStart[2]) / iMaxDistance);
+
+				for(i = 0; i < filled_spawns;i++)
 				{
-					new Float:fOriginEnt[3];
-					get_entvar(iEnt,var_origin,fOriginEnt);
-					
-					new fCurDistance = floatround(get_distance_f(fOriginStart,fOriginEnt));
-					if (fCurDistance < fMaxDistance)
+					iEnt = spawn_filled[i];
+					if (iEnt <= 0)
+						continue;
+					iCurDistance = get_distance(iOriginStart,spawn_iEnt_Origin[i]);
+					if (iCurDistance < iMaxDistance)
 					{
-						new Float:fVelocityValue[ 3 ];
-						velocity_by_aim( id, fCurDistance, fVelocityValue );
+						iEntOriginEnd[0] = floatround(fEntOriginStart[0] * iCurDistance + iOriginStart[0]);
+						iEntOriginEnd[1] = floatround(fEntOriginStart[1] * iCurDistance + iOriginStart[1]);
+						iEntOriginEnd[2] = floatround(fEntOriginStart[2] * iCurDistance + iOriginStart[2]);
 						
-						new Float:fTargetEyesOrigin[ 3 ];
-						xs_vec_add( fOriginStart, fVelocityValue, fTargetEyesOrigin );
-						
-						if (get_distance_f(fTargetEyesOrigin,fOriginEnt) < 25.0)
+						if (get_distance(iEntOriginEnd,spawn_iEnt_Origin[i]) < 25)
 						{
 							RM_UPDATE_HUD_RUNE(id,iEnt);
 							break;

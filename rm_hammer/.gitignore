@@ -167,12 +167,3 @@ include/ultimate_stats.inc
 include/unixtime.inc
 RERUNEMOD.zip
 include/dhudmessage.inc
-rm_multijump/update_and_compile.bat
-rm_multijump/include/rm_api.inc
-rm_multijump/include/screenfade_util.inc
-rm_multijump/include/portal_gun/vec_utils.inc
-rm_multijump/include/portal_gun/types/portalBox.inc
-rm_multijump/include/portal_gun/portal.inc
-rm_multijump/rm_multijump.zip
-rm_hammer/update_and_compile.bat
-include/easy_profiler.inc

@@ -14,7 +14,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.3","Karaulov"); 
+	register_plugin("RM_PROTECT","2.4","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg", .post = false)
 }
@@ -47,19 +47,7 @@ public rm_drop_rune(id)
 
 public update_protect_state(id)
 {
-	// Поддержка ботов, при смерти забрать руну.
-	if (is_user_bot(id))
-	{
-		if (!is_user_alive(id))
-		{
-			g_protection[id] = 0;	
-			if (task_exists(id))
-				remove_task(id);
-			rm_base_drop_rune( id );
-			return;
-		}
-	}
-	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
+	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
 	show_dhudmessage(id, "CHARGE: [ %d / 10 ]", g_protection[id]);
 	
 	new iPlayers[ 32 ], iNum;
@@ -70,7 +58,7 @@ public update_protect_state(id)
 		new specTarget = get_entvar(spec_id, var_iuser2);
 		if (specTarget == id)
 		{
-			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 1.3, 0.0);
+			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
 			show_dhudmessage(spec_id, "CHARGE: [ %d / 10 ]", g_protection[id]);
 		}
 	}
@@ -79,7 +67,7 @@ public update_protect_state(id)
 
 public CSGameRules_FPlayerCanTakeDmg(const pPlayer, const pAttacker)
 {
-	if (g_protection[pPlayer] > 0)
+	if (is_real_player(pPlayer) && g_protection[pPlayer] > 0)
 	{
 		if (get_gametime() - g_fProtection_time[pPlayer] > 0.1)
 		{
@@ -89,7 +77,7 @@ public CSGameRules_FPlayerCanTakeDmg(const pPlayer, const pAttacker)
 			g_fProtection_time[pPlayer] = get_gametime();
 		}
 		SetHookChainReturn(ATYPE_INTEGER, false);
-		return HC_SUPERCEDE;
+		return HC_BREAK;
 	}
 	return HC_CONTINUE;
 }

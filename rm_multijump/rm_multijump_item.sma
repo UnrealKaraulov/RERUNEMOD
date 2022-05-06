@@ -11,7 +11,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_VODKA","1.1","Karaulov");
+	register_plugin("RM_JUMP","1.3","Karaulov");
 	rm_register_dictionary("runemod_mj_item.txt");
 	rm_register_rune("rm_multijump_item_name","rm_multijump_item_desc",Float:{0.0,255.0,0.0}, "models/rm_reloaded/w_multijump.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
@@ -51,18 +51,7 @@ public rm_give_rune(id)
 
 public update_jump_state(id)
 {
-	// Поддержка ботов, при смерти забрать предмет.
-	if (is_user_bot(id))
-	{
-		if (!is_user_alive(id))
-		{
-			g_bHasMultiJump[id] = 0;	
-			if (task_exists(id))
-				remove_task(id);
-			return;
-		}
-	}
-	set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.0, 0.7, 0.0);
+	set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
 	show_dhudmessage(id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
 	
 		
@@ -74,7 +63,7 @@ public update_jump_state(id)
 		new specTarget = get_entvar(spec_id, var_iuser2);
 		if (specTarget == id)
 		{
-			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 0.0, 0.7, 0.0);
+			set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
 			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
 		}
 	}
@@ -124,7 +113,7 @@ public HC_CBasePlayer_Jump_Pre(id)
 				remove_task(id);
 			rm_base_drop_item_notice(id);
 		}
-		return HC_SUPERCEDE;
+		return HC_BREAK;
 	}
 	return HC_CONTINUE;
 }
