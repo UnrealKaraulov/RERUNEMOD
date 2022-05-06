@@ -13,7 +13,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.1","Karaulov");
+	register_plugin("RM_MJOLNIR","1.2","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
 	rm_register_rune("rm_mjolnir_item_name","rm_mjolnir_item_desc",Float:{0.0,100.0,0.0}, "models/rm_reloaded/w_mjolnir.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
@@ -98,7 +98,7 @@ public CSGameRules_FPlayerCanTakeDmg_post(const pPlayer, const pAttacker)
 			if (is_real_player(pPlayer) && is_user_connected(pAttacker))
 			{
 				g_bHasstun[pPlayer] = true;
-				velocity_by_aim(pAttacker, random_num(500,1000),g_vStunVelocity[pPlayer]);
+				velocity_by_aim(pAttacker, random_num(800,1200),g_vStunVelocity[pPlayer]);
 				g_fStun_time[pAttacker] = get_gametime();
 			}
 		}
@@ -116,7 +116,7 @@ public PM_Move(const id)
 		fPunchAngles[1] = random_float(-180.0,180.0);
 		fPunchAngles[2] = random_float(-180.0,180.0);
 		set_pmove(pm_punchangle,fPunchAngles);
-		g_vStunVelocity[id][2] = random_float(100.0,250.0);
+		g_vStunVelocity[id][2] = random_float(250.0,750.0);
 		set_pmove(pm_velocity,g_vStunVelocity[id]);
 		set_entvar(id,var_velocity,g_vStunVelocity[id])
 	}
