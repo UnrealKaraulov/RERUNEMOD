@@ -12,7 +12,7 @@ new rune_descr[] = "rm_protect_rune_desc";
 
 new rune_model_id = -1;
 
-new const MAX_PROTECTION_CHARGE = 5;
+new const MAX_PROTECTION_CHARGE = 7;
 
 public plugin_init()
 {
@@ -71,7 +71,7 @@ public CSGameRules_FPlayerCanTakeDmg(const pPlayer, const pAttacker)
 {
 	if (is_real_player(pPlayer) && g_protection[pPlayer] > 0)
 	{
-		if (get_gametime() - g_fProtection_time[pPlayer] > 0.5)
+		if (get_gametime() - g_fProtection_time[pPlayer] > 0.3)
 		{
 			g_protection[pPlayer]--;
 			if (g_protection[pPlayer] <= 0)
