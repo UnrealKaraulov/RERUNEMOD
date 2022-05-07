@@ -38,6 +38,13 @@ public client_disconnected(id)
 		remove_task(id);
 }
 
+public rm_drop_rune(id)
+{
+	g_bHasMultiJump[id] = 0;
+	if (task_exists(id))
+		remove_task(id);
+}
+
 public rm_give_rune(id)
 {
 	if (g_bHasMultiJump[id] > 0)

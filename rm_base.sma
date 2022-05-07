@@ -100,6 +100,9 @@ new runemod_only_gamecms;
 // Режим неизвестных рун
 new runemod_random_mode;
 
+// Забрать руны после окончания раунда
+new runemod_newround_remove;
+
 // Текст 
 
 new runemod_prefix[64];
@@ -305,6 +308,10 @@ public rm_config_execute()
 					.description = "Random mode"
 	),	runemod_random_mode);
 	
+	bind_pcvar_num(create_cvar("runemod_newround_remove", "1",
+					.description = "Drop all runes and items at round end"
+	),	runemod_newround_remove);
+	
 	bind_pcvar_string(create_cvar("runemod_default_model_path", "models/rm_reloaded/rune_black.mdl",
 					.description = "Default model for RuneMod"
 	),	runemod_default_model_path, charsmax(runemod_default_model_path));
@@ -348,6 +355,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	g_bRegGameCMS[id] = false;
 	lock_rune_pickup[id] = 0;
 	player_drop_rune(id);
+	player_drop_all_items(id);
 }
 
 // Зарегистрировать словарь в RUNEMOD
@@ -427,10 +435,14 @@ public cmd_drop(id)
 // 3aбpaть pyны в конце payндa
 public DropAllRunes( )
 {
-	g_iRoundLeft++;
-	for(new i = 1; i < MAX_PLAYERS + 1;i++)
+	if (runemod_newround_remove > 0)
 	{
-		player_drop_rune(i);
+		g_iRoundLeft++;
+		for(new id = 1; id < MAX_PLAYERS + 1;id++)
+		{
+			player_drop_rune(id);
+			player_drop_all_items(id);
+		}
 	}
 }
 
@@ -584,16 +596,21 @@ public client_death(killer, victim, wpnindex, hitplace, TK)
 	{
 		lock_rune_pickup[victim] = 0;
 		player_drop_rune(victim);
+		player_drop_all_items(victim);
 	}
 }
 
 // 3aбpaть pyнy пpи пoявлeнии игpoкa
 public client_respawned(const id)
 {
-	if (is_real_player(id))
+	if (runemod_newround_remove > 0)
 	{
-		lock_rune_pickup[id] = 0;
-		player_drop_rune(id);
+		if (is_real_player(id))
+		{
+			lock_rune_pickup[id] = 0;
+			player_drop_rune(id);
+			player_drop_all_items(id);
+		}
 	}
 }
 
@@ -622,6 +639,16 @@ public rm_highlight_screen(plug_id, id, hpower)
 		{	
 			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT | FFADE_MODULATE, true,true);
 		}
+	}
+}
+
+// Функция сбрасывает действия всех предметов
+public player_drop_all_items(id)
+{
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (rune_list_isItem[i])
+			rm_drop_rune_callback(rune_list_id[i] , id);
 	}
 }
 
@@ -718,7 +745,7 @@ public rm_reset_highlight(id)
 // Фyнкция вызывaeтcя в плaгинax pyн, пoзвoляeт пpинyдитeльнo зacтaвить бaзoвый плaгин oтключить pyнy игpoкy.
 public rm_drop_rune_api(plug_id, id)
 {
-	if (active_rune[id] == plug_id && is_real_player(id))
+	if ( is_real_player(id) && active_rune[id] == plug_id)
 		player_drop_rune(id); 
 }
 
@@ -1171,6 +1198,8 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 	}
 }
 
+// Функций отвечающая за описание предмета на экране
+// TODO: Можно улучшить (но тогда увеличиться нагрузка слегка)
 public user_think(id)
 {
 	static iOriginStart[3];
@@ -1196,7 +1225,7 @@ public user_think(id)
 			
 			iMaxDistance = get_distance(iOriginStart,iOriginEnd);
 			
-			if (iMaxDistance > 0.1)
+			if (iMaxDistance > 0)
 			{
 				fEntOriginStart[0] = (float(iOriginEnd[0] - iOriginStart[0]) / iMaxDistance);
 				fEntOriginStart[1] = (float(iOriginEnd[1] - iOriginStart[1]) / iMaxDistance);

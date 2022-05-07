@@ -49,6 +49,13 @@ public rm_give_rune(id)
 	return RUNE_PICKUP_SUCCESS;
 }
 
+public rm_drop_rune(id)
+{
+	if (task_exists(id))
+		remove_task(id);
+	g_bSilentStep[id] = false;
+}
+
 public reset_silent(id)
 {
 	g_bSilentStep[id] = false;

@@ -4,9 +4,11 @@
 
 new bool:g_bHasmjolnir[MAX_PLAYERS + 1] = {false,...};
 new bool:g_bHasstun[MAX_PLAYERS + 1] = {false,...};
+
 new Float:g_vStunVelocity[MAX_PLAYERS + 1][3];
 new Float:g_fStun_time[MAX_PLAYERS + 1] = {0.0,...};
 
+new Float:g_fStun_starttime[MAX_PLAYERS + 1] = {0.0,...};
 
 
 new rune_model_id = -1;
@@ -52,6 +54,13 @@ public rm_give_rune(id)
 	g_bHasmjolnir[id] = true;
 	set_task(0.5,"update_stun_state",id, _, _, "b");
 	return RUNE_PICKUP_SUCCESS;
+}
+
+public rm_drop_rune(id)
+{
+	g_bHasmjolnir[id] = false;
+	if (task_exists(id))
+		remove_task(id);
 }
 
 public update_stun_state(id)

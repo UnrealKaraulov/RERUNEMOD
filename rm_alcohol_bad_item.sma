@@ -15,7 +15,6 @@ public plugin_init()
 	rm_base_use_rune_as_item( );
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post =false);
-	RegisterHookChain(RG_RoundEnd, "DropAlcohol", .post =false);
 }
 
 public PM_Move(const id)
@@ -99,12 +98,12 @@ public rm_give_rune(id)
 	return RUNE_PICKUP_SUCCESS;
 }
 
-public DropAlcohol()
+public rm_drop_rune(id)
 {
-	for(new i = 1 ; i < 33 ; i++)
-	{
-		reset_vodka(i);
-	}
+	g_bHasAlcohol[id] = false;
+	reset_vodka(id);
+	if (task_exists(id))
+		remove_task(id);
 }
 
 public reset_vodka(id)
