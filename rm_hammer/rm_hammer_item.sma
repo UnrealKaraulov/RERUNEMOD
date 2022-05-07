@@ -15,7 +15,7 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.2","Karaulov");
+	register_plugin("RM_MJOLNIR","1.3","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
 	rm_register_rune("rm_mjolnir_item_name","rm_mjolnir_item_desc",Float:{0.0,100.0,0.0}, "models/rm_reloaded/w_mjolnir.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );

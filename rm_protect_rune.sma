@@ -12,9 +12,11 @@ new rune_descr[] = "rm_protect_rune_desc";
 
 new rune_model_id = -1;
 
+new const MAX_PROTECTION_CHARGE = 5;
+
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.4","Karaulov"); 
+	register_plugin("RM_PROTECT","2.5","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg", .post = false)
 }
@@ -30,7 +32,7 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	g_protection[id] = 10;
+	g_protection[id] = MAX_PROTECTION_CHARGE;
 	rm_base_highlight_player(id);
 	rm_base_highlight_screen(id);
 	if (task_exists(id))
@@ -48,7 +50,7 @@ public rm_drop_rune(id)
 public update_protect_state(id)
 {
 	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
-	show_dhudmessage(id, "CHARGE: [ %d / 10 ]", g_protection[id]);
+	show_dhudmessage(id, "CHARGE: [ %d / %d ]", g_protection[id],MAX_PROTECTION_CHARGE);
 	
 	new iPlayers[ 32 ], iNum;
 	get_players( iPlayers, iNum, "bch" );
@@ -59,7 +61,7 @@ public update_protect_state(id)
 		if (specTarget == id)
 		{
 			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
-			show_dhudmessage(spec_id, "CHARGE: [ %d / 10 ]", g_protection[id]);
+			show_dhudmessage(spec_id, "CHARGE: [ %d / %d ]", g_protection[id],MAX_PROTECTION_CHARGE);
 		}
 	}
 }
@@ -69,7 +71,7 @@ public CSGameRules_FPlayerCanTakeDmg(const pPlayer, const pAttacker)
 {
 	if (is_real_player(pPlayer) && g_protection[pPlayer] > 0)
 	{
-		if (get_gametime() - g_fProtection_time[pPlayer] > 0.1)
+		if (get_gametime() - g_fProtection_time[pPlayer] > 0.5)
 		{
 			g_protection[pPlayer]--;
 			if (g_protection[pPlayer] <= 0)
