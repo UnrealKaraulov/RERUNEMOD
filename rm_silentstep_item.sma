@@ -11,9 +11,11 @@ new bool:g_bSilentStep[MAX_PLAYERS + 1] = {false,...};
 
 public plugin_init()
 {
-	register_plugin("RM_SILENT","2.1","Karaulov"); 
+	register_plugin("RM_SILENT","2.2","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_botinok_2.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
+	
+	rm_base_set_rune_cost(1000);
 }
 
 public plugin_precache()

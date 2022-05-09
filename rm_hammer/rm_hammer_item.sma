@@ -8,14 +8,11 @@ new bool:g_bHasstun[MAX_PLAYERS + 1] = {false,...};
 new Float:g_vStunVelocity[MAX_PLAYERS + 1][3];
 new Float:g_fStun_time[MAX_PLAYERS + 1] = {0.0,...};
 
-new Float:g_fStun_starttime[MAX_PLAYERS + 1] = {0.0,...};
-
-
 new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.3","Karaulov");
+	register_plugin("RM_MJOLNIR","1.4","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
 	rm_register_rune("rm_mjolnir_item_name","rm_mjolnir_item_desc",Float:{0.0,100.0,0.0}, "models/rm_reloaded/w_mjolnir.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
@@ -24,6 +21,8 @@ public plugin_init()
 	
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post =false);
+	
+	rm_base_set_rune_cost(5000);
 }
 
 public plugin_precache()

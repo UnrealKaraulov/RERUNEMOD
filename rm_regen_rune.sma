@@ -10,9 +10,11 @@ new max_hp_available_cvar;
 
 public plugin_init()
 {
-	register_plugin("RM_REGEN","2.4","Karaulov"); 
+	register_plugin("RM_REGEN","2.5","Karaulov"); 
 	rm_register_rune("rm_regen_rune_name","rm_regen_rune_desc",Float:{255.0,80.0,140.0}, "models/rm_reloaded/rune_pink.mdl", "rm_reloaded/regen.wav",rune_model_id);
 	max_hp_available_cvar = get_cvar_pointer("runemod_max_hp");
+	
+	rm_base_set_rune_cost(6300);
 }
 
 public plugin_precache()

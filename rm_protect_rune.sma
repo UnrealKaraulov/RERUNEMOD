@@ -16,9 +16,11 @@ new const MAX_PROTECTION_CHARGE = 7;
 
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.5","Karaulov"); 
+	register_plugin("RM_PROTECT","2.6","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, "models/rm_reloaded/rune_red.mdl", "rm_reloaded/protect.wav",rune_model_id);
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg", .post = false)
+	
+	rm_base_set_rune_cost(6000);
 }
 
 public plugin_precache()

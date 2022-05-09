@@ -18,10 +18,12 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.3","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.4","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, "models/rm_reloaded/rune_green.mdl", "rm_reloaded/teleport.wav",rune_model_id);
 	g_pCommonTr = create_tr2();
 	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
+	
+	rm_base_set_rune_cost(7500);
 }
 
 public plugin_end()

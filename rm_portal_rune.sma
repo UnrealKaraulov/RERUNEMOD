@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.5 NOREAPI"
+#define VERSION "2.6 NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -86,6 +86,8 @@ public plugin_precache() {
 	{
 		precache_generic("sound/rm_reloaded/portal_gun.wav");
 	}
+	
+	rm_base_set_rune_cost(5000);
 }
 
 public plugin_init() {

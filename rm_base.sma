@@ -29,6 +29,7 @@ new rune_list_sound[MAX_REGISTER_RUNES][256];
 new Float:rune_list_model_color[MAX_REGISTER_RUNES][3];
 new rune_list_maxcount[MAX_REGISTER_RUNES] = {0,...};
 new rune_list_count[MAX_REGISTER_RUNES];
+new rune_list_icost[MAX_REGISTER_RUNES] = {0,...};
 
 // Cтaндapтнaя мoдeль pyны. Иcпoльзyeтcя ecли зaгpyжeнa. Пo yмoлчaнию "models/rm_reloaded/rune_black.mdl"
 new rune_default_model[64];
@@ -103,6 +104,9 @@ new runemod_random_mode;
 // Забрать руны после окончания раунда
 new runemod_newround_remove;
 
+// Активировать магазин рун
+new runemod_rune_shop;
+
 // Текст 
 
 new runemod_prefix[64];
@@ -118,8 +122,11 @@ new runemod_hud_rune_description_phrase[190];
 
 new runemod_print_need_register_phrase[128];
 
-
-
+new runemod_print_shopmenu_phrase[190];
+new runemod_menu_shopmenu_phrase[128];
+new runemod_print_need_money[190];
+new runemod_print_need_drop_rune[190];
+new runemod_print_noneed_this_item[190];
 // Остальные глобальные переменные
 new g_pCommonTr;
 new rune_last_created = 0;
@@ -129,6 +136,7 @@ new g_iRoundLeft = 0;
 new bool:g_bCurrentMapIgnored = false;
 new g_sConfigDirPath[PLATFORM_MAX_PATH];
 new bool:g_bRegGameCMS[MAX_PLAYERS + 1] = {false,...};
+new mp_maxmoney;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
@@ -206,6 +214,33 @@ public plugin_init()
 	{
 		copy(runemod_print_need_register_phrase,charsmax(runemod_print_need_register_phrase),"Требуется регистрация!");
 	}
+	
+	if (!LookupLangKey(runemod_menu_shopmenu_phrase,charsmax(runemod_menu_shopmenu_phrase),"runemod_menu_shopmenu_phrase",g_hServerLanguage) || runemod_menu_shopmenu_phrase[0] == EOS)
+	{
+		copy(runemod_menu_shopmenu_phrase,charsmax(runemod_menu_shopmenu_phrase),"\w[\rМагазин RuneMod\w]");
+	}
+	
+	if (!LookupLangKey(runemod_print_shopmenu_phrase,charsmax(runemod_print_shopmenu_phrase),"runemod_print_shopmenu_phrase",g_hServerLanguage) || runemod_print_shopmenu_phrase[0] == EOS)
+	{
+		copy(runemod_print_shopmenu_phrase,charsmax(runemod_print_shopmenu_phrase),"^1Для доступа к магазину введите команду ^3runeshop^1!");
+	}
+	
+	if (!LookupLangKey(runemod_print_need_money,charsmax(runemod_print_need_money),"runemod_print_need_money",g_hServerLanguage) || runemod_print_need_money[0] == EOS)
+	{
+		copy(runemod_print_need_money,charsmax(runemod_print_need_money),"Нужно больше золота!");
+	}
+	
+	if (!LookupLangKey(runemod_print_need_drop_rune,charsmax(runemod_print_need_drop_rune),"runemod_print_need_drop_rune",g_hServerLanguage) || runemod_print_need_drop_rune[0] == EOS)
+	{
+		copy(runemod_print_need_drop_rune,charsmax(runemod_print_need_drop_rune),"Вы должны снять руну перед новой!");
+	}
+	
+	if (!LookupLangKey(runemod_print_noneed_this_item,charsmax(runemod_print_noneed_this_item),"runemod_print_noneed_this_item",g_hServerLanguage) || runemod_print_noneed_this_item[0] == EOS)
+	{
+		copy(runemod_print_noneed_this_item,charsmax(runemod_print_noneed_this_item),"Нельзя сотворить здесь.");
+	}
+	
+	mp_maxmoney = get_cvar_pointer("mp_maxmoney");
 	
 	// Часть кода отвечающая за отключения мода при совпадении префикса или названия карты
 	new sMapName[32];
@@ -312,6 +347,10 @@ public rm_config_execute()
 					.description = "Drop all runes and items at round end"
 	),	runemod_newround_remove);
 	
+	bind_pcvar_num(create_cvar("runemod_rune_shop", "0",
+					.description = "Enable runeshop"
+	),	runemod_rune_shop);
+	
 	bind_pcvar_string(create_cvar("runemod_default_model_path", "models/rm_reloaded/rune_black.mdl",
 					.description = "Default model for RuneMod"
 	),	runemod_default_model_path, charsmax(runemod_default_model_path));
@@ -321,6 +360,13 @@ public rm_config_execute()
 					.description = "Default sound for RuneMod"
 	),	runemod_default_pickup_path, charsmax(runemod_default_pickup_path));
 	
+	
+	register_clcmd("runeshop", "rm_runeshop");
+	register_clcmd("rune_shop", "rm_runeshop");
+	register_clcmd("say runeshop", "rm_runeshop");
+	register_clcmd("say /runeshop", "rm_runeshop");
+	register_clcmd("say_team runeshop", "rm_runeshop");
+	register_clcmd("say_team /runeshop", "rm_runeshop");
 	
 	create_cvar("runemod_max_hp", "150",
 					.description = "Max HP for RUNES");
@@ -603,13 +649,20 @@ public client_death(killer, victim, wpnindex, hitplace, TK)
 // 3aбpaть pyнy пpи пoявлeнии игpoкa
 public client_respawned(const id)
 {
-	if (runemod_newround_remove > 0)
+	if (is_real_player(id))
 	{
-		if (is_real_player(id))
+		if (runemod_newround_remove > 0)
 		{
-			lock_rune_pickup[id] = 0;
-			player_drop_rune(id);
-			player_drop_all_items(id);
+			if (is_real_player(id))
+			{
+				lock_rune_pickup[id] = 0;
+				player_drop_rune(id);
+				player_drop_all_items(id);
+			}
+		}
+		if (runemod_rune_shop > 0)
+		{
+			client_print_color(id, print_team_red, "^4%s^3: %s!",runemod_prefix, runemod_print_shopmenu_phrase);
 		}
 	}
 }
@@ -667,7 +720,6 @@ public player_drop_rune(id)
 					new is_item = rune_list_isItem[rune_id];
 					if (!is_item)
 					{
-						client_print_color(id, print_team_red, "^4%s^3 %s ^1%s!^3",runemod_prefix, runemod_drop_rune_phrase, rune_list_name[rune_id]);
 						
 						new iPlayers[ 32 ], iNum;
 						get_players( iPlayers, iNum, "bch" );
@@ -748,6 +800,15 @@ public rm_drop_rune_api(plug_id, id)
 	if ( is_real_player(id) && active_rune[id] == plug_id)
 		player_drop_rune(id); 
 }
+
+// Устанавливает стоимость руны
+public rm_set_rune_cost_api(plug_id, imoney)
+{
+	new rune_id = get_runeid_by_pluginid(plug_id);
+	if (rune_id >= 0 && rune_id < runes_registered)
+		rune_list_icost[rune_id] = imoney;
+}
+
 
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм c тoчкaми пoявлeния дpyгиx pyн
 public bool:is_no_rune_point( Float:coords[3] )
@@ -892,6 +953,68 @@ public spawn_one_rune(rune_id, spawn_id)
 	spawn_iEnt_Origin[spawn_id][0] = floatround(fOrigin[0]);
 	spawn_iEnt_Origin[spawn_id][1] = floatround(fOrigin[1]);
 	spawn_iEnt_Origin[spawn_id][2] = floatround(fOrigin[2]) + 10;
+}
+
+public bool:rm_give_rune_to_player( rune_id, player_id )
+{
+	new bool:is_item = rune_list_isItem[rune_id];
+	if (active_rune[player_id] == 0 || is_item)
+	{
+		if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
+		{
+			rm_print_register_api(player_id);
+			return false;
+		}
+		
+		if (!is_item)
+			active_rune[player_id] = rune_list_id[rune_id];
+			
+		if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_RUNE_PICKUP_SUCCESS)
+		{
+			if (!is_item)
+			{
+				client_print_color(player_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_rune_phrase, rune_list_name[rune_id]);
+				client_print_color(player_id, print_team_red, "^4%s^3 %s", runemod_prefix, runemod_hintdrop_rune_phrase);
+			}
+			else 
+			{
+				client_print_color(player_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
+			}
+			
+				
+			new iPlayers[ 32 ], iNum;
+			get_players( iPlayers, iNum, "bch" );
+			for( new i = 0; i < iNum; i++ )
+			{
+				new spec_id = iPlayers[ i ];
+				new specTarget = get_entvar(spec_id, var_iuser2);
+				if (specTarget == player_id)
+				{
+					if (!is_item)
+					{
+						client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_rune_phrase, rune_list_name[rune_id]);
+						client_print_color(spec_id, print_team_red, "^4%s^3 %s", runemod_prefix, runemod_hintdrop_rune_phrase);
+					}
+					else 
+					{
+						client_print_color(spec_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
+					}
+				}
+			}
+			
+			client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
+			
+			return true;
+		}
+		else 
+		{
+			if (!is_item)
+				active_rune[player_id] = 0;
+			
+			return false;
+		}
+	}
+	return false;
 }
 
 // Coбытиe пpoиcxoдит пpи cтoлкнoвeнии игpoкa c pyнoй, ecли pyны нeт, дaeм игpoкy нoвyю, ocвoбoждaeм cпaвн и yдaляeм мoдeль pyны
@@ -1253,4 +1376,116 @@ public user_think(id)
 			}
         }
     }
+}
+
+public rm_get_shoprunescount()
+{
+	new iRunes = 0;
+	new imaxmoney = get_pcvar_num(mp_maxmoney);
+	if (imaxmoney <= 0)
+		imaxmoney = 16000;
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (rune_list_icost[i] > 0)
+		{
+			iRunes++;
+		}
+		//trial hardcode. FIXME
+		if (rune_list_icost[i] > imaxmoney)
+			rune_list_icost[i] = imaxmoney;
+	}
+	
+	return iRunes;
+}
+
+public rm_shopmenu(id)
+{
+	new ishoprunes = rm_get_shoprunescount();
+	new iacc = get_member(id,m_iAccount);
+	if (ishoprunes == 0)
+	{
+		return PLUGIN_CONTINUE;
+	}
+	new tmpmenuitem[190];
+	format(tmpmenuitem, charsmax(tmpmenuitem),"%s",runemod_menu_shopmenu_phrase);
+	
+	new vmenu = menu_create(runemod_menu_shopmenu_phrase, "rm_shopmenu_handler")
+	new runeidstr[16];
+	for(new i = 0; i < runes_registered; i++)
+	{
+		if (rune_list_icost[i] > 0)
+		{
+			if (rune_list_icost[i] <= iacc )
+				formatex(tmpmenuitem, charsmax(tmpmenuitem), "\y%s\r[\w%d\r]", rune_list_name[i],rune_list_icost[i]);
+			else 
+				formatex(tmpmenuitem, charsmax(tmpmenuitem), "\y%s\r[%d]", rune_list_name[i],rune_list_icost[i]);
+				
+			num_to_str(i,runeidstr,charsmax(runeidstr));
+			menu_additem(vmenu, tmpmenuitem, runeidstr);
+		}
+	}
+	menu_display(id, vmenu, 0)
+	return PLUGIN_HANDLED;
+}
+
+public rm_shopmenu_handler(id, vmenu, item)
+{
+	if (item == MENU_EXIT || !is_user_connected(id))
+	{
+		menu_destroy(vmenu)
+		return PLUGIN_HANDLED
+	}
+
+	new data[6], iName[64], access, callback
+	menu_item_getinfo(vmenu, item, access, data, 5, iName, 63, callback)
+
+	if (equali(data, "exit"))
+	{
+		menu_destroy(vmenu)
+		return PLUGIN_HANDLED
+	}
+
+	new iaccount = get_member(id,m_iAccount);
+	new key = str_to_num(data);
+	
+	if (key >= 0 && key < runes_registered)
+	{
+		new irunecost = rune_list_icost[key];
+		if (irunecost <= iaccount)
+		{
+			new is_item = rune_list_isItem[key];
+			if (is_item || active_rune[id] == 0)
+			{
+				if (rm_give_rune_to_player(key,id))
+				{
+					rg_add_account(id,iaccount - irunecost,AS_SET);
+				}
+				else 
+				{
+					client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_noneed_this_item);
+				}
+			}
+			else 
+			{
+				client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_need_drop_rune);
+			}
+		}
+		else 
+		{
+			client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_need_money);
+		}
+	}
+
+	menu_destroy(vmenu)
+	return PLUGIN_HANDLED
+}
+
+
+public rm_runeshop(id)
+{
+	if (runemod_rune_shop <= 0)
+	{
+		return PLUGIN_CONTINUE;
+	}
+	return rm_shopmenu(id);
 }

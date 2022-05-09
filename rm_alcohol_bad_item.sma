@@ -10,11 +10,13 @@ new rune_model_id = -1;
 
 public plugin_init()
 {
-	register_plugin("RM_VODKA","2.5","Karaulov");
+	register_plugin("RM_VODKA","2.6","Karaulov");
 	rm_register_rune("rm_alcohol_bad_item_name","rm_alcohol_bad_item_desc",Float:{255.0,0.0,255.0}, "models/rm_reloaded/w_butilka_vodki.mdl", _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post =false);
+	
+	rm_base_set_rune_cost(500);
 }
 
 public PM_Move(const id)

@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.1.5"
+#define RUNEMOD_VERSION "3.2.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -466,6 +466,38 @@ stock rm_base_set_max_count(num = MAX_REGISTER_RUNES)
 	
 	return callfunc_end();
 }
+
+
+/*
+* Добавить в магазин рун
+*
+* @param imoney			Стоимость руны
+*
+* @noreturn
+*/
+stock rm_base_set_rune_cost(imoney = 16000)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_set_rune_cost_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(imoney);
+	
+	return callfunc_end();
+}
+
 
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )

@@ -8,11 +8,13 @@ new max_hp_available_cvar;
 
 public plugin_init()
 {
-	register_plugin("RM_MEDKIT","2.3","Karaulov"); 
+	register_plugin("RM_MEDKIT","2.4","Karaulov"); 
 	rm_register_rune("rm_medkit_item_name","rm_medkit_item_desc",Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_medkit.mdl",_,rune_model_id);
 	rm_base_use_rune_as_item( );
 	
 	max_hp_available_cvar = get_cvar_pointer("runemod_max_hp");
+	
+	rm_base_set_rune_cost(4000);
 }
 
 public plugin_precache()
