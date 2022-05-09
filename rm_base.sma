@@ -1462,17 +1462,17 @@ public rm_shopmenu_handler(id, vmenu, item)
 				}
 				else 
 				{
-					client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_noneed_this_item);
+					client_print_color(id, print_team_red, "^4%s^3: ^1%s^3",runemod_prefix, runemod_print_noneed_this_item);
 				}
 			}
 			else 
 			{
-				client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_need_drop_rune);
+				client_print_color(id, print_team_red, "^4%s^3: ^1%s^3",runemod_prefix, runemod_print_need_drop_rune);
 			}
 		}
 		else 
 		{
-			client_print_color(id, print_team_red, "^4%s^3: ^1%s^3!",runemod_prefix, runemod_print_need_money);
+			client_print_color(id, print_team_red, "^4%s^3: ^1%s^3",runemod_prefix, runemod_print_need_money);
 		}
 	}
 
