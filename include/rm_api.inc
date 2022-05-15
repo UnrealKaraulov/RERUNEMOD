@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.2.0"
+#define RUNEMOD_VERSION "3.2.1"
 
 
 #define HUD_CHANNEL_ID 3
@@ -32,9 +32,6 @@
 	#include <screenfade_util>
 #endif
 
-// Магическое число для быстрого детекта руны
-#define RUNEMODE_MAGIC_NUMBER 14343390
-
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
 
@@ -48,7 +45,6 @@
 #define NO_RUNE_PICKUP_SUCCESS 2
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
-
 
 
 /*
@@ -353,8 +349,7 @@ stock rm_base_lock_pickup(id, iBlock)
 	}
 	callfunc_push_int(id);
 	callfunc_push_int(iBlock);
-	new retval = callfunc_end();
-	return retval;
+	return callfunc_end();
 }
 
 /*
@@ -381,7 +376,7 @@ stock bool:rm_base_player_has_rune(id)
 		return false;
 	}
 	callfunc_push_int(id);
-	return callfunc_end() == RUNEMODE_MAGIC_NUMBER;
+	return callfunc_end() > 0;
 }
 
 /*
@@ -498,6 +493,91 @@ stock rm_base_set_rune_cost(imoney = 16000)
 	return callfunc_end();
 }
 
+/*
+* Дать руну игроку из внешнего плагина
+*
+* @param id				индекс игрока
+* @param rune_id		номер руны
+*
+* * @return true/false (успешно или руну нельзя выдать)
+*/
+stock bool:rm_give_rune_to_player(player_id, rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_give_rune_to_player_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(player_id);
+	callfunc_push_int(rune_id);
+	
+	return callfunc_end() > 0;
+}
+
+/*
+* Получить количество зарегистрированных рун
+*
+* * @return количество рун.
+*/
+stock rm_get_runes_count()
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_get_runes_count_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	return callfunc_end();
+}
+
+
+/*
+* Получить имя руны по индексу руны. (От 0 до rm_get_runes_count)
+*
+* @param rune_name				название руны
+*
+* * @return номер руны или -1
+*/
+stock rm_get_rune_by_name(rune_name[])
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_get_rune_by_name_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_str(rune_name);
+	
+	return callfunc_end();
+}
 
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )

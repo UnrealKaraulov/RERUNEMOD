@@ -21,6 +21,7 @@ new runes_registered = 0;
 new rune_list_id[MAX_REGISTER_RUNES];
 new bool:rune_list_isItem[MAX_REGISTER_RUNES] = {false,...};
 new bool:rune_list_gamecms[MAX_REGISTER_RUNES] = {false,...};
+new rune_list_name_api[MAX_REGISTER_RUNES][128];
 new rune_list_name[MAX_REGISTER_RUNES][128];
 new rune_list_descr[MAX_REGISTER_RUNES][256];
 new rune_list_model[MAX_REGISTER_RUNES][256];
@@ -550,6 +551,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	
 	rune_list_id[i] = PluginIndex;
 	
+	copy(rune_list_name_api[i],charsmax(rune_list_name_api[]), RuneName);
 	
 	if (!LookupLangKey(rune_list_name[i],charsmax(rune_list_name[]),RuneName,g_hServerLanguage) || rune_list_name[i][0] == EOS)
 	{
@@ -589,6 +591,23 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	rune_list_model_color[i][0] = RuneColor1;
 	rune_list_model_color[i][1] = RuneColor2;
 	rune_list_model_color[i][2] = RuneColor3;
+}
+
+// Вернуть количество зарегистрированных рун
+public rm_get_runes_count_api()
+{
+	return runes_registered;
+}
+
+// Вернуть количество зарегистрированных рун
+public rm_get_rune_by_name_api(rune_name[])
+{
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (equali(rune_name,rune_list_name_api[i]))
+			return i;
+	}
+	return -1;
 }
 
 // Лимит на количество рун 
@@ -778,8 +797,7 @@ public rm_is_player_has_rune(id, iBlock)
 {
 	if (is_real_player(id))
 	{
-		if (active_rune[id] != 0)
-			return RUNEMODE_MAGIC_NUMBER;
+		return active_rune[id] > 0;
 	}
 	return 0;
 }
@@ -925,7 +943,6 @@ public spawn_one_rune(rune_id, spawn_id)
 
 	set_entvar(iEnt, var_solid, SOLID_TRIGGER );
 
-	set_entvar(iEnt, var_iuser4, RUNEMODE_MAGIC_NUMBER);
 	set_entvar(iEnt, var_fuser3, float(spawn_id));
 	set_entvar(iEnt, var_fuser4, float(rune_id));
 
@@ -955,7 +972,7 @@ public spawn_one_rune(rune_id, spawn_id)
 	spawn_iEnt_Origin[spawn_id][2] = floatround(fOrigin[2]) + 10;
 }
 
-public bool:rm_give_rune_to_player( rune_id, player_id )
+public bool:rm_give_rune_to_player_api( player_id, rune_id )
 {
 	new bool:is_item = rune_list_isItem[rune_id];
 	if (active_rune[player_id] == 0 || is_item)
@@ -969,7 +986,7 @@ public bool:rm_give_rune_to_player( rune_id, player_id )
 		if (!is_item)
 			active_rune[player_id] = rune_list_id[rune_id];
 			
-		if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_RUNE_PICKUP_SUCCESS)
+		if (rm_give_rune_callback( rune_list_id[rune_id],player_id ) != NO_RUNE_PICKUP_SUCCESS)
 		{
 			if (!is_item)
 			{
@@ -1038,7 +1055,7 @@ public rune_touch(const rune_ent, const player_id)
 			if (!is_item)
 				active_rune[player_id] = rune_list_id[rune_id];
 				
-			if (rm_give_rune_callback( rune_list_id[rune_id],player_id) != NO_RUNE_PICKUP_SUCCESS)
+			if (rm_give_rune_callback( rune_list_id[rune_id],player_id ) != NO_RUNE_PICKUP_SUCCESS)
 			{
 				new spawn_id = get_rune_spawnid(rune_ent);
 				spawn_filled[spawn_id] = 0;
@@ -1055,7 +1072,6 @@ public rune_touch(const rune_ent, const player_id)
 					client_print_color(player_id, print_team_red, "^4%s^3 %s ^1%s!^3", runemod_prefix, runemod_pickup_item_phrase, rune_list_name[rune_id]);
 				}
 				
-					
 				new iPlayers[ 32 ], iNum;
 				get_players( iPlayers, iNum, "bch" );
 				for( new i = 0; i < iNum; i++ )
@@ -1456,7 +1472,7 @@ public rm_shopmenu_handler(id, vmenu, item)
 			new is_item = rune_list_isItem[key];
 			if (is_item || active_rune[id] == 0)
 			{
-				if (rm_give_rune_to_player(key,id))
+				if (rm_give_rune_to_player_api(id,key))
 				{
 					rg_add_account(id,iaccount - irunecost,AS_SET);
 				}
