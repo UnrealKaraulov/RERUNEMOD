@@ -21,6 +21,7 @@ new runes_registered = 0;
 new rune_list_id[MAX_REGISTER_RUNES];
 new bool:rune_list_isItem[MAX_REGISTER_RUNES] = {false,...};
 new bool:rune_list_gamecms[MAX_REGISTER_RUNES] = {false,...};
+new bool:rune_list_disabled[MAX_REGISTER_RUNES] = {false,...};
 new rune_list_name_api[MAX_REGISTER_RUNES][128];
 new rune_list_name[MAX_REGISTER_RUNES][128];
 new rune_list_descr[MAX_REGISTER_RUNES][256];
@@ -47,6 +48,12 @@ new runemod_default_model_path[64];
 
 // Стандартный звук поднятия руны
 new runemod_default_pickup_path[64];
+
+// Время работы мода
+new runemod_start_time_hours = -1;
+new runemod_end_time_hours = -1;
+
+new runemod_time[16];
 
 // Очередь HUD сообщений
 new HUD_SYNS_1,HUD_SYNS_2; 
@@ -262,7 +269,36 @@ public plugin_init()
 		}
 	}
 	
-	log_amx("RuneMod Reloaded!");
+	// Установка лимита по времени по часам
+	
+	if (strlen(runemod_time) > 2)
+	{
+		new hour1[3];
+		new hour2[3];
+		parse(runemod_time, hour1, charsmax(hour1), hour2, charsmax(hour2));
+		if (hour1[0] != EOS && hour2[0] != EOS)
+		{
+			if (hour1[0] == '0')
+			{
+				hour1[0] = hour1[1];
+				hour1[1] = EOS;
+			}
+			if (hour2[0] == '0')
+			{
+				hour2[0] = hour2[1];
+				hour2[1] = EOS;
+			}
+			runemod_start_time_hours = str_to_num(hour1);
+			runemod_end_time_hours = str_to_num(hour2);
+		}
+		
+		log_amx("RuneMod Reloaded! Time from %02d:00 to %02d:00",runemod_start_time_hours,runemod_end_time_hours);
+	}
+	else 
+	{
+		log_amx("RuneMod Reloaded!");
+	}
+	
 }
 
 public RH_ConPrintf_Pre(const szBuffer[])
@@ -362,6 +398,10 @@ public rm_config_execute()
 	),	runemod_default_pickup_path, charsmax(runemod_default_pickup_path));
 	
 	
+	bind_pcvar_string(create_cvar("runemod_time", "",
+					.description = "Runemod time"
+	),	runemod_time, charsmax(runemod_time));
+	
 	register_clcmd("runeshop", "rm_runeshop");
 	register_clcmd("rune_shop", "rm_runeshop");
 	register_clcmd("say runeshop", "rm_runeshop");
@@ -419,6 +459,48 @@ public REMOVE_RUNE_MONITOR()
 		runemod_active_status = runemod_active;
 		if (!runemod_active)
 			RemoveAllRunes();
+	}
+	
+	if (runemod_start_time_hours == -1 || runemod_start_time_hours == -1 || runemod_start_time_hours == runemod_end_time_hours)
+	{
+		return;
+	}
+	new hours;
+	time(hours);
+	
+	if (runemod_start_time_hours > runemod_end_time_hours)
+	{
+		if (hours >= runemod_start_time_hours || hours < runemod_end_time_hours)
+		{
+			if (runemod_active_status != 1)
+			{
+				set_cvar_num("runemod_active", 1);
+			}
+		}
+		else 
+		{
+			if (runemod_active_status != 0)
+			{
+				set_cvar_num("runemod_active", 0);
+			}
+		}
+	}
+	else 
+	{
+		if (runemod_start_time_hours <= hours && hours < runemod_end_time_hours)
+		{
+			if (runemod_active_status != 1)
+			{
+				set_cvar_num("runemod_active", 1);
+			}
+		}
+		else 
+		{
+			if (runemod_active_status != 0)
+			{
+				set_cvar_num("runemod_active", 0);
+			}
+		}
 	}
 }
 
@@ -827,6 +909,11 @@ public rm_set_rune_cost_api(plug_id, imoney)
 		rune_list_icost[rune_id] = imoney;
 }
 
+// Запретить создание руны на карте
+public rm_disable_rune_api(rune_id, rune_status)
+{
+	rune_list_disabled[rune_id] = rune_status > 0;
+}
 
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм c тoчкaми пoявлeния дpyгиx pyн
 public bool:is_no_rune_point( Float:coords[3] )
@@ -1122,7 +1209,7 @@ rm_get_next_rune( bool:First = true)
 	{
 		for(new n = 0; n < runes_registered;n++)
 		{
-			if (rune_list_isItem[n])
+			if (rune_list_isItem[n] && !rune_list_disabled[n])
 			{
 				rune_id = n;
 				break;
@@ -1140,18 +1227,21 @@ rm_get_next_rune( bool:First = true)
 			{
 				continue;
 			}
+			if (rune_list_disabled[n])
+				continue;
+				
 			rune_id = n;
 			if (random_num(0,100) > 50)
 				break;
 		}
 	}
 
-	// Поиск предмета с доступным количеством
+	// Если уже достаточно на карте, ищем первый подходящий
 	if (rune_list_maxcount[rune_id] != 0 && rune_list_count[rune_id] >= rune_list_maxcount[rune_id])
 	{
 		for(rune_id = 0;rune_id < runes_registered;rune_id++)
 		{
-			if (rune_list_count[rune_id] < rune_list_maxcount[rune_id])
+			if (rune_list_count[rune_id] < rune_list_maxcount[rune_id] && !rune_list_disabled[rune_id])
 			{
 				break;
 			}
@@ -1181,7 +1271,7 @@ rm_get_next_rune( bool:First = true)
 	
 	if (rune_id == rune_last_created)
 	{
-		if (search_iters == 5)
+		if (search_iters >= 5)
 			return rune_id;
 		return rm_get_next_rune(false);
 	}

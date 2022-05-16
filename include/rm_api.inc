@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.2.1"
+#define RUNEMOD_VERSION "3.2.2"
 
 
 #define HUD_CHANNEL_ID 3
@@ -545,6 +545,37 @@ stock rm_get_runes_count()
 		log_amx("CALL BASE FUNC ERROR 4");
 		return PLUGIN_HANDLED;
 	}
+	
+	return callfunc_end();
+}
+
+
+/*
+* Выключить появление руны на карте принудительно
+*
+* @param rune_id		номер руны
+*
+* * @noreturn 
+*/
+stock rm_disable_rune(rune_id, bool:disable=true)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_disable_rune_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(rune_id);
+	callfunc_push_int(disable ? 1 : 0);
 	
 	return callfunc_end();
 }
