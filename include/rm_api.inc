@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.2.2"
+#define RUNEMOD_VERSION "3.3.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -56,10 +56,11 @@
 * @param rModel			Путь к модели, иначе используется стандартная
 * @param rSound			Путь к звуку, иначе используется стандартный
 * @param rModelID		Индекс модели из прекеша (только если указана rModel)
+* @param RuneGiveName	Название руны для выдачи или покупки
 *
 * @noreturn
 */
-stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)
+stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1,RuneGiveName[] = "")
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex);
@@ -83,6 +84,7 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	callfunc_push_str(rModel);
 	callfunc_push_str(rSound);
 	callfunc_push_int(rModelID);
+	callfunc_push_str(RuneGiveName);
 	return callfunc_end();
 }
 
@@ -508,14 +510,14 @@ stock bool:rm_give_rune_to_player(player_id, rune_id)
 	if (BasePluginRegFunc == -1)
 	{
 		log_amx("NO BASE FUNC FOUND 4");
-		return PLUGIN_HANDLED;
+		return false;
 	}
 	
 	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
 		log_amx("CALL BASE FUNC ERROR 4");
-		return PLUGIN_HANDLED;
+		return false;
 	}
 	
 	callfunc_push_int(player_id);
@@ -582,7 +584,7 @@ stock rm_disable_rune(rune_id, bool:disable=true)
 
 
 /*
-* Получить имя руны по индексу руны. (От 0 до rm_get_runes_count)
+* Получить номер руны по названию руны. 
 *
 * @param rune_name				название руны
 *
@@ -609,6 +611,90 @@ stock rm_get_rune_by_name(rune_name[])
 	
 	return callfunc_end();
 }
+
+
+/*
+* Купить руну за игровые деньги по названию
+*
+* @param rune_name				название руны
+*
+* * @return true/false
+*/
+stock rm_buy_rune_by_name(id,rune_name[])
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_buy_rune_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(id);
+	callfunc_push_str(rune_name);
+	
+	return callfunc_end();
+}
+
+
+/*
+* Принудительно забрать руну у игрока.
+*
+* @param id				Индекс игрока
+* 
+* @noreturn
+*/
+stock rm_force_drop_rune(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new PluginReqFunc = get_func_id("rm_force_drop_rune_api",BasePluginIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_drop_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
+
+/*
+* Принудительно забрать все предметы у игрока.
+*
+* @param id				Индекс игрока
+* 
+* @noreturn
+*/
+stock rm_force_drop_items(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new PluginReqFunc = get_func_id("rm_force_drop_items_api",BasePluginIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_drop_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
 
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )
