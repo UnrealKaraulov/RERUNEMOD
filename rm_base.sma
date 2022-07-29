@@ -145,6 +145,7 @@ new bool:g_bCurrentMapIgnored = false;
 new g_sConfigDirPath[PLATFORM_MAX_PATH];
 new bool:g_bRegGameCMS[MAX_PLAYERS + 1] = {false,...};
 new mp_maxmoney;
+new g_bScreenFadeAllowed = false;
 
 // Peгиcтpaция плaгинa, cтoлкнoвeний c pyнoй, pecпaвнa игpoкoв и oбнoвлeния cпaвнoв и pyн.
 // A тaк жe нaвeдeниe нa pyнy вoзвpaщaeт ee нaзвaниe и oпиcaниe pyны.
@@ -175,12 +176,13 @@ public plugin_init()
 	// Read server lang
 	server_cmd("exec %s/amxx.cfg", g_sConfigDirPath);
 	server_exec();
-	
 	DisableHookChain(g_hConPrintf);
 	
 	register_dictionary("rm_runemod.txt");
 	register_dictionary("rm_runemod_runes.txt");
 	register_dictionary("rm_runemod_items.txt");
+	
+	register_message(get_user_msgid("ScreenFade"),"Event_ScreenFade");
 	
 
 	if (!LookupLangKey(runemod_pickup_rune_phrase,charsmax(runemod_pickup_rune_phrase),"runemod_pickup_rune_phrase",g_hServerLanguage) || runemod_pickup_rune_phrase[0] == EOS)
@@ -682,6 +684,15 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	rune_list_model_color[i][2] = RuneColor3;
 }
 
+public Event_ScreenFade(msgid, msgDest, msgEnt)
+{
+	if (runemod_screen_highlight && is_real_player(msgEnt) && active_rune[msgEnt] && !g_bScreenFadeAllowed)
+	{
+		return PLUGIN_HANDLED;
+	}
+	return PLUGIN_CONTINUE;
+}
+
 // Вернуть количество зарегистрированных рун
 public rm_get_runes_count_api()
 {
@@ -709,6 +720,7 @@ public RM_MaxRunesAtOneTime(PluginIndex, num)
 	}
 }
 
+// Форвард из GAMECMS означающий что игрок с GAMECMS подключен
 public OnAPIMemberConnected(id, memberId, memberName[])
 {
     g_bRegGameCMS[id] = true;
@@ -798,7 +810,7 @@ public rm_highlight_screen(plug_id, id, hpower)
 		bColor[2] = floatround(rune_list_model_color[rune_id][2]);
 		if (rune_id >= 0)
 		{	
-			UTIL_ScreenFade(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT | FFADE_MODULATE, true,true);
+			RM_SCREENFADE(id, bColor , 1.0, 0.0, hpower, FFADE_STAYOUT | FFADE_MODULATE, true,true);
 		}
 	}
 }
@@ -897,7 +909,7 @@ public rm_reset_highlight(id)
 	if (is_user_connected(id))
 	{
 		rg_set_rendering(id);
-		UTIL_ScreenFade(id, _, _, _,_,true,true);
+		RM_SCREENFADE(id, _, _, _,_,true,true);
 	}
 }
 
@@ -1649,4 +1661,11 @@ public rm_force_drop_rune_api(id)
 public rm_force_drop_items_api(id)
 {
 	player_drop_all_items(id);
+}
+
+stock RM_SCREENFADE(id = 0, iColor[3] = { 0, 0, 0 }, Float:flFxTime = -1.0, Float:flHoldTime = 0.0, iAlpha = 0, iFlags = FFADE_IN, bool:bReliable = false, bool:bExternal = false)
+{
+	g_bScreenFadeAllowed = true;
+	UTIL_ScreenFade(id,iColor,flFxTime,flHoldTime,iAlpha,iFlags,bReliable,bExternal);
+	g_bScreenFadeAllowed = false;
 }
