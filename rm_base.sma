@@ -798,7 +798,7 @@ public player_drop_rune(id)
 							else 
 							{
 								new specTarget = get_entvar(spec_id, var_iuser2);
-								if (specTarget == id)
+								if (spec_id != id && specTarget == id)
 								{
 									client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
 								}
