@@ -9,7 +9,6 @@
 new filled_spawns = 0;
 // 3aнят ли cпaвн нa дaнный мoмeнт pyнoй
 new spawn_filled[MAX_REGISTER_RUNES] = {0,...};
-new spawn_prev_runeid[MAX_REGISTER_RUNES] = {0,...};
 // Koopдинaты cпaвнoв
 new Float:spawn_list[MAX_REGISTER_RUNES][3];
 // Координаты рун для user_think
@@ -632,6 +631,8 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 		copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound);
 	}
 	
+	rune_list_maxcount[i] = 999999;
+	
 	rune_list_model_color[i][0] = RuneColor1;
 	rune_list_model_color[i][1] = RuneColor2;
 	rune_list_model_color[i][2] = RuneColor3;
@@ -1059,7 +1060,6 @@ public spawn_one_rune(rune_id, spawn_id)
 		return;
 	}
 	
-	spawn_prev_runeid[spawn_id] = rune_id;
 	spawn_filled[spawn_id] = iEnt;
 	
 	rune_list_count[rune_id]++;
@@ -1319,92 +1319,77 @@ public rune_touch(const rune_ent, const player_id)
 }
 
 // Фунция подходящий номер руны для создания
-rm_get_next_rune( bool:First = true)
+public rm_get_next_rune( spawn_id )
 {
-	static search_iters;
+	new rune_id = -1;
+	new max_rune_count = 999;
 	
-	if (First)
-		search_iters = 0;
-		
-	search_iters++;
-	
-	new rune_id = random_num(1,runes_registered) - 1;
-	
-	// Если активирован режим "Только предметы", но выпала руна
-	// ищем первый предмет.
-	if (runemod_only_items && !rune_list_isItem[rune_id])
+	// Псевдо "рандом"
+	for(new i = rune_last_created + 1; i < runes_registered; i++ )
 	{
-		for(new n = 0; n < runes_registered;n++)
+		if (random_num(0,100) > 50 || rune_list_disabled[i]
+			|| (runemod_only_items && !rune_list_isItem[i]))
 		{
-			if (rune_list_isItem[n] && !rune_list_disabled[n])
-			{
-				rune_id = n;
+			continue;
+		}
+		new cur_rune_count = rune_list_count[i];
+		if (cur_rune_count <= max_rune_count && cur_rune_count < rune_list_maxcount[i])
+		{
+			if (cur_rune_count == max_rune_count && random_num(0,100) > 50)
 				break;
-			}
+			rune_id = i;
+			max_rune_count = cur_rune_count;
 		}
 	}
 	
-	// Теперь проверяем, если есть более подходящий "кандидат", выбираем его.
-	for(new n = 0; n < runes_registered;n++)
+	for(new i = 0; i < rune_last_created; i++ )
 	{
-		if (n != rune_last_created && rune_list_maxcount[n] == 0 &&
-					rune_list_count[n] < rune_list_count[rune_id])
+		if (random_num(0,100) > 50 || rune_list_disabled[i]
+			|| (runemod_only_items && !rune_list_isItem[i]))
 		{
-			if (runemod_only_items && !rune_list_isItem[n])
-			{
-				continue;
-			}
-			if (rune_list_disabled[n])
-				continue;
-				
-			rune_id = n;
-			if (random_num(0,100) > 50)
-				break;
+			continue;
 		}
-	}
-
-	// Если уже достаточно на карте, ищем первый подходящий
-	if (rune_list_maxcount[rune_id] != 0 && rune_list_count[rune_id] >= rune_list_maxcount[rune_id])
-	{
-		for(rune_id = 0;rune_id < runes_registered;rune_id++)
+		new cur_rune_count = rune_list_count[i];
+		if (cur_rune_count <= max_rune_count && cur_rune_count < rune_list_maxcount[i])
 		{
-			if (rune_list_count[rune_id] < rune_list_maxcount[rune_id] && !rune_list_disabled[rune_id])
-			{
+			if (cur_rune_count == max_rune_count && random_num(0,100) > 50)
 				break;
-			}
+			rune_id = i;
+			max_rune_count = cur_rune_count;
 		}
 	}
 	
-	// Срабатывает только если поиск предмета не завершился успехом, выбираем первый попавшийся предмет или руну.
-	if (rune_id >= runes_registered)
+	// Если не найдено подходящей руны, берем любую
+	if (rune_id == -1)
 	{
-		for(rune_id = 0;rune_id < runes_registered;rune_id++)
+		rune_id = 0;
+		if (runemod_only_items)
 		{
-			if (runemod_only_items && !rune_list_isItem[rune_id])
+			for(new n = 0; n < runes_registered;n++)
 			{
-				continue;
-			}
-			if (rune_list_maxcount[rune_id] == 0)
-			{
-				break;
+				if (rune_list_isItem[n] && !rune_list_disabled[n])
+				{
+					rune_id = n;
+					if (random_num(0,100) > 50)
+						break;
+				}
 			}
 		}
-		// Возникла неизвестная ошибка
-		if (rune_id >= runes_registered || rune_id < 0)
+		else 
 		{
-			rune_id = 0;
+			for(new n = 0; n < runes_registered;n++)
+			{
+				if (!rune_list_disabled[n])
+				{
+					rune_id = n;
+					if (random_num(0,100) > 50)
+						break;
+				}
+			}
 		}
-	}
-	
-	if (rune_id == rune_last_created)
-	{
-		if (search_iters >= 5)
-			return rune_id;
-		return rm_get_next_rune(false);
 	}
 	
 	rune_last_created = rune_id;
-	
 	return rune_id;
 }
 
@@ -1504,9 +1489,9 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 	if (is_no_player_point(spawn_list[spawn_id],float(runemod_player_distance))
 		|| (forceview && is_no_player_point(spawn_list[spawn_id],float(runemod_player_distance) / 1.5)) )
 	{
-		new rune_id = rm_get_next_rune();
+		new rune_id = rm_get_next_rune(spawn_id);
 		
-		if (rune_id < runes_registered)
+		if (rune_id >= 0 && rune_id < runes_registered)
 		{
 			spawn_one_rune( rune_id, spawn_id );
 			return true;
