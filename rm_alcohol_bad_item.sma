@@ -17,6 +17,9 @@ public plugin_init()
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post =false);
 	
 	rm_base_set_rune_cost(500);
+	
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	rm_base_set_max_count( 1 );
 }
 
 public PM_Move(const id)

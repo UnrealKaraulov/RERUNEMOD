@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.4.1"
+#define RUNEMOD_VERSION "3.5.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -119,10 +119,11 @@ public rm_register_dictionary(const dictname[])
 * Вызывается когда игрок поднимает руну
 *
 * @param id				Индекс игрока
+* @param ent			Руна
 * 
 * @return RUNE_PICKUP_SUCCESS/NO_RUNE_PICKUP_SUCCESS или ничего
 */
-stock rm_give_rune_callback(OwnIndex, id)
+stock rm_give_rune_callback(OwnIndex, id, ent)
 {
 	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex);
 	if(PluginReqFunc == -1)
@@ -136,6 +137,55 @@ stock rm_give_rune_callback(OwnIndex, id)
 		return PLUGIN_HANDLED;
 	}
 	callfunc_push_int(id);
+	callfunc_push_int(ent);
+	return callfunc_end();
+}
+
+/*
+* Вызывается когда руна появляется на карте
+*
+* @param ent				Руна
+* 
+* @noreturn
+*/
+stock rm_spawn_rune_callback(OwnIndex, ent)
+{
+	new PluginReqFunc = get_func_id("rm_spawn_rune",OwnIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_spawn_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
+	return callfunc_end();
+}
+
+/*
+* Вызывается когда руна удаляется с карты
+*
+* @param ent				Руна
+* 
+* @noreturn
+*/
+stock rm_remove_rune_callback(OwnIndex, ent)
+{
+	new PluginReqFunc = get_func_id("rm_remove_rune",OwnIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_remove_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
 	return callfunc_end();
 }
 
@@ -354,6 +404,35 @@ stock rm_base_lock_pickup(id, iBlock)
 	return callfunc_end();
 }
 
+
+/*
+* Заменить лежащую на земле руну другой
+*
+* @param ent 				Руна
+* @param new_rune_id 		Новый номер руны
+*
+* @noreturn
+*/
+stock rm_base_swap_rune_id(ent, new_rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_swap_rune_id",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
+	callfunc_push_int(new_rune_id);
+	return callfunc_end();
+}
+
 /*
 * Есть ли у игрока активная руна?
 *
@@ -527,6 +606,36 @@ stock bool:rm_give_rune_to_player(player_id, rune_id)
 }
 
 /*
+* Узнать по номеру руны что это, руна или предмет
+*
+* @param rune_id 		Номер руны
+*
+* * @return bool (Предмет или нет)
+*/
+stock bool:rm_is_rune_item(rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_is_rune_item_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return true;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return true;
+	}
+	
+	callfunc_push_int(rune_id);
+	
+	return callfunc_end() > 0;
+}
+
+
+/*
 * Получить количество зарегистрированных рун
 *
 * * @return количество рун.
@@ -550,7 +659,6 @@ stock rm_get_runes_count()
 	
 	return callfunc_end();
 }
-
 
 /*
 * Выключить появление руны на карте принудительно
@@ -700,9 +808,17 @@ stock rm_force_drop_items(id)
 stock bool:is_user_onground( id )
 {
 	new flags = get_entvar(id, var_flags);
-	if( flags & FL_ONGROUND )
+	if( (flags & FL_ONGROUND) > 0 )
 	{
-		return get_entvar(id,var_groundentity) == 0;
+		new igroundent = get_entvar(id,var_groundentity);
+		if (igroundent == 0)
+			return true;
+		else if (!is_nullent(igroundent))
+		{
+			new classname[33];
+			get_entvar(igroundent,var_classname,classname,charsmax(classname));
+			return equali(classname,"func_wall") > 0;
+		}
 	}
 	return false;
 }
@@ -712,6 +828,44 @@ stock bool:is_real_player( id )
 {
 	return id > 0 && id < 33;
 }
+
+// Фyнкция coxpaняeт ид pyны в руну
+public rm_set_rune_runeid( id, rune_id )
+{
+	return set_entvar(id, var_fuser4, float(rune_id) );
+}
+
+// Фyнкция вoзвpaщaeт ид pyны из руны
+public rm_get_rune_runeid( id )
+{
+	return floatround(get_entvar(id, var_fuser4));
+}
+
+// Фyнкция coxpaняeт ид спавна в руну
+public rm_set_rune_spawnid( id, spawn_id )
+{
+	return set_entvar(id, var_fuser3, float(spawn_id) );
+}
+
+// Фyнкция вoзвpaщaeт ид спавна из руны
+public rm_get_rune_spawnid( id )
+{
+	return floatround(get_entvar(id, var_fuser3));
+}
+
+
+// Фyнкция coxpaняeт число в руну
+public rm_set_rune_num( id, num )
+{
+	return set_entvar(id, var_iuser4, num );
+}
+
+// Фyнкция вoзвpaщaeт число из руны
+public rm_get_rune_num( id )
+{
+	return get_entvar(id, var_iuser4);
+}
+
 
 stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, mode = kRenderNormal, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
 {
@@ -736,7 +890,8 @@ stock bool:rm_is_hull_vacant(id, Float:origin[3], iHull, g_pCommonTr)
 
 stock bool:rm_unstuck_player(id)
 {
-	new g_pCommonTr = create_tr2();
+	new pCommonTr = create_tr2();
+	new bool:bSuccess = false;
 	new Float:Origin[3];
 	get_entvar(id, var_origin, Origin);
 	
@@ -744,28 +899,28 @@ stock bool:rm_unstuck_player(id)
 	iHull = (get_entvar(id, var_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
 	
 	// fast unstuck 
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		Origin[2] -= 64.0;
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		Origin[2] += 128.0;
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
 	
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		new const Float:RANDOM_OWN_PLACE[][3] =
 		{
@@ -811,10 +966,11 @@ stock bool:rm_unstuck_player(id)
 			new iZ = 0;
 			do
 			{
-				if (rm_is_hull_vacant(id, flOriginFinal, iHull, g_pCommonTr))
+				if (rm_is_hull_vacant(id, flOriginFinal, iHull, pCommonTr))
 				{
 					i = iSpawnPoint;
 					engfunc(EngFunc_SetOrigin, id, flOriginFinal);
+					bSuccess = true;
 					break;
 				}
 				
@@ -829,12 +985,12 @@ stock bool:rm_unstuck_player(id)
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
 	
-	free_tr2(g_pCommonTr);
-	return false;
+	free_tr2(pCommonTr);
+	return bSuccess;
 }
 
 

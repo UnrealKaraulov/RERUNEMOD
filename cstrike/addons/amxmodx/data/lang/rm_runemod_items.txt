@@ -13,6 +13,8 @@ rm_money_item_name = Деньги
 rm_money_item_desc = Дает 5000$ в игре.
 rm_silentstep_item_name = Бесшумный шаг
 rm_silentstep_item_desc = Шаги игрока никто не услышит
+rm_random_item = Случайный предмет
+rm_random_item_desc = Получите случайный предмет
 [en]
 rm_alcohol_bad_item_name = RUSSIAN VODKA
 rm_alcohol_bad_item_desc = ALCOHOL BAD ITEM
@@ -28,3 +30,5 @@ rm_money_item_name = Money
 rm_money_item_desc = Give 5000$ to game
 rm_silentstep_item_name = Silent step
 rm_silentstep_item_desc = Player can do silent step
+rm_random_item = Random item
+rm_random_item_desc = Give random item

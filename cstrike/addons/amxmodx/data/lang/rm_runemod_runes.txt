@@ -13,6 +13,8 @@ rm_speed_rune_name = Ускорение
 rm_speed_rune_desc = Игрок двигается очень быстро
 rm_teleport_rune_name = Телепорт
 rm_teleport_rune_desc = Игрок может быстро телепортироваться(нож)
+rm_random_rune = Случайная руна
+rm_random_rune_desc = Получите случайную руну
 [en]
 rm_invis_rune_name = Invisible
 rm_invis_rune_desc = Make player invisibled when not moving
@@ -28,3 +30,5 @@ rm_speed_rune_name = Speed
 rm_speed_rune_desc = Big increase speed
 rm_teleport_rune_name = Teleport
 rm_teleport_rune_desc = Player can use teleport (with knife)
+rm_random_rune = Random rune
+rm_random_rune_desc = Give random rune
