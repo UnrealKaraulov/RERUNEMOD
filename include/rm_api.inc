@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.0"
+#define RUNEMOD_VERSION "3.6.1"
 
 
 #define HUD_CHANNEL_ID 3

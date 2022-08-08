@@ -387,6 +387,8 @@ public client_connect(id)
 // 3aбpaть pyнy пpи oтключeнии игpoкa
 public client_disconnected(id, bool:drop, message[], maxlen)
 {
+	if (task_exists(id))
+		remove_task(id);
 	g_bRegGameCMS[id] = false;
 	lock_rune_pickup[id] = 0;
 	player_drop_rune(id);
