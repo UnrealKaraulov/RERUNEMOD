@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.2.0"
+#define RUNEMOD_VERSION "3.6.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -32,8 +32,9 @@
 	#include <screenfade_util>
 #endif
 
-// Магическое число для быстрого детекта руны
-#define RUNEMODE_MAGIC_NUMBER 14343390
+#if !defined _ini_file_included
+	#include <ini_file>
+#endif
 
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
@@ -44,11 +45,10 @@
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 
-#define RUNE_PICKUP_SUCCESS 1
-#define NO_RUNE_PICKUP_SUCCESS 2
+#define RUNE_PICKUP_SUCCESS 0
+#define NO_RUNE_PICKUP_SUCCESS 1
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
-
 
 
 /*
@@ -60,10 +60,11 @@
 * @param rModel			Путь к модели, иначе используется стандартная
 * @param rSound			Путь к звуку, иначе используется стандартный
 * @param rModelID		Индекс модели из прекеша (только если указана rModel)
+* @param RuneGiveName	Название руны для выдачи или покупки
 *
 * @noreturn
 */
-stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1)
+stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1,RuneGiveName[] = "")
 {
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("RM_RegisterPlugin",BasePluginIndex);
@@ -87,7 +88,37 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	callfunc_push_str(rModel);
 	callfunc_push_str(rSound);
 	callfunc_push_int(rModelID);
+	callfunc_push_str(RuneGiveName);
 	return callfunc_end();
+}
+
+/* Конфигурация */
+stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], out[], outlen)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_string(FILENAME, RuneName, RuneParam, out, outlen))
+	{
+		ini_write_string(FILENAME, RuneName, RuneParam, DefaultValue);
+		copy(out,outlen,DefaultValue);
+	}
+}
+stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &out)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_int(FILENAME, RuneName, RuneParam, out))
+	{
+		ini_write_int(FILENAME, RuneName, RuneParam, DefaultValue);
+		out = DefaultValue;
+	}
+}
+stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:out)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_float(FILENAME, RuneName, RuneParam, out))
+	{
+		ini_write_float(FILENAME, RuneName, RuneParam, DefaultValue);
+		out = DefaultValue;
+	}
 }
 
 /*
@@ -121,10 +152,11 @@ public rm_register_dictionary(const dictname[])
 * Вызывается когда игрок поднимает руну
 *
 * @param id				Индекс игрока
+* @param ent			Руна
 * 
 * @return RUNE_PICKUP_SUCCESS/NO_RUNE_PICKUP_SUCCESS или ничего
 */
-stock rm_give_rune_callback(OwnIndex, id)
+stock rm_give_rune_callback(OwnIndex, id, ent)
 {
 	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex);
 	if(PluginReqFunc == -1)
@@ -138,6 +170,55 @@ stock rm_give_rune_callback(OwnIndex, id)
 		return PLUGIN_HANDLED;
 	}
 	callfunc_push_int(id);
+	callfunc_push_int(ent);
+	return callfunc_end();
+}
+
+/*
+* Вызывается когда руна появляется на карте
+*
+* @param ent				Руна
+* 
+* @noreturn
+*/
+stock rm_spawn_rune_callback(OwnIndex, ent)
+{
+	new PluginReqFunc = get_func_id("rm_spawn_rune",OwnIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_spawn_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
+	return callfunc_end();
+}
+
+/*
+* Вызывается когда руна удаляется с карты
+*
+* @param ent				Руна
+* 
+* @noreturn
+*/
+stock rm_remove_rune_callback(OwnIndex, ent)
+{
+	new PluginReqFunc = get_func_id("rm_remove_rune",OwnIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,OwnIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_remove_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
 	return callfunc_end();
 }
 
@@ -353,8 +434,36 @@ stock rm_base_lock_pickup(id, iBlock)
 	}
 	callfunc_push_int(id);
 	callfunc_push_int(iBlock);
-	new retval = callfunc_end();
-	return retval;
+	return callfunc_end();
+}
+
+
+/*
+* Заменить лежащую на земле руну другой
+*
+* @param ent 				Руна
+* @param new_rune_id 		Новый номер руны
+*
+* @noreturn
+*/
+stock rm_base_swap_rune_id(ent, new_rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_swap_rune_id",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(ent);
+	callfunc_push_int(new_rune_id);
+	return callfunc_end();
 }
 
 /*
@@ -381,7 +490,7 @@ stock bool:rm_base_player_has_rune(id)
 		return false;
 	}
 	callfunc_push_int(id);
-	return callfunc_end() == RUNEMODE_MAGIC_NUMBER;
+	return callfunc_end() > 0;
 }
 
 /*
@@ -498,14 +607,251 @@ stock rm_base_set_rune_cost(imoney = 16000)
 	return callfunc_end();
 }
 
+/*
+* Дать руну игроку из внешнего плагина
+*
+* @param id				индекс игрока
+* @param rune_id		номер руны
+*
+* * @return true/false (успешно или руну нельзя выдать)
+*/
+stock bool:rm_give_rune_to_player(player_id, rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_give_rune_to_player_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return false;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return false;
+	}
+	
+	callfunc_push_int(player_id);
+	callfunc_push_int(rune_id);
+	
+	return callfunc_end() > 0;
+}
+
+/*
+* Узнать по номеру руны что это, руна или предмет
+*
+* @param rune_id 		Номер руны
+*
+* * @return bool (Предмет или нет)
+*/
+stock bool:rm_is_rune_item(rune_id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_is_rune_item_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return true;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return true;
+	}
+	
+	callfunc_push_int(rune_id);
+	
+	return callfunc_end() > 0;
+}
+
+
+/*
+* Получить количество зарегистрированных рун
+*
+* * @return количество рун.
+*/
+stock rm_get_runes_count()
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_get_runes_count_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	return callfunc_end();
+}
+
+/*
+* Выключить появление руны на карте принудительно
+*
+* @param rune_id		номер руны
+*
+* * @noreturn 
+*/
+stock rm_disable_rune(rune_id, bool:disable=true)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_disable_rune_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(rune_id);
+	callfunc_push_int(disable ? 1 : 0);
+	
+	return callfunc_end();
+}
+
+
+/*
+* Получить номер руны по названию руны. 
+*
+* @param rune_name				название руны
+*
+* * @return номер руны или -1
+*/
+stock rm_get_rune_by_name(rune_name[])
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_get_rune_by_name_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_str(rune_name);
+	
+	return callfunc_end();
+}
+
+
+/*
+* Купить руну за игровые деньги по названию
+*
+* @param rune_name				название руны
+*
+* * @return true/false
+*/
+stock rm_buy_rune_by_name(id,rune_name[])
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_buy_rune_api",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(id);
+	callfunc_push_str(rune_name);
+	
+	return callfunc_end();
+}
+
+
+/*
+* Принудительно забрать руну у игрока.
+*
+* @param id				Индекс игрока
+* 
+* @noreturn
+*/
+stock rm_force_drop_rune(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new PluginReqFunc = get_func_id("rm_force_drop_rune_api",BasePluginIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_drop_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
+
+/*
+* Принудительно забрать все предметы у игрока.
+*
+* @param id				Индекс игрока
+* 
+* @noreturn
+*/
+stock rm_force_drop_items(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new PluginReqFunc = get_func_id("rm_force_drop_items_api",BasePluginIndex);
+	if(PluginReqFunc == -1)
+	{
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(PluginReqFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("rm_drop_rune error");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
 
 // Функция проверяет не находится ли игрок на земле
 stock bool:is_user_onground( id )
 {
 	new flags = get_entvar(id, var_flags);
-	if( flags & FL_ONGROUND )
+	if( (flags & FL_ONGROUND) > 0 )
 	{
-		return get_entvar(id,var_groundentity) == 0;
+		new igroundent = get_entvar(id,var_groundentity);
+		if (igroundent == 0)
+			return true;
+		else if (!is_nullent(igroundent))
+		{
+			new classname[33];
+			get_entvar(igroundent,var_classname,classname,charsmax(classname));
+			return equali(classname,"func_wall") > 0;
+		}
 	}
 	return false;
 }
@@ -515,6 +861,44 @@ stock bool:is_real_player( id )
 {
 	return id > 0 && id < 33;
 }
+
+// Фyнкция coxpaняeт ид pyны в руну
+public rm_set_rune_runeid( id, rune_id )
+{
+	return set_entvar(id, var_fuser4, float(rune_id) );
+}
+
+// Фyнкция вoзвpaщaeт ид pyны из руны
+public rm_get_rune_runeid( id )
+{
+	return floatround(get_entvar(id, var_fuser4));
+}
+
+// Фyнкция coxpaняeт ид спавна в руну
+public rm_set_rune_spawnid( id, spawn_id )
+{
+	return set_entvar(id, var_fuser3, float(spawn_id) );
+}
+
+// Фyнкция вoзвpaщaeт ид спавна из руны
+public rm_get_rune_spawnid( id )
+{
+	return floatround(get_entvar(id, var_fuser3));
+}
+
+
+// Фyнкция coxpaняeт число в руну
+public rm_set_rune_num( id, num )
+{
+	return set_entvar(id, var_iuser4, num );
+}
+
+// Фyнкция вoзвpaщaeт число из руны
+public rm_get_rune_num( id )
+{
+	return get_entvar(id, var_iuser4);
+}
+
 
 stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, mode = kRenderNormal, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
 {
@@ -539,7 +923,8 @@ stock bool:rm_is_hull_vacant(id, Float:origin[3], iHull, g_pCommonTr)
 
 stock bool:rm_unstuck_player(id)
 {
-	new g_pCommonTr = create_tr2();
+	new pCommonTr = create_tr2();
+	new bool:bSuccess = false;
 	new Float:Origin[3];
 	get_entvar(id, var_origin, Origin);
 	
@@ -547,28 +932,28 @@ stock bool:rm_unstuck_player(id)
 	iHull = (get_entvar(id, var_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN;
 	
 	// fast unstuck 
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		Origin[2] -= 64.0;
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		Origin[2] += 128.0;
 	}
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
 	
-	if(!rm_is_hull_vacant(id,Origin,iHull, g_pCommonTr))
+	if(!rm_is_hull_vacant(id,Origin,iHull, pCommonTr))
 	{
 		new const Float:RANDOM_OWN_PLACE[][3] =
 		{
@@ -614,10 +999,11 @@ stock bool:rm_unstuck_player(id)
 			new iZ = 0;
 			do
 			{
-				if (rm_is_hull_vacant(id, flOriginFinal, iHull, g_pCommonTr))
+				if (rm_is_hull_vacant(id, flOriginFinal, iHull, pCommonTr))
 				{
 					i = iSpawnPoint;
 					engfunc(EngFunc_SetOrigin, id, flOriginFinal);
+					bSuccess = true;
 					break;
 				}
 				
@@ -632,12 +1018,12 @@ stock bool:rm_unstuck_player(id)
 	else
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin);
-		free_tr2(g_pCommonTr);
+		free_tr2(pCommonTr);
 		return true;
 	}
 	
-	free_tr2(g_pCommonTr);
-	return false;
+	free_tr2(pCommonTr);
+	return bSuccess;
 }
 
 

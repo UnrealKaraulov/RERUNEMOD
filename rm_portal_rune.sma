@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.6NOREAPI"
+#define VERSION "2.7NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -65,13 +65,23 @@ new g_iMaxplayers
 
 new rune_model_id = -1
 
+new rune_name[] = "rm_portal_rune_name";
+new rune_descr[] = "rm_portal_rune_desc";
 
-public plugin_precache() {
+new rune_model_path[64] = "models/next_portalgun/w_portalgun.mdl";
+new rune_sound_path[64] = "sound/rm_reloaded/portal_gun.wav";
+
+
+public plugin_precache() {	
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+
 	g_idPortalModel = precache_model(g_sPortalModel)
 	g_idPortalGunModelV = precache_model(g_sPortalGunModelV)
 	precache_model(g_sPortalGunModelP)
 	
-	rune_model_id = precache_model("models/next_portalgun/w_portalgun.mdl")
+	rune_model_id = precache_model(rune_model_path)
 	
 	precache_sound(g_sPortalGunSoundShot1)
 	precache_sound(g_sPortalGunSoundShot2)
@@ -82,17 +92,20 @@ public plugin_precache() {
 	g_idSparksSpriteBlue = precache_model(g_sSparksSpriteBlue)
 	g_idSparksSpriteOrange = precache_model(g_sSparksSpriteOrange)
 	
-	if (file_exists("sound/rm_reloaded/portal_gun.wav"))
+	if (file_exists(rune_sound_path))
 	{
-		precache_generic("sound/rm_reloaded/portal_gun.wav");
+		precache_generic(rune_sound_path);
 	}
 	
-	rm_base_set_rune_cost(5000);
+	/* Чтение конфигурации */
+	new cost = 4800;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
 }
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune("rm_portal_rune_name","rm_portal_rune_desc",Float:{25.0,25.0,25.0}, "models/next_portalgun/w_portalgun.mdl", "rm_reloaded/portal_gun.wav",rune_model_id);
+	rm_register_rune(rune_name,rune_descr,Float:{25.0,25.0,25.0}, rune_model_path, rune_sound_path, rune_model_id);
 	
 	g_pCommonTr = create_tr2()
 	

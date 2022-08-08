@@ -360,9 +360,6 @@ public rm_config_execute()
 	register_clcmd("say_team runeshop", "rm_runeshop");
 	register_clcmd("say_team /runeshop", "rm_runeshop");
 	
-	create_cvar("runemod_max_hp", "150",
-					.description = "Max HP for RUNES");
-	
 	get_configsdir(g_sConfigDirPath, charsmax(g_sConfigDirPath));
 	server_cmd("exec %s/plugins/runemod.cfg", g_sConfigDirPath);
 	server_exec();
@@ -579,16 +576,15 @@ public plugin_precache()
 	
 	rune_default_model_id = precache_model(rune_default_model);
 	
-	if(contain(runemod_default_pickup_path,"sound/") == 0 && file_exists(runemod_default_pickup_path,true))
+	if(file_exists(runemod_default_pickup_path,true))
 	{
 		// replace first sound/
 		precache_generic(runemod_default_pickup_path);
-		replace_stringex(runemod_default_pickup_path,charsmax(runemod_default_pickup_path),"sound/","");
 		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),runemod_default_pickup_path);
 	}
 	else
 	{
-		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"items/nvg_on.wav");
+		copy(rune_default_pickup_sound,charsmax(rune_default_pickup_sound),"sound/items/nvg_on.wav");
 	}
 }
 
@@ -618,17 +614,21 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 		rune_list_model_id[i] = rune_default_model_id;
 	}
 	
-	formatex(rune_list_sound[i],charsmax(rune_list_sound[]),"sound/%s", rSound);
-	
 	if( strlen(rSound) > 0 && file_exists( rune_list_sound[i], true ) )
 	{
 		//server_print("INIT RUNE: SOUND FOUND");
-		copy(rune_list_sound[i],charsmax(rune_list_sound[]), rSound);
+		if (contain(rSound,"sound/") == 0)
+			copy(rune_list_sound[i],charsmax(rune_list_sound[]), rSound);
+		else 
+			copy(rune_list_sound[i],charsmax(rune_list_sound[]), rSound[6]);
 	}
 	else 
 	{
 		//server_print("INIT RUNE: SOUND NOT FOUND");
-		copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound);
+		if (contain(rune_default_pickup_sound,"sound/") == 0)
+			copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound);
+		else 
+			copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound[6]);
 	}
 	
 	rune_list_maxcount[i] = 999999;

@@ -2,28 +2,45 @@
 #include <amxmisc>
 #include <rm_api>
 
-new const MULTIJUMP_COUNT = 10;
 
 new g_bHasMultiJump[MAX_PLAYERS + 1] = {0,...};
 
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_multijump_item_name";
+new rune_descr[] = "rm_multijump_item_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/w_multijump.mdl";
+
+new g_iMultiJumpCount = 10;
+
 public plugin_init()
 {
-	register_plugin("RM_JUMP","1.5","Karaulov");
+	register_plugin("RM_JUMP","1.6","Karaulov");
 	rm_register_dictionary("runemod_mj_item.txt");
-	rm_register_rune("rm_multijump_item_name","rm_multijump_item_desc",Float:{0.0,255.0,0.0}, "models/rm_reloaded/w_multijump.mdl", _,rune_model_id);
+	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, rune_model_path, _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	
 	RegisterHookChain(RG_CBasePlayer_Jump, "HC_CBasePlayer_Jump_Pre", .post = false);
 	
-	rm_base_set_rune_cost(4200);
+	/* Чтение конфигурации */
+	new cost = 4300;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
+	
+	
+	/* Чтение конфигурации */
+	rm_read_cfg_int(rune_name,"JUMPS",g_iMultiJumpCount,g_iMultiJumpCount);
 }
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/w_multijump.mdl");
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	
+	
+	rune_model_id = precache_model(rune_model_path);
 }
 
 public client_putinserver(id)
@@ -53,7 +70,7 @@ public rm_give_rune(id)
 		return NO_RUNE_PICKUP_SUCCESS;
 	if (task_exists(id))
 		remove_task(id);
-	g_bHasMultiJump[id] = MULTIJUMP_COUNT;
+	g_bHasMultiJump[id] = g_iMultiJumpCount;
 	set_task(0.5,"update_jump_state",id, _, _, "b");
 	return RUNE_PICKUP_SUCCESS;
 }
@@ -61,7 +78,7 @@ public rm_give_rune(id)
 public update_jump_state(id)
 {
 	set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
-	show_dhudmessage(id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
+	show_dhudmessage(id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],g_iMultiJumpCount);
 	
 		
 	new iPlayers[ 32 ], iNum;
@@ -73,7 +90,7 @@ public update_jump_state(id)
 		if (specTarget == id)
 		{
 			set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
-			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],MULTIJUMP_COUNT);
+			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],g_iMultiJumpCount);
 		}
 	}
 }

@@ -4,26 +4,41 @@
 #include <fakemeta>
 #include <hamsandwich>
 
+new rune_name[] = "rm_teleport_rune_name";
+new rune_descr[] = "rm_teleport_rune_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/rune_green.mdl";
+new rune_sound_path[64] = "sound/rm_reloaded/teleport.wav";
+
+
 new Float:g_Teleport[MAX_PLAYERS + 1] = {0.0,...};
 
 new Float:g_MsgTime[MAX_PLAYERS + 1] = {0.0,...};
-
-new rune_name[] = "rm_teleport_rune_name";
-new rune_descr[] = "rm_teleport_rune_desc";
 
 new g_spriteid_steam1;
 new g_pCommonTr;
 
 new rune_model_id = -1;
 
+new Float:g_fCooldown = 1.0;
+
+
+new g_sTeleportSprite[64] = "sprites/steam1.spr";
+
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.5","Karaulov"); 
-	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0}, "models/rm_reloaded/rune_green.mdl", "rm_reloaded/teleport.wav",rune_model_id);
+	register_plugin("RM_TELEPORT","2.6","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0},rune_model_path, rune_sound_path, rune_model_id);
 	g_pCommonTr = create_tr2();
 	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
 	
-	rm_base_set_rune_cost(7500);
+	/* Чтение конфигурации */
+	new cost = 7500;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
+	
+	/* Чтение конфигурации */
+	rm_read_cfg_flt(rune_name,"COOLDOWN",g_fCooldown,g_fCooldown);
 }
 
 public plugin_end()
@@ -33,14 +48,19 @@ public plugin_end()
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/rune_green.mdl");
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+	rm_read_cfg_str(rune_name,"teleport_sprite",g_sTeleportSprite,g_sTeleportSprite,charsmax(g_sTeleportSprite));
+
+	rune_model_id = precache_model(rune_model_path);
 	
-	if (file_exists("sound/rm_reloaded/teleport.wav"))
+	if (file_exists(rune_sound_path))
 	{
-		precache_generic("sound/rm_reloaded/teleport.wav");
+		precache_generic(rune_sound_path);
 	}
 	
-	g_spriteid_steam1 = precache_model("sprites/steam1.spr");
+	g_spriteid_steam1 = precache_model(g_sTeleportSprite);
 }
 
 public rm_give_rune(id)
@@ -144,7 +164,7 @@ public try_teleport(id)
 	{
 		if ((get_entvar(id, var_button) & IN_ATTACK) && get_user_weapon(id) == CSW_KNIFE)
 		{
-			if( get_gametime() - g_Teleport[id] > 1.0)
+			if( get_gametime() - g_Teleport[id] > g_fCooldown)
 			{
 				new Float:TeleportPoint[3];
 				if (get_teleport_point(id,TeleportPoint))

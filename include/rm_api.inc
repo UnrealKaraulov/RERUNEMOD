@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.5.1"
+#define RUNEMOD_VERSION "3.6.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -32,6 +32,10 @@
 	#include <screenfade_util>
 #endif
 
+#if !defined _ini_file_included
+	#include <ini_file>
+#endif
+
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
 
@@ -41,8 +45,8 @@
 #define UPDATE_RUNE_DESCRIPTION_HUD_ID 10002
 #define UPDATE_RUNE_DESCRIPTION_HUD_TIME 1.0
 
-#define RUNE_PICKUP_SUCCESS 1
-#define NO_RUNE_PICKUP_SUCCESS 2
+#define RUNE_PICKUP_SUCCESS 0
+#define NO_RUNE_PICKUP_SUCCESS 1
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 
@@ -86,6 +90,35 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 	callfunc_push_int(rModelID);
 	callfunc_push_str(RuneGiveName);
 	return callfunc_end();
+}
+
+/* Конфигурация */
+stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], out[], outlen)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_string(FILENAME, RuneName, RuneParam, out, outlen))
+	{
+		ini_write_string(FILENAME, RuneName, RuneParam, DefaultValue);
+		copy(out,outlen,DefaultValue);
+	}
+}
+stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &out)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_int(FILENAME, RuneName, RuneParam, out))
+	{
+		ini_write_int(FILENAME, RuneName, RuneParam, DefaultValue);
+		out = DefaultValue;
+	}
+}
+stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:out)
+{
+	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	if (!ini_read_float(FILENAME, RuneName, RuneParam, out))
+	{
+		ini_write_float(FILENAME, RuneName, RuneParam, DefaultValue);
+		out = DefaultValue;
+	}
 }
 
 /*

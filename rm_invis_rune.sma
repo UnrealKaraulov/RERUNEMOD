@@ -7,21 +7,36 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_invis_rune_name";
+new rune_descr[] = "rm_invis_rune_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/rune_sky.mdl";
+new rune_sound_path[64] = "sound/rm_reloaded/invis.wav";
+
+
 public plugin_init()
 {
-	register_plugin("RM_INVIS","2.5","Karaulov"); 
-	rm_register_rune("rm_invis_rune_name","rm_invis_rune_desc",Float:{99.0, 197.0, 218.0}, "models/rm_reloaded/rune_sky.mdl", "rm_reloaded/invis.wav", rune_model_id);
+	register_plugin("RM_INVIS","2.6","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{99.0, 197.0, 218.0}, rune_model_path, rune_sound_path, rune_model_id);
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, "CPlayer_TakeDamage_Post", .post = true);
-	rm_base_set_rune_cost(8500);
+	
+	/* Чтение конфигурации */
+	new cost = 8500;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
 }
 
 public plugin_precache()
-{
-	rune_model_id = precache_model("models/rm_reloaded/rune_sky.mdl");
+{	
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+
+	rune_model_id = precache_model(rune_model_path);
 	
-	if (file_exists("sound/rm_reloaded/invis.wav"))
+	if (file_exists(rune_sound_path))
 	{
-		precache_generic("sound/rm_reloaded/invis.wav");
+		precache_generic(rune_sound_path);
 	}
 }
 

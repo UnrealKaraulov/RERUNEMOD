@@ -8,13 +8,22 @@ new bool:g_Phantom_activated[MAX_PLAYERS + 1] = {false, ...};
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_phantom_rune_name";
+new rune_descr[] = "rm_phantom_rune_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/rune_magenta.mdl";
+new rune_sound_path[64] = "sound/rm_reloaded/phantom.wav";
+
 public plugin_init()
 {
-	register_plugin("RM_PHANTOM","2.4","Karaulov"); 
-	rm_register_rune("rm_phantom_rune_name","rm_phantom_rune_desc",Float:{255.0,0.0,255.0}, "models/rm_reloaded/rune_magenta.mdl", "rm_reloaded/phantom.wav",rune_model_id);
+	register_plugin("RM_PHANTOM","2.5","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,255.0}, rune_model_path, rune_sound_path, rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	
-	rm_base_set_rune_cost(10000);
+	/* Чтение конфигурации */
+	new cost = 7700;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
 }
 
 public PM_Move(const id)
@@ -33,10 +42,15 @@ public PM_Move(const id)
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/rune_magenta.mdl");
-	if (file_exists("sound/rm_reloaded/phantom.wav"))
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+
+	rune_model_id = precache_model(rune_model_path);
+	
+	if (file_exists(rune_sound_path))
 	{
-		precache_generic("sound/rm_reloaded/phantom.wav");
+		precache_generic(rune_sound_path);
 	}
 }
 

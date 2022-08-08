@@ -1,8 +1,0 @@
-// Сколько рублей дает предмет gamecms money
-runemod_gamecms_money 5
-
-// Сколько денег дает предмет money
-runemod_money_item 16000
-
-// Какие временные флаги или услугу дает предмет gamecms vip
-runemod_gamecms_vip_name "_nick_prefix"

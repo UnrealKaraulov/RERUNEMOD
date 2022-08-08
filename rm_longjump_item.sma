@@ -4,18 +4,29 @@
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_longjump_item_name";
+new rune_descr[] = "rm_longjump_item_desc";
+
+new rune_model_path[64] = "models/w_longjump.mdl";
+
 public plugin_init()
 {
-	register_plugin("RM_LONGJUMP","2.3","Karaulov"); 
-	rm_register_rune("rm_longjump_item_name","rm_longjump_item_desc",Float:{255.0,255.0,255.0}, "models/w_longjump.mdl",_,rune_model_id);
+	register_plugin("RM_LONGJUMP","2.4","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	rm_base_use_rune_as_item( );
 	
-	rm_base_set_rune_cost(800);
+	/* Чтение конфигурации */
+	new cost = 900;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
 }
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/w_longjump.mdl");
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	
+	rune_model_id = precache_model(rune_model_path);
 }
 
 public rm_give_rune(id)

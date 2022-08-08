@@ -10,11 +10,18 @@ new Float:g_fStun_time[MAX_PLAYERS + 1] = {0.0,...};
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_mjolnir_item_name";
+new rune_descr[] = "rm_mjolnir_item_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/w_mjolnir.mdl";
+
+new Float:g_fCooldown = 3.0;
+
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.4","Karaulov");
+	register_plugin("RM_MJOLNIR","1.5","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
-	rm_register_rune("rm_mjolnir_item_name","rm_mjolnir_item_desc",Float:{0.0,100.0,0.0}, "models/rm_reloaded/w_mjolnir.mdl", _,rune_model_id);
+	rm_register_rune(rune_name,rune_descr,Float:{0.0,100.0,0.0}, rune_model_path, _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg_post", .post = true)
@@ -22,12 +29,21 @@ public plugin_init()
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
 	RegisterHookChain(RG_PM_AirMove, "PM_Move", .post =false);
 	
-	rm_base_set_rune_cost(5000);
+	/* Чтение конфигурации */
+	new cost = 7100;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
+	
+	/* Чтение конфигурации */
+	rm_read_cfg_flt(rune_name,"COOLDOWN",g_fCooldown,g_fCooldown);
 }
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/w_mjolnir.mdl");
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	
+	rune_model_id = precache_model(rune_model_path);
 }
 
 public client_putinserver(id)
@@ -64,7 +80,7 @@ public rm_drop_rune(id)
 
 public update_stun_state(id)
 {
-	if (get_gametime() - g_fStun_time[id] > 3.0)
+	if (get_gametime() - g_fStun_time[id] > g_fCooldown)
 	{
 		set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
 		show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
@@ -83,7 +99,7 @@ public update_stun_state(id)
 		new specTarget = get_entvar(spec_id, var_iuser2);
 		if (specTarget == id)
 		{
-			if (get_gametime() - g_fStun_time[id] > 3.0)
+			if (get_gametime() - g_fStun_time[id] > g_fCooldown)
 			{
 				set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
 				show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
@@ -101,7 +117,7 @@ public CSGameRules_FPlayerCanTakeDmg_post(const pPlayer, const pAttacker)
 {
 	if (is_real_player(pAttacker) && g_bHasmjolnir[pAttacker] && GetHookChainReturn(ATYPE_INTEGER) > 0)
 	{
-		if (get_gametime() - g_fStun_time[pAttacker] > 3.0)
+		if (get_gametime() - g_fStun_time[pAttacker] > g_fCooldown)
 		{
 			if (is_real_player(pPlayer) && is_user_connected(pAttacker))
 			{
@@ -124,7 +140,7 @@ public PM_Move(const id)
 		fPunchAngles[1] = random_float(-180.0,180.0);
 		fPunchAngles[2] = random_float(-180.0,180.0);
 		set_pmove(pm_punchangle,fPunchAngles);
-		g_vStunVelocity[id][2] = random_float(250.0,750.0);
+		g_vStunVelocity[id][2] = random_float(350.0,850.0);
 		set_pmove(pm_velocity,g_vStunVelocity[id]);
 		set_entvar(id,var_velocity,g_vStunVelocity[id])
 	}

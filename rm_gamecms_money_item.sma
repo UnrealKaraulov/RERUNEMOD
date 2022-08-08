@@ -15,27 +15,48 @@
 native cmsapi_add_user_money(id, Float:fAmmount);
 
 
+new rune_name[] = "rm_gamecms_money_item_name";
+new rune_descr[] = "rm_gamecms_money_item_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/w_rubel.mdl";
+
 new rune_model_id = -1;
+
+new Float:g_fMinMoney = 5.0;
+new Float:g_fMaxMoney = 5.0;
 
 public plugin_init()
 {
-	register_plugin("RM_GAMECMS_CASH","2.2","Karaulov"); 
-	rm_register_rune("rm_gamecms_money_item_name","rm_gamecms_money_item_desc",Float:{255.0,255.0,255.0}, "models/rm_reloaded/w_rubel.mdl",_,rune_model_id);
+	register_plugin("RM_GAMECMS_CASH","2.3","Karaulov"); 
+	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	rm_base_use_rune_as_item( );
 	// Максимальное количество предметов/рун которые могут быть на карте в одно время
 	rm_base_set_max_count( 1 );
 	// Предмет может поднять только зарегистрированный в GAMECMS
 	rm_need_gamecms_register( );
+	
+	/* Чтение конфигурации */
+	new cost = 0; // 0 знач незя купить по умолчанию!
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
+	
+	
+	rm_read_cfg_flt(rune_name,"MIN_MONEY",g_fMinMoney,g_fMinMoney);
+	rm_read_cfg_flt(rune_name,"MAX_MONEY",g_fMaxMoney,g_fMaxMoney);
 }
 
 public plugin_precache()
-{
-	rune_model_id = precache_model("models/rm_reloaded/w_rubel.mdl");
+{	
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	
+	
+	rune_model_id = precache_model(rune_model_path);
 }
 
 public rm_give_rune(id)
 {
-	cmsapi_add_user_money(id, 5.0);
+	cmsapi_add_user_money(id, random_float(g_fMinMoney,g_fMaxMoney));
 }
 
 public plugin_natives() 

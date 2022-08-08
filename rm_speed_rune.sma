@@ -11,15 +11,30 @@ const MovingBits = ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT );
 
 new rune_model_id = -1;
 
+new rune_name[] = "rm_speed_rune_name";
+new rune_descr[] = "rm_speed_rune_desc";
+
+new rune_model_path[64] = "models/rm_reloaded/rune_skyblue.mdl";
+new rune_sound_path[64] = "sound/rm_reloaded/speedup.wav";
+
+new Float:g_fSpeed = 750.0;
+
 public plugin_init()
 {
-	register_plugin("RM_SPEED","2.4","Karaulov");
-	rm_register_rune("rm_speed_rune_name","rm_speed_rune_desc",Float:{0.0,0.0,255.0}, "models/rm_reloaded/rune_skyblue.mdl", "rm_reloaded/speedup.wav",rune_model_id);
+	register_plugin("RM_SPEED","2.5","Karaulov");
+	rm_register_rune(rune_name,rune_descr,Float:{0.0,0.0,255.0}, rune_model_path, rune_sound_path,rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
-	set_task(30.0, "update_server_speed", 1, _, _, "b");
-	update_server_speed(1);
 	
-	rm_base_set_rune_cost(9000);
+	update_server_speed(0);
+	set_task(25.0, "update_server_speed");
+	
+	/* Чтение конфигурации */
+	new cost = 9000;
+	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
+	rm_base_set_rune_cost(cost);
+	
+	/* Чтение конфигурации */
+	rm_read_cfg_flt(rune_name,"SPEED",g_fSpeed,g_fSpeed);
 }
 
 public update_server_speed(id)
@@ -29,10 +44,14 @@ public update_server_speed(id)
 
 public plugin_precache()
 {
-	rune_model_id = precache_model("models/rm_reloaded/rune_skyblue.mdl");
-	if (file_exists("sound/rm_reloaded/speedup.wav"))
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+
+	rune_model_id = precache_model(rune_model_path);
+	if (file_exists(rune_sound_path))
 	{
-		precache_generic("sound/rm_reloaded/speedup.wav");
+		precache_generic(rune_sound_path);
 	}
 }
 
@@ -42,9 +61,9 @@ public PM_Move(const id)
 	{
 		if (g_iSpeed[id] == 1 && get_entvar(id, var_button) & MovingBits )
 		{
-			set_user_maxspeed(id,  750.0)
-			set_pmove(pm_maxspeed, 750.0)
-			set_pmove(pm_clientmaxspeed, 750.0)
+			set_user_maxspeed(id,  g_fSpeed)
+			set_pmove(pm_maxspeed, g_fSpeed)
+			set_pmove(pm_clientmaxspeed, g_fSpeed)
 		}
 		else if (g_iSpeed[id] == 2)
 		{
