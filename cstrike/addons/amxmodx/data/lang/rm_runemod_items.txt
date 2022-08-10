@@ -15,6 +15,9 @@ rm_silentstep_item_name = Бесшумный шаг
 rm_silentstep_item_desc = Шаги игрока никто не услышит
 rm_random_item = Случайный предмет
 rm_random_item_desc = Получите случайный предмет
+rm_vip_item_name = VIP-Статус
+rm_vip_item_desc = Получите VIP-Статус до конца карты
+
 [en]
 rm_alcohol_bad_item_name = RUSSIAN VODKA
 rm_alcohol_bad_item_desc = ALCOHOL BAD ITEM
@@ -32,3 +35,5 @@ rm_silentstep_item_name = Silent step
 rm_silentstep_item_desc = Player can do silent step
 rm_random_item = Random item
 rm_random_item_desc = Give random item
+rm_vip_item_name = VIP
+rm_vip_item_desc = Give VIP for this map

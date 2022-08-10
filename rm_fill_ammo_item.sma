@@ -35,7 +35,7 @@ public bool:ReloadWeapons(const pPlayer)
 	new m_iActiveItem = get_member(pPlayer, m_pActiveItem);
 	if(!m_iActiveItem || is_nullent(m_iActiveItem))
 	{
-		return false
+		return false;
 	}
 	
 	new iMaxClip = rg_get_iteminfo(m_iActiveItem, ItemInfo_iMaxClip);
