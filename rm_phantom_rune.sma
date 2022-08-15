@@ -48,7 +48,7 @@ public plugin_precache()
 
 	rune_model_id = precache_model(rune_model_path);
 	
-	if (file_exists(rune_sound_path))
+	if (file_exists(rune_sound_path,true))
 	{
 		precache_generic(rune_sound_path);
 	}

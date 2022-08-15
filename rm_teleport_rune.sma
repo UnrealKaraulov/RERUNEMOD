@@ -4,6 +4,8 @@
 #include <fakemeta>
 #include <hamsandwich>
 
+#include <msg_floatstocks>
+
 new rune_name[] = "rm_teleport_rune_name";
 new rune_descr[] = "rm_teleport_rune_desc";
 
@@ -15,7 +17,8 @@ new Float:g_Teleport[MAX_PLAYERS + 1] = {0.0,...};
 
 new Float:g_MsgTime[MAX_PLAYERS + 1] = {0.0,...};
 
-new g_spriteid_steam1;
+new g_spriteid_steam1 = 0;
+
 new g_pCommonTr;
 
 new rune_model_id = -1;
@@ -27,7 +30,7 @@ new g_sTeleportSprite[64] = "sprites/steam1.spr";
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.6","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.7","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0},rune_model_path, rune_sound_path, rune_model_id);
 	g_pCommonTr = create_tr2();
 	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
@@ -55,12 +58,16 @@ public plugin_precache()
 
 	rune_model_id = precache_model(rune_model_path);
 	
-	if (file_exists(rune_sound_path))
+	if (file_exists(rune_sound_path,true))
 	{
 		precache_generic(rune_sound_path);
 	}
 	
-	g_spriteid_steam1 = precache_model(g_sTeleportSprite);
+		// model/.mdl
+	if (strlen(g_sTeleportSprite) >= 10 && file_exists(g_sTeleportSprite,true))
+	{
+		g_spriteid_steam1 = precache_model(g_sTeleportSprite);
+	}
 }
 
 public rm_give_rune(id)
@@ -220,7 +227,12 @@ public teleportPlayer(id, Float:TeleportPoint[3])
 	create_smoke(pOrigin);
 }
 
-create_smoke(const Float:origin[3]) {
+create_smoke(Float:origin[3]) {
+	if (g_spriteid_steam1 == 0)
+	{
+		te_create_teleport_splash(origin);
+		return;
+	}
 	engfunc(EngFunc_MessageBegin, MSG_PVS, SVC_TEMPENTITY, origin, 0);
 	write_byte(TE_SMOKE);
 	engfunc(EngFunc_WriteCoord, origin[0]);

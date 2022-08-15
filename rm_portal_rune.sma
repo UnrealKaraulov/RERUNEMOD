@@ -92,7 +92,7 @@ public plugin_precache() {
 	g_idSparksSpriteBlue = precache_model(g_sSparksSpriteBlue)
 	g_idSparksSpriteOrange = precache_model(g_sSparksSpriteOrange)
 	
-	if (file_exists(rune_sound_path))
+	if (file_exists(rune_sound_path,true))
 	{
 		precache_generic(rune_sound_path);
 	}
