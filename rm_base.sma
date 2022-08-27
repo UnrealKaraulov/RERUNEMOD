@@ -510,7 +510,7 @@ public cmd_drop(id)
 {
 	if (get_user_weapon(id) == CSW_KNIFE)
 	{
-		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune_id[id] != -1 && lock_rune_pickup[id] == 0)
+		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune_id[id] >= 0 && lock_rune_pickup[id] == 0)
 		{
 			player_drop_rune( id );
 		}
@@ -791,7 +791,7 @@ public player_drop_rune(id)
 {
 	if (is_real_player(id))
 	{
-		if (active_rune_id[id] != -1)
+		if (active_rune_id[id] >= 0)
 		{
 			new rune_id = active_rune_id[id];
 			if (rune_id >= 0)
@@ -835,7 +835,7 @@ public player_drop_rune(id)
 						client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
 					}
 				}
-				rm_drop_rune_callback(active_rune_id[id], id, rune_id);
+				rm_drop_rune_callback(rune_list_id[rune_id], id, rune_id);
 			}
 		}
 		active_rune_id[id] = -1;
@@ -1194,7 +1194,7 @@ public spawn_one_rune(rune_id, spawn_id)
 public bool:rm_give_rune_to_player_api( player_id, rune_id )
 {
 	new bool:is_item = rune_list_isItem[rune_id];
-	if (active_rune_id[player_id] == -1 || is_item)
+	if (active_rune_id[player_id] < 0 || is_item)
 	{
 		if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
 		{
@@ -1283,7 +1283,7 @@ public rune_touch(const rune_ent, const player_id)
 			return PLUGIN_CONTINUE;
 		
 		new bool:is_item = rune_list_isItem[rune_id];
-		if (active_rune_id[player_id] == -1 || is_item)
+		if (active_rune_id[player_id] < 0 || is_item)
 		{
 			if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
 			{
@@ -1759,7 +1759,7 @@ public rm_shopmenu_handler(id, vmenu, item)
 		if (irunecost <= iaccount)
 		{
 			new is_item = rune_list_isItem[key];
-			if (is_item || active_rune_id[id] == 0)
+			if (is_item || active_rune_id[id] < 0)
 			{
 				if (rm_give_rune_to_player_api(id,key))
 				{
@@ -1809,7 +1809,7 @@ public rm_buy_rune_api(id,rune_name[])
 	if (irunecost <= iaccount)
 	{
 		new is_item = rune_list_isItem[rune_id];
-		if (is_item || active_rune_id[id] == 0)
+		if (is_item || active_rune_id[id] < 0)
 		{
 			if (rm_give_rune_to_player_api(id,rune_id))
 			{
