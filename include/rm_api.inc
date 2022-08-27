@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.3"
+#define RUNEMOD_VERSION "3.6.4"
 
 
 #define HUD_CHANNEL_ID 3
@@ -62,7 +62,7 @@
 * @param rModelID		Номер модели из прекеша (только если указана rModel)
 * @param RuneGiveName	Название руны для выдачи или покупки
 *
-* @return Номер руны
+* @return Номер руны или -1 если количество превышено допустимое количество рун (MAX_REGISTER_RUNES)
 */
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1,RuneGiveName[] = "")
 {
@@ -302,6 +302,35 @@ stock rm_base_drop_item_notice(id)
 		return PLUGIN_HANDLED;
 	}
 	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(id);
+	return callfunc_end();
+}
+
+
+/*
+* Прервано дейтсвие предмета по номеру предмета (руны)
+*
+* @param rune_id		Номер руны
+* @param id				Номер игрока
+*
+* @noreturn
+*/
+stock rm_base_drop_item_by_rune_id_notice(rune_id,id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_drop_item_api_by_rune_id",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 2");
+		return PLUGIN_HANDLED;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 2");
+		return PLUGIN_HANDLED;
+	}
+	callfunc_push_int(rune_id);
 	callfunc_push_int(id);
 	return callfunc_end();
 }
@@ -608,6 +637,38 @@ stock rm_base_set_rune_cost(imoney = 16000)
 	}
 	
 	callfunc_push_int(rm_current_plugin_id());
+	callfunc_push_int(imoney);
+	
+	return callfunc_end();
+}
+
+
+/*
+* Добавить в магазин рун по номеру руны
+*
+* @param rune_id		Номер руны
+* @param imoney			Стоимость руны
+*
+* @noreturn
+*/
+stock rm_base_set_rune_cost_by_rune_id(rune_id, imoney = 16000)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_set_rune_cost_api_by_rune_id",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return PLUGIN_HANDLED;
+	}
+	
+	callfunc_push_int(rune_id);
 	callfunc_push_int(imoney);
 	
 	return callfunc_end();

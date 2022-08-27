@@ -58,7 +58,7 @@ new runemod_time[16];
 new HUD_SYNS_1,HUD_SYNS_2; 
 
 // Aктивнaя pyнa игpoкa - нoмep плaгинa
-new active_rune[MAX_PLAYERS + 1];
+new active_rune_id[MAX_PLAYERS + 1] = {-1,...};
 
 // Блокировка возможности поднять руну или предмет
 new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
@@ -393,6 +393,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	lock_rune_pickup[id] = 0;
 	player_drop_rune(id);
 	player_drop_all_items(id);
+	active_rune_id[id] = -1;
 }
 
 // Зарегистрировать словарь в RUNEMOD
@@ -509,7 +510,7 @@ public cmd_drop(id)
 {
 	if (get_user_weapon(id) == CSW_KNIFE)
 	{
-		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune[id] != 0 && lock_rune_pickup[id] == 0)
+		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune_id[id] != -1 && lock_rune_pickup[id] == 0)
 		{
 			player_drop_rune( id );
 		}
@@ -598,6 +599,9 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	new i = runes_registered;
 	runes_registered++;
 	
+	if (i >= MAX_REGISTER_RUNES)
+		return -1;
+	
 	rune_list_id[i] = PluginIndex;
 	
 	copy(rune_list_name[i],charsmax(rune_list_name[]), RuneName);
@@ -643,7 +647,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 
 public Event_ScreenFade(msgid, msgDest, msgEnt)
 {
-	if (runemod_screen_highlight && is_real_player(msgEnt) && active_rune[msgEnt] && !g_bScreenFadeAllowed)
+	if (runemod_screen_highlight && is_real_player(msgEnt) && active_rune_id[msgEnt] >= 0 && !g_bScreenFadeAllowed)
 	{
 		return PLUGIN_HANDLED;
 	}
@@ -668,12 +672,12 @@ public rm_get_rune_by_name_api(rune_name[])
 }
 
 // Лимит на количество рун 
-public RM_MaxRunesAtOneTime(PluginIndex, num)
+public RM_MaxRunesAtOneTime(plug_id, num)
 {
-	new runeid = get_runeid_by_pluginid(PluginIndex);
-	if (runeid >= 0)
+	for(new i = 0; i < runes_registered;i++)
 	{
-		rune_list_maxcount[runeid] = num;
+		if (rune_list_id[i] == plug_id)
+			rune_list_maxcount[i] = num;
 	}
 }
 
@@ -695,21 +699,23 @@ public rm_print_register_api(id)
 }
 
 // Необходимо зарегистрироваться на веб сайте (GAMECMS) для того что бы поднять руну
-public rm_need_gamecms_register_api(PluginIndex)
+public rm_need_gamecms_register_api(plug_id)
 {
-	new runeid = get_runeid_by_pluginid(PluginIndex);
-	if (runeid >= 0)
+	for(new i = 0; i < runes_registered;i++)
 	{
-		rune_list_gamecms[runeid] = true;
+		if (rune_list_id[i] == plug_id)
+			rune_list_gamecms[i] = true;
 	}
 }
 
-// Руна является предметом одноразовым
+// Руна является предметом (поднял и забыл)
 public rm_rune_set_item(plug_id)
 {
-	new runeid = get_runeid_by_pluginid(plug_id);
-	if (runeid >= 0)
-		rune_list_isItem[runeid] = true;
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (rune_list_id[i] == plug_id)
+			rune_list_isItem[i] = true;
+	}
 }
 
 // 3aбpaть pyнy пpи cмepти игpoкa 
@@ -745,22 +751,20 @@ public client_respawned(const id)
 }
 
 // Подсветка модели игрока 
-public rm_highlight_player(plug_id, id)
+public rm_highlight_player(rune_id, id)
 {
 	if (runemod_player_highlight && is_real_player(id))
 	{
-		new rune_id = get_runeid_by_pluginid(plug_id);
 		if (rune_id >= 0)
 			rg_set_rendering(id, kRenderFxGlowShell, _, rune_list_model_color[rune_id], 10.0);
 	}
 }
 
 // Подсветка экрана игрока
-public rm_highlight_screen(plug_id, id, hpower)
+public rm_highlight_screen(rune_id, id, hpower)
 {
 	if (runemod_screen_highlight && is_real_player(id))
 	{
-		new rune_id = get_runeid_by_pluginid(plug_id);
 		new bColor[3];
 		bColor[0] = floatround(rune_list_model_color[rune_id][0]);
 		bColor[1] = floatround(rune_list_model_color[rune_id][1]);
@@ -787,9 +791,9 @@ public player_drop_rune(id)
 {
 	if (is_real_player(id))
 	{
-		if (active_rune[id] != 0)
+		if (active_rune_id[id] != -1)
 		{
-			new rune_id = get_runeid_by_pluginid(active_rune[id]);
+			new rune_id = active_rune_id[id];
 			if (rune_id >= 0)
 			{
 				if (is_user_connected(id))
@@ -831,10 +835,10 @@ public player_drop_rune(id)
 						client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
 					}
 				}
-				rm_drop_rune_callback(active_rune[id], id, rune_id);
+				rm_drop_rune_callback(active_rune_id[id], id, rune_id);
 			}
 		}
-		active_rune[id] = 0;
+		active_rune_id[id] = -1;
 		rm_reset_highlight(id);
 	}
 }
@@ -843,6 +847,46 @@ public player_drop_rune(id)
 public rm_drop_item_api(plug_id,id)
 {
 	new rune_id = get_runeid_by_pluginid(plug_id);
+	if (rune_id >= 0 && is_user_connected(id))
+	{
+		new username[33];
+		if (runemod_notify_players_drop)
+			get_user_name(id,username,charsmax(username));
+						
+		new iPlayers[ 32 ], iNum;
+		
+		if (runemod_notify_players_drop)
+			get_players( iPlayers, iNum, "ch" );
+		else 
+			get_players( iPlayers, iNum, "bch" );
+			
+		for( new i = 0; i < iNum; i++ )
+		{
+			new spec_id = iPlayers[ i ];
+			if (runemod_notify_players_drop)
+			{
+				if ( spec_id != id )
+				{
+					client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item_noty", username, LANG_PLAYER, rune_list_name[rune_id]);
+				}
+			}
+			else 
+			{
+				new specTarget = get_entvar(spec_id, var_iuser2);
+				if (specTarget == id)
+				{
+					client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item", LANG_PLAYER, rune_list_name[rune_id]);
+				}
+			}
+		}
+		
+		client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item", LANG_PLAYER, rune_list_name[rune_id]);
+	}
+}
+
+// Сообщение о том что действие предмета прекратилось по номеру руны
+public rm_drop_item_api_by_rune_id(rune_id,id)
+{
 	if (rune_id >= 0 && is_user_connected(id))
 	{
 		new username[33];
@@ -894,7 +938,7 @@ public rm_is_player_has_rune(id, iBlock)
 {
 	if (is_real_player(id))
 	{
-		return active_rune[id] > 0;
+		return active_rune_id[id] >= 0;
 	}
 	return 0;
 }
@@ -912,14 +956,23 @@ public rm_reset_highlight(id)
 // Фyнкция вызывaeтcя в плaгинax pyн, пoзвoляeт пpинyдитeльнo зacтaвить бaзoвый плaгин oтключить pyнy игpoкy.
 public rm_drop_rune_api(plug_id, id)
 {
-	if ( is_real_player(id) && active_rune[id] == plug_id)
+	if ( is_real_player(id) && active_rune_id[id] >= 0 && rune_list_id[active_rune_id[id]] == plug_id)
 		player_drop_rune(id); 
 }
 
 // Устанавливает стоимость руны
 public rm_set_rune_cost_api(plug_id, imoney)
 {
-	new rune_id = get_runeid_by_pluginid(plug_id);
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (rune_list_id[i] == plug_id)
+			rune_list_icost[i] = imoney;
+	}
+}
+
+// Устанавливает стоимость руны
+public rm_set_rune_cost_api_by_rune_id(rune_id, imoney)
+{
 	if (rune_id >= 0 && rune_id < runes_registered)
 		rune_list_icost[rune_id] = imoney;
 }
@@ -1141,7 +1194,7 @@ public spawn_one_rune(rune_id, spawn_id)
 public bool:rm_give_rune_to_player_api( player_id, rune_id )
 {
 	new bool:is_item = rune_list_isItem[rune_id];
-	if (active_rune[player_id] == 0 || is_item)
+	if (active_rune_id[player_id] == -1 || is_item)
 	{
 		if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
 		{
@@ -1150,7 +1203,7 @@ public bool:rm_give_rune_to_player_api( player_id, rune_id )
 		}
 		
 		if (!is_item)
-			active_rune[player_id] = rune_list_id[rune_id];
+			active_rune_id[player_id] = rune_id;
 		
 		new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id],player_id, 0, rune_id);
 		
@@ -1212,7 +1265,7 @@ public bool:rm_give_rune_to_player_api( player_id, rune_id )
 		else 
 		{
 			if (!is_item)
-				active_rune[player_id] = 0;
+				active_rune_id[player_id] = -1;
 			
 			return false;
 		}
@@ -1230,7 +1283,7 @@ public rune_touch(const rune_ent, const player_id)
 			return PLUGIN_CONTINUE;
 		
 		new bool:is_item = rune_list_isItem[rune_id];
-		if (active_rune[player_id] == 0 || is_item)
+		if (active_rune_id[player_id] == -1 || is_item)
 		{
 			if (!g_bRegGameCMS[player_id] && (rune_list_gamecms[rune_id] || runemod_only_gamecms > 0))
 			{
@@ -1239,7 +1292,7 @@ public rune_touch(const rune_ent, const player_id)
 			}
 			
 			if (!is_item)
-				active_rune[player_id] = rune_list_id[rune_id];
+				active_rune_id[player_id] = rune_id;
 				
 			new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id], player_id, rune_ent, rune_id);
 			
@@ -1314,7 +1367,7 @@ public rune_touch(const rune_ent, const player_id)
 			else 
 			{
 				if (!is_item)
-					active_rune[player_id] = 0;
+					active_rune_id[player_id] = -1;
 			}
 		}
 	}
@@ -1541,13 +1594,9 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 		for( new i = 0; i < iNum; i++ )
 		{
 			new id = iPlayers[ i ];
-			if (active_rune[id] != 0)
+			if (active_rune_id[id] >= 0)
 			{
-				new rune_id = get_runeid_by_pluginid(active_rune[id]);
-				if (rune_id >= 0)
-				{
-					RM_UPDATE_HUD(id,rune_id);
-				}
+				RM_UPDATE_HUD(id,active_rune_id[id]);
 			}
 		}
 		
@@ -1559,17 +1608,13 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 			new specTarget = get_entvar(id, var_iuser2);
 			if (is_real_player(specTarget))
 			{
-				if (active_rune[specTarget] != 0)
+				if (active_rune_id[specTarget] >= 0)
 				{
-					new rune_id = get_runeid_by_pluginid(active_rune[specTarget]);
-					if (rune_id >= 0)
+					RM_UPDATE_HUD(id,active_rune_id[specTarget]);
+					if (!highlightfound && runemod_screen_highlight > 0)
 					{
-						RM_UPDATE_HUD(id,rune_id);
-						if (!highlightfound && runemod_screen_highlight > 0)
-						{
-							highlightfound = true;
-							rm_highlight_screen(active_rune[specTarget],id,RUNEMODE_DEFAULT_HIGHLIGHT_POWER);
-						}
+						highlightfound = true;
+						rm_highlight_screen(active_rune_id[specTarget],id,RUNEMODE_DEFAULT_HIGHLIGHT_POWER);
 					}
 				}
 			}
@@ -1714,7 +1759,7 @@ public rm_shopmenu_handler(id, vmenu, item)
 		if (irunecost <= iaccount)
 		{
 			new is_item = rune_list_isItem[key];
-			if (is_item || active_rune[id] == 0)
+			if (is_item || active_rune_id[id] == 0)
 			{
 				if (rm_give_rune_to_player_api(id,key))
 				{
@@ -1764,7 +1809,7 @@ public rm_buy_rune_api(id,rune_name[])
 	if (irunecost <= iaccount)
 	{
 		new is_item = rune_list_isItem[rune_id];
-		if (is_item || active_rune[id] == 0)
+		if (is_item || active_rune_id[id] == 0)
 		{
 			if (rm_give_rune_to_player_api(id,rune_id))
 			{
