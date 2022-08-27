@@ -17,6 +17,8 @@ rm_random_item = Случайный предмет
 rm_random_item_desc = Получите случайный предмет
 rm_vip_item_name = VIP-Статус
 rm_vip_item_desc = Получите VIP-Статус до конца карты
+rm_servercmd_item_name = Команда сервера
+rm_servercmd_item_desc = Стандартное описание команды сервера
 
 [en]
 rm_alcohol_bad_item_name = RUSSIAN VODKA
@@ -37,3 +39,5 @@ rm_random_item = Random item
 rm_random_item_desc = Give random item
 rm_vip_item_name = VIP
 rm_vip_item_desc = Give VIP for this map
+rm_servercmd_item_name = Server cmd
+rm_servercmd_item_desc = Default 'Server cmd' description

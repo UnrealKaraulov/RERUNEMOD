@@ -597,10 +597,11 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 {
 	//server_print("INIT RUNE: %i %s %s %f %f %f %s %s %i %s^n", PluginIndex,RuneName,RuneDesc, RuneColor1,RuneColor2,RuneColor3,rModel,rSound,rModelID,RuneGiveName);
 	new i = runes_registered;
-	runes_registered++;
 	
 	if (i >= MAX_REGISTER_RUNES)
 		return -1;
+	
+	runes_registered++;
 	
 	rune_list_id[i] = PluginIndex;
 	
@@ -642,6 +643,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	rune_list_model_color[i][0] = RuneColor1;
 	rune_list_model_color[i][1] = RuneColor2;
 	rune_list_model_color[i][2] = RuneColor3;
+	
 	return i;
 }
 
