@@ -638,6 +638,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 	rune_list_model_color[i][0] = RuneColor1;
 	rune_list_model_color[i][1] = RuneColor2;
 	rune_list_model_color[i][2] = RuneColor3;
+	return i;
 }
 
 public Event_ScreenFade(msgid, msgDest, msgEnt)
@@ -777,7 +778,7 @@ public player_drop_all_items(id)
 	for(new i = 0; i < runes_registered;i++)
 	{
 		if (rune_list_isItem[i])
-			rm_drop_rune_callback(rune_list_id[i] , id);
+			rm_drop_rune_callback(rune_list_id[i] , id, i);
 	}
 }
 
@@ -830,7 +831,7 @@ public player_drop_rune(id)
 						client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
 					}
 				}
-				rm_drop_rune_callback(active_rune[id], id);
+				rm_drop_rune_callback(active_rune[id], id, rune_id);
 			}
 		}
 		active_rune[id] = 0;
@@ -1134,7 +1135,7 @@ public spawn_one_rune(rune_id, spawn_id)
 		client_print_color(0, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_print_rune_spawned", LANG_PLAYER, rune_list_name[rune_id]);
 	}
 	
-	rm_spawn_rune_callback(rune_list_id[rune_id],iEnt);
+	rm_spawn_rune_callback(rune_list_id[rune_id],iEnt,rune_id);
 }
 
 public bool:rm_give_rune_to_player_api( player_id, rune_id )
@@ -1151,7 +1152,7 @@ public bool:rm_give_rune_to_player_api( player_id, rune_id )
 		if (!is_item)
 			active_rune[player_id] = rune_list_id[rune_id];
 		
-		new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id],player_id, 0 );
+		new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id],player_id, 0, rune_id);
 		
 		if (give_cb_data != NO_RUNE_PICKUP_SUCCESS)
 		{
@@ -1240,7 +1241,7 @@ public rune_touch(const rune_ent, const player_id)
 			if (!is_item)
 				active_rune[player_id] = rune_list_id[rune_id];
 				
-			new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id], player_id, rune_ent );
+			new give_cb_data = rm_give_rune_callback( rune_list_id[rune_id], player_id, rune_ent, rune_id);
 			
 			if (give_cb_data != NO_RUNE_PICKUP_SUCCESS)
 			{

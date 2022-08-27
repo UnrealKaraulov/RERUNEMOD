@@ -25,9 +25,12 @@ new rune_model_id = -1;
 new Float:g_fMinMoney = 5.0;
 new Float:g_fMaxMoney = 5.0;
 
+new g_iMinMoney = 5;
+new g_iMaxMoney = 5;
+
 public plugin_init()
 {
-	register_plugin("RM_GAMECMS_CASH","2.3","Karaulov"); 
+	register_plugin("RM_GAMECMS_CASH","2.4","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	rm_base_use_rune_as_item( );
 	// Максимальное количество предметов/рун которые могут быть на карте в одно время
@@ -40,9 +43,12 @@ public plugin_init()
 	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
 	rm_base_set_rune_cost(cost);
 	
-	
 	rm_read_cfg_flt(rune_name,"MIN_MONEY",g_fMinMoney,g_fMinMoney);
 	rm_read_cfg_flt(rune_name,"MAX_MONEY",g_fMaxMoney,g_fMaxMoney);
+	
+	// Прибегнуть к хитрости
+	g_iMinMoney = floatround(g_fMinMoney * 10.0); // for example 1.55555 to 15 or 5.55555 to 55
+	g_iMaxMoney = floatround(g_fMaxMoney * 10.0);
 }
 
 public plugin_precache()
@@ -56,7 +62,7 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	cmsapi_add_user_money(id, random_float(g_fMinMoney,g_fMaxMoney));
+	cmsapi_add_user_money(id, float( random_num(g_iMinMoney,g_iMaxMoney) ) / 10.0 );
 }
 
 public plugin_natives() 

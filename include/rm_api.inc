@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.2"
+#define RUNEMOD_VERSION "3.6.3"
 
 
 #define HUD_CHANNEL_ID 3
@@ -59,10 +59,10 @@
 * @param RuneColor		Цвет руны(подсветка игрока, экрана и модели)
 * @param rModel			Путь к модели, иначе используется стандартная
 * @param rSound			Путь к звуку, иначе используется стандартный
-* @param rModelID		Индекс модели из прекеша (только если указана rModel)
+* @param rModelID		Номер модели из прекеша (только если указана rModel)
 * @param RuneGiveName	Название руны для выдачи или покупки
 *
-* @noreturn
+* @return Номер руны
 */
 stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = "", rSound[] = "", rModelID = -1,RuneGiveName[] = "")
 {
@@ -151,12 +151,13 @@ public rm_register_dictionary(const dictname[])
 /*
 * Вызывается когда игрок поднимает руну
 *
-* @param id				Индекс игрока
-* @param ent			Руна
+* @param id				Номер игрока
+* @param ent			Руна или 0 если нет руны
+* @param rune_id		Номер руны
 * 
 * @return RUNE_PICKUP_SUCCESS/NO_RUNE_PICKUP_SUCCESS или ничего
 */
-stock rm_give_rune_callback(OwnIndex, id, ent)
+stock rm_give_rune_callback(OwnIndex, id, ent, rune_id)
 {
 	new PluginReqFunc = get_func_id("rm_give_rune",OwnIndex);
 	if(PluginReqFunc == -1)
@@ -171,6 +172,7 @@ stock rm_give_rune_callback(OwnIndex, id, ent)
 	}
 	callfunc_push_int(id);
 	callfunc_push_int(ent);
+	callfunc_push_int(rune_id);
 	return callfunc_end();
 }
 
@@ -178,10 +180,11 @@ stock rm_give_rune_callback(OwnIndex, id, ent)
 * Вызывается когда руна появляется на карте
 *
 * @param ent				Руна
+* @param rune_id			Номер руны
 * 
 * @noreturn
 */
-stock rm_spawn_rune_callback(OwnIndex, ent)
+stock rm_spawn_rune_callback(OwnIndex, ent, rune_id)
 {
 	new PluginReqFunc = get_func_id("rm_spawn_rune",OwnIndex);
 	if(PluginReqFunc == -1)
@@ -195,6 +198,7 @@ stock rm_spawn_rune_callback(OwnIndex, ent)
 		return PLUGIN_HANDLED;
 	}
 	callfunc_push_int(ent);
+	callfunc_push_int(rune_id);
 	return callfunc_end();
 }
 
@@ -225,11 +229,12 @@ stock rm_remove_rune_callback(OwnIndex, ent)
 /*
 * Вызывается когда игрок теряет руну
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
+* @param rune_id		Номер руны
 * 
 * @noreturn
 */
-stock rm_drop_rune_callback(OwnIndex, id)
+stock rm_drop_rune_callback(OwnIndex, id, rune_id)
 {
 	new PluginReqFunc = get_func_id("rm_drop_rune",OwnIndex);
 	if(PluginReqFunc == -1)
@@ -243,13 +248,14 @@ stock rm_drop_rune_callback(OwnIndex, id)
 		return PLUGIN_HANDLED;
 	}
 	callfunc_push_int(id);
+	callfunc_push_int(rune_id);
 	return callfunc_end();
 }
 
 /*
 * Выбросить руну
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 *
 * @noreturn
 */
@@ -276,7 +282,7 @@ stock rm_base_drop_rune(id)
 /*
 * Прервано дейтсвие предмета
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 *
 * @noreturn
 */
@@ -327,7 +333,7 @@ stock rm_base_use_rune_as_item( )
 /*
 * Активировать свечение модели игрока
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 *
 * @noreturn
 */
@@ -355,7 +361,7 @@ stock rm_base_highlight_player(id)
 /*
 * Активировать подсветку экрана игрока
 *
-* @param id						Индекс игрока
+* @param id						Номер игрока
 * @param hpower(optional)		Сила подсветки
 *
 * @noreturn
@@ -385,7 +391,7 @@ stock rm_base_highlight_screen(id, hpower = RUNEMODE_DEFAULT_HIGHLIGHT_POWER)
 /*
 * Сбросить подсветку игрока
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 *
 * @noreturn
 */
@@ -412,7 +418,7 @@ stock rm_base_disable_highlight(id)
 /*
 * Заблокиовать игрок возможность поднимать руны и предметы
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 * @param iBlock			1 что бы заблокировать, 0 для разблокировки
 *
 * @noreturn
@@ -469,7 +475,7 @@ stock rm_base_swap_rune_id(ent, new_rune_id)
 /*
 * Есть ли у игрока активная руна?
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 * 
 * @return true / false 
 */
@@ -496,7 +502,7 @@ stock bool:rm_base_player_has_rune(id)
 /*
 * Предупредить игрока о необходимости зарегистрироваться на сайте!
 *
-* @param id			Индекс игрока
+* @param id			Номер игрока
 *
 * @noreturn
 *
@@ -610,7 +616,7 @@ stock rm_base_set_rune_cost(imoney = 16000)
 /*
 * Дать руну игроку из внешнего плагина
 *
-* @param id				индекс игрока
+* @param id				Номер игрока
 * @param rune_id		номер руны
 *
 * * @return true/false (успешно или руну нельзя выдать)
@@ -788,7 +794,7 @@ stock rm_buy_rune_by_name(id,rune_name[])
 /*
 * Принудительно забрать руну у игрока.
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 * 
 * @noreturn
 */
@@ -814,7 +820,7 @@ stock rm_force_drop_rune(id)
 /*
 * Принудительно забрать все предметы у игрока.
 *
-* @param id				Индекс игрока
+* @param id				Номер игрока
 * 
 * @noreturn
 */
