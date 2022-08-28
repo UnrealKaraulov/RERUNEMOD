@@ -26,9 +26,16 @@ new player_pid[MAX_PLAYERS+1][64];
 
 public plugin_init()
 {
-	register_plugin("RM_SERVERCMD","1.0","Karaulov"); 
+	register_plugin("RM_SERVERCMD","1.1","Karaulov"); 
 	// Предупредить движок что это предмет а не руна
 	rm_base_use_rune_as_item( );
+}
+
+
+
+public CMD_TEST_FUNCTION_FORWARD(id,str[],int,flt)
+{
+	client_print_color(0,print_team_red,"TEST ID: %d, STRING: %s, INTEGER: %d, FLOAT: %f",id,str,int,flt);
 }
 
 public plugin_precache()
@@ -97,5 +104,154 @@ public rm_give_rune(id,ent,rune_id)
 	replace_string(tmpCmd,charsmax(tmpCmd), "%pid%", player_pid[id], false);
 	replace_string(tmpCmd,charsmax(tmpCmd), "%userip%", player_ip[id], false);
 	replace_string(tmpCmd,charsmax(tmpCmd), "%authid%", player_auth[id], false);
-	server_cmd("%s",tmpCmd);
+	EXECUTE_COMMAND(id,tmpCmd);
+	return RUNE_PICKUP_SUCCESS;
+}
+
+public EXECUTE_COMMAND(id, const cmd[])
+{
+	if (containi(cmd,"EXECUTE_WITH_ID:") == 0)
+	{
+		new tmpLeftPart[MAX_SERVER_CMD_LEN];
+		new tmpRigtPart[MAX_SERVER_CMD_LEN];
+		split2(cmd,tmpLeftPart,charsmax(tmpLeftPart),tmpRigtPart,charsmax(tmpRigtPart),":");
+		
+		new num_of_plugins = get_pluginsnum()
+		for (new i = 0; i < num_of_plugins; ++i)
+		{
+			new tmpFuncID = get_func_id(tmpRigtPart,i);
+			if ( tmpFuncID >= 0 )
+			{
+				callfunc_begin_i(tmpFuncID,i);
+				callfunc_push_int(id);
+				callfunc_end();
+			}
+		}
+	}
+	else if (containi(cmd,"EXECUTE_WITH_ARGS:") == 0)
+	{
+		new funcRealID=-1;
+		static tmpFuncName[64];
+		static tmpPlugName[64];
+		static tmpFuncName2[64];
+		static tmpArgType[32];
+		static tmpArgValue[MAX_SERVER_CMD_LEN];
+		static tmpLeftPart[MAX_SERVER_CMD_LEN];
+		static tmpRigtPart[MAX_SERVER_CMD_LEN];
+		
+		split2(cmd,tmpLeftPart,charsmax(tmpLeftPart),tmpRigtPart,charsmax(tmpRigtPart),":");
+		
+		split2(tmpRigtPart,tmpFuncName,charsmax(tmpFuncName),tmpLeftPart,charsmax(tmpLeftPart),":"); 
+		
+		funcRealID = str_to_num(tmpFuncName);
+		num_to_str(funcRealID,tmpFuncName2,charsmax(tmpFuncName2));
+		
+		if (!equal(tmpFuncName,tmpFuncName2))
+		{
+			funcRealID = -1;
+			split2(tmpLeftPart,tmpPlugName,charsmax(tmpPlugName),tmpArgValue,charsmax(tmpArgValue),":"); 
+			if (containi(tmpPlugName,".amx") > 0)
+			{
+				split2(tmpLeftPart,tmpPlugName,charsmax(tmpPlugName),tmpLeftPart,charsmax(tmpLeftPart),":"); 
+			}
+			else 
+			{
+				tmpPlugName[0] = '^0';
+			}
+		}
+		else 
+		{
+			split2(tmpLeftPart,tmpPlugName,charsmax(tmpPlugName),tmpLeftPart,charsmax(tmpLeftPart),":"); 
+		}
+		
+		new num_of_plugins = get_pluginsnum();
+		for (new i = 0; i < num_of_plugins; ++i)
+		{
+			new tmpFuncID = -1;
+			if (funcRealID == -1)
+				tmpFuncID = get_func_id(tmpFuncName,i);
+			else 
+			{
+				tmpFuncID = funcRealID;
+			}
+			
+			new tmpPlugName2[32]
+			if (strlen(tmpPlugName) > 0)
+			{
+				get_plugin(i, tmpPlugName2, charsmax(tmpPlugName2))
+				if (!equal(tmpPlugName2,tmpPlugName))
+					continue;
+			}
+			
+			if ( tmpFuncID >= 0 )
+			{
+				new callsuccess = callfunc_begin_i(tmpFuncID, i);
+				if (callsuccess != 1)
+				{				
+					log_error(AMX_ERR_NOTFOUND, "Problem with calling function (%s - %i) in plugin (%s - %i)!",tmpFuncName,tmpFuncID,tmpPlugName2,i);
+					break;
+				}
+				
+				while(containi(tmpLeftPart,":") != -1)
+				{	
+					split2(tmpLeftPart,tmpArgType,charsmax(tmpArgType),tmpLeftPart,charsmax(tmpLeftPart),":");
+					if ( containi(tmpLeftPart,":") == -1 )
+					{
+						copy(tmpArgValue,charsmax(tmpArgValue),tmpLeftPart);
+					}
+					else 
+					{
+						split2(tmpLeftPart,tmpArgValue,charsmax(tmpArgValue),tmpLeftPart,charsmax(tmpLeftPart),":");
+					}
+					if (equal(tmpArgType,"INTEGER"))
+					{
+						new tmpvar = 0;
+						if (equal(tmpArgValue,"CALLERID"))
+						{
+							tmpvar = id;
+						}
+						else 
+						{
+							tmpvar = str_to_num(tmpArgValue);
+						}
+						
+						callfunc_push_int(tmpvar);
+					}
+					else if (equal(tmpArgType,"STRING"))
+					{
+						callfunc_push_str(tmpArgValue);
+					}
+					else 
+					{
+						new Float:tmpvar = str_to_float(tmpArgValue);
+						callfunc_push_float(tmpvar);
+					}
+				}
+				callfunc_end();
+				
+				if (funcRealID != -1)
+					break;
+			}
+		}
+	}
+	else 
+	{
+		server_cmd("%s",cmd);
+	}
+}
+
+
+stock split2(const szInput[], szLeft[], sL_Max, szRight[], sR_Max, const szDelim[])
+{
+	new i = containi(szInput,szDelim);
+	if (i <= 0)
+	{
+		szLeft[0] = '^0';
+		szRight[0] = '^0';
+		return 0;
+	}
+	copy(szLeft,sL_Max,szInput);
+	szLeft[i] = '^0';
+	copy(szRight,sR_Max,szInput[i + 1]);
+	return 1;
 }
