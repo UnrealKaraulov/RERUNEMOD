@@ -1,4 +1,3 @@
-# RERUNEMOD
- Runemod Reloaded (More easy)
+# Runemod Reloaded
 
-Adding runes to CS 1.6 
+Adding items and / or runes to CS 1.6 
