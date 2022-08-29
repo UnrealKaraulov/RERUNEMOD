@@ -11,3 +11,22 @@
 7. Смените карту на сервере
 
 Если все сделали верно, останется только настроить /addons/amxmodx/configs/plugins/runemod.cfg
+
+
+
+
+
+
+
+
+
+
+
+
+Проблемы и их решение. П/Р
+
+
+П: Руны не появляются на карте, или появляются очень редко
+Р: Уменьшите таймер появления следующей руны [runemod_spawntime]
+Р: Уменьшите радиус runemod_respawn_distance если у вас CSDM сервер и много спавн точек на карте.
+Р: Если карта маленькая, уменьшите runemod_respawn_distance, runemod_player_distance и runemod_respawn_distance
