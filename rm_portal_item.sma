@@ -65,14 +65,20 @@ new g_iMaxplayers
 
 new rune_model_id = -1
 
-new rune_name[] = "rm_portal_rune_name";
-new rune_descr[] = "rm_portal_rune_desc";
+new rune_name[] = "rm_portal_item_name";
+new rune_descr[] = "rm_portal_item_desc";
 
 new rune_model_path[64] = "models/next_portalgun/w_portalgun.mdl";
 new rune_sound_path[64] = "sound/rm_reloaded/portal_gun.wav";
 
 
 public plugin_precache() {	
+	// Регистрация руны
+	rm_register_rune(rune_name,rune_descr,Float:{25.0,25.0,25.0}, rune_model_path, rune_sound_path, rune_model_id);
+	
+	// Класс руны: предмет
+	rm_base_use_rune_as_item( );
+	
 	/* Чтение конфигурации */
 	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
 	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
@@ -105,7 +111,6 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	rm_register_rune(rune_name,rune_descr,Float:{25.0,25.0,25.0}, rune_model_path, rune_sound_path, rune_model_id);
 	
 	g_pCommonTr = create_tr2()
 	
