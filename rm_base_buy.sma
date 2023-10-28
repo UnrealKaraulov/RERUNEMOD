@@ -58,6 +58,10 @@ public fn_buy_rune(id, level, cid)
 }
 
 /*
+Добавлена совместимость с AES https://dev-cs.ru/resources/362/
+
+
+Пример выдачи предмета деньги GAMECMS, предмет может быть любой
 
 <call>
 plugin = rm_base_buy.amxx
@@ -66,6 +70,8 @@ function = AES_GIVE_ITEM
 points = 10
 flags = rm_gamecms_money_item_name
 days = 0
+
+Пример выдачи руны невидимости
 
 <call>
 plugin = rm_base_buy.amxx
@@ -79,7 +85,6 @@ days = 0
 
 public AES_GIVE_ITEM(id, item[])
 {
-	rm_force_drop_rune(id);
 	new rune_id = rm_get_rune_by_name(item);
 	if (rune_id != -1)
 	{
