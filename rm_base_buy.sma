@@ -70,7 +70,7 @@ days = 0
 <call>
 plugin = rm_base_buy.amxx
 name = Руна невидимости
-function = AddRune
+function = AES_REPLACE_RUNE
 points = 10
 flags = rm_invis_rune_name
 days = 0
