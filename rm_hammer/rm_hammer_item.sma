@@ -36,6 +36,11 @@ public plugin_init()
 	
 	/* Чтение конфигурации */
 	rm_read_cfg_flt(rune_name,"COOLDOWN",g_fCooldown,g_fCooldown);
+	
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 10;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public plugin_precache()
