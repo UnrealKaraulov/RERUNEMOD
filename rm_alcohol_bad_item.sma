@@ -31,7 +31,9 @@ public plugin_init()
 	
 	rm_read_cfg_flt(rune_name,"ACTIVE_SECONDS",g_fActiveTime,g_fActiveTime);
 	// Максимальное количество предметов/рун которые могут быть на карте в одно время
-	rm_base_set_max_count( 1 );
+	new max_count = 1;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public plugin_precache()

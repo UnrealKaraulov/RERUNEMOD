@@ -670,6 +670,19 @@ public rm_get_rune_by_name_api(rune_name[])
 		if (equali(rune_name,rune_list_name[i]))
 			return i;
 	}
+	
+	// FIX AES FLAGS MAX CHAR[30]
+	new name_len = strlen(rune_name);
+	
+	for(new i = 0; i < runes_registered;i++)
+	{
+		if (strlen(rune_list_name[i]) <= name_len)
+			continue;
+			
+		if (equali(rune_name,rune_list_name[i],name_len))
+			return i;
+	}
+	
 	return -1;
 }
 

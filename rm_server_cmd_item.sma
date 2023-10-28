@@ -65,6 +65,13 @@ public plugin_precache()
 		new rune_id = rm_register_rune(tmpCmdNAME,tmpCmdDESCR,Float:{255.0,255.0,255.0}, rune_model_path[i],_,rune_model_id[i]);
 		rune_rune_id[i] = rune_id;
 		
+		/*
+		// Максимальное количество предметов/рун которые могут быть на карте в одно время
+		new max_count = 20;
+		rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+		rm_base_set_max_count( max_count );
+		*/
+		
 		new cost = 0; // 0 знач незя купить по умолчанию!
 		formatex(tmpCmdVar,charsmax(tmpCmdVar),"SERVERCMD%d_COST",i+1);
 		rm_read_cfg_int(rune_name,tmpCmdVar,0,cost);

@@ -35,6 +35,11 @@ public plugin_init()
 	
 	/* Чтение конфигурации */
 	rm_read_cfg_flt(rune_name,"SPEED",g_fSpeed,g_fSpeed);
+
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 10;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public update_server_speed(id)

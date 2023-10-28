@@ -14,6 +14,11 @@ public plugin_init()
 	rm_base_use_rune_as_item( );
 	
 	g_CurrentRuneID = rm_get_rune_by_name(rune_name);
+
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 10;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public update_random_item( ent )

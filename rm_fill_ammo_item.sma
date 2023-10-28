@@ -19,6 +19,12 @@ public plugin_init()
 	new cost = 1100;
 	rm_read_cfg_int(rune_name,"COST_MONEY",cost,cost);
 	rm_base_set_rune_cost(cost);
+	
+	
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new cost = 10;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",cost,cost);
+	rm_base_set_max_count( cost );
 }
 
 public plugin_precache()

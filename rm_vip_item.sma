@@ -33,10 +33,11 @@ public plugin_init()
 	
 	// Класс руны: предмет
 	rm_base_use_rune_as_item( );
-	
-	// Указать максимальное число предметов данного типа которое может появится на карте
-	rm_base_set_max_count( 1 );
-	
+
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 1;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public plugin_precache()

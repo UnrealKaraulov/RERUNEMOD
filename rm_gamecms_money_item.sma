@@ -33,8 +33,6 @@ public plugin_init()
 	register_plugin("RM_GAMECMS_CASH","2.4","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	rm_base_use_rune_as_item( );
-	// Максимальное количество предметов/рун которые могут быть на карте в одно время
-	rm_base_set_max_count( 1 );
 	// Предмет может поднять только зарегистрированный в GAMECMS
 	rm_need_gamecms_register( );
 	
@@ -49,6 +47,12 @@ public plugin_init()
 	// Прибегнуть к хитрости
 	g_iMinMoney = floatround(g_fMinMoney * 10.0); // for example 1.55555 to 15 or 5.55555 to 55
 	g_iMaxMoney = floatround(g_fMaxMoney * 10.0);
+	
+
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 1;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public plugin_precache()

@@ -26,6 +26,11 @@ public plugin_init()
 	
 	rm_read_cfg_flt("GENERAL","MAXIMUM_HP",g_fMaxHP,g_fMaxHP);
 	rm_read_cfg_flt("GENERAL","HP_REGEN",g_fMedkitHP,g_fMedkitHP);
+
+	// Максимальное количество предметов/рун которые могут быть на карте в одно время
+	new max_count = 10;
+	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
+	rm_base_set_max_count( max_count );
 }
 
 public plugin_precache()
