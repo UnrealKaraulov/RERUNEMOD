@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.8"
+#define RUNEMOD_VERSION "3.6.9"
 
 
 #define HUD_CHANNEL_ID 3
@@ -38,6 +38,9 @@
 
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 128
+
+// Максимальное количество спавн точек
+#define MAX_SPAWN_POINTS 256
 
 #define RUNEMODE_DEFAULT_HIGHLIGHT_POWER 100
 

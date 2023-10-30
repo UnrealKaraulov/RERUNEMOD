@@ -110,8 +110,6 @@ public PM_Move(const id)
 
 public rm_give_rune(id)
 {
-	if (rm_base_player_has_rune(id))
-		return NO_RUNE_PICKUP_SUCCESS;
 	if (task_exists(id))
 		remove_task(id);
 	g_bHasAlcohol[id] = true;
