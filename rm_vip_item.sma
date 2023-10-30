@@ -13,7 +13,7 @@ new g_uVipFlags = 0;
 
 public plugin_init()
 {
-	register_plugin("RM_CASH","2.4","Karaulov"); 
+	register_plugin("RM_VIP_FLAG","1.2","Karaulov"); 
 	
 	new rune_flags[] = "ab";
 	/* Чтение конфигурации */
