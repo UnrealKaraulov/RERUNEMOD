@@ -1166,8 +1166,6 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		return false;
 	}
 	
-	spawn_has_ent[spawn_id] = iEnt;
-	
 	if (rune_list_isItem[rune_id])
 	{
 		if (runemod_max_items >= runemod_spawned_items)
@@ -1184,6 +1182,9 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		}
 		runemod_spawned_runes++;
 	}
+	
+	
+	spawn_has_ent[spawn_id] = iEnt;
 	
 	rune_list_count[rune_id]++;
 
