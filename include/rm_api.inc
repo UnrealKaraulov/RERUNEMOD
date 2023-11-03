@@ -959,7 +959,6 @@ public rm_get_rune_spawnid( id )
 	return floatround(get_entvar(id, var_fuser3));
 }
 
-
 // Фyнкция coxpaняeт число в руну
 public rm_set_rune_num( id, num )
 {
@@ -971,7 +970,6 @@ public rm_get_rune_num( id )
 {
 	return get_entvar(id, var_iuser4);
 }
-
 
 stock rg_set_rendering(const pEntity, const fx = kRenderFxNone, mode = kRenderNormal, const Float:flColor[] = {0.0, 0.0, 0.0}, const Float:iAmount = 0.0)
 {

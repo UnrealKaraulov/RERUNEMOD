@@ -5,7 +5,7 @@
 #include <xs>
 #include <rm_api>
 
-// #define DEBUG_ENABLED
+//#define DEBUG_ENABLED
 
 // Koличecтвo pyн
 new runes_registered = 0;
@@ -87,7 +87,7 @@ new runemod_restart_cleanup;
 // Таймер добавления рун
 new runemod_spawntime = 10;
 
-// Максимальное спавн точек для рун
+// Максимальное спавн точек
 new runemod_spawncount;
 
 // Максимальное спавн точек для рун
@@ -836,7 +836,7 @@ public player_drop_all_items(id)
 	for(new i = 0; i < runes_registered;i++)
 	{
 		if (rune_list_isItem[i])
-			rm_drop_rune_callback(rune_list_id[i] , id, i);
+			rm_drop_rune_callback(rune_list_id[i], id, i);
 	}
 }
 
@@ -1168,7 +1168,7 @@ public rm_is_rune_item_api(rune_id)
 public bool:spawn_one_rune(rune_id, spawn_id)
 {
 #if defined DEBUG_ENABLED
-	log_amx("[TRACE] Create new rune '%s' in spawn number '%i", rune_list_name[rune_id],spawn_id);
+	log_amx("[TRACE] Create new rune '%s' in spawn number '%i' max spawn count '%i'", rune_list_name[rune_id], spawn_id, filled_spawns);
 #endif
 	if (rune_list_isItem[rune_id])
 	{
@@ -1544,7 +1544,9 @@ public spawn_runes( )
 	new bool:reversed = random_num(0,100) > 50;
 	new random_spawn = random_num(1,filled_spawns) - 1;
 	new need_runes = runemod_perspawn;
-	
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] Need create '%i' runes", need_runes);
+#endif
 	new iPlayers[ 32 ], iNum;
 	get_players( iPlayers, iNum ,"ah" );
 	
@@ -1644,6 +1646,9 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 // Taймep coздaния cпaвнoв и зaпoлнeния иx pyнaми
 public RM_SPAWN_RUNE( id )
 {
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] RM_SPAWN_RUNE tick");
+#endif
 	if (runemod_active && !g_bCurrentMapIgnored)
 	{
 		if (runes_registered > 0 && g_iRoundLeft >= runemod_start_round)
