@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.10"
+#define RUNEMOD_VERSION "3.6.11"
 
 
 #define HUD_CHANNEL_ID 3
@@ -50,6 +50,9 @@
 
 #define RUNE_PICKUP_SUCCESS 0
 #define NO_RUNE_PICKUP_SUCCESS 1
+
+#define PICKUP_SUCCESS RUNE_PICKUP_SUCCESS
+#define PICKUP_ERROR NO_RUNE_PICKUP_SUCCESS
 
 #define TSC_Vector_MA(%1,%2,%3,%4)	(%4[0] = %2[0] * %3 + %1[0], %4[1] = %2[1] * %3 + %1[1])
 

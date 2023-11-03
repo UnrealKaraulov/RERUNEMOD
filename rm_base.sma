@@ -5,6 +5,8 @@
 #include <xs>
 #include <rm_api>
 
+// #define DEBUG_ENABLED
+
 // Koличecтвo pyн
 new runes_registered = 0;
 
@@ -417,6 +419,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 {
 	if (task_exists(id))
 		remove_task(id);
+		
 	g_bRegGameCMS[id] = false;
 	lock_rune_pickup[id] = 0;
 	player_drop_rune(id);
@@ -826,6 +829,10 @@ public rm_highlight_screen(rune_id, id, hpower)
 // Функция сбрасывает действия всех предметов
 public player_drop_all_items(id)
 {
+	if (!is_real_player(id))
+	{
+		return;
+	}
 	for(new i = 0; i < runes_registered;i++)
 	{
 		if (rune_list_isItem[i])
@@ -1160,15 +1167,12 @@ public rm_is_rune_item_api(rune_id)
 // Coбcтвeннo coздaeм oднy pyнy
 public bool:spawn_one_rune(rune_id, spawn_id)
 {
-	new iEnt = rg_create_entity("info_target");
-	if (!iEnt || is_nullent(iEnt))
-	{
-		return false;
-	}
-	
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] Create new rune '%s' in spawn number '%i", rune_list_name[rune_id],spawn_id);
+#endif
 	if (rune_list_isItem[rune_id])
 	{
-		if (runemod_max_items >= runemod_spawned_items)
+		if (runemod_spawned_items >= runemod_max_items)
 		{
 			return false;
 		}
@@ -1176,13 +1180,18 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	}
 	else 
 	{
-		if (runemod_max_runes >= runemod_spawned_runes)
+		if (runemod_spawned_runes >= runemod_max_runes)
 		{
 			return false;
 		}
 		runemod_spawned_runes++;
 	}
 	
+	new iEnt = rg_create_entity("info_target");
+	if (!iEnt || is_nullent(iEnt))
+	{
+		return false;
+	}
 	
 	spawn_has_ent[spawn_id] = iEnt;
 	

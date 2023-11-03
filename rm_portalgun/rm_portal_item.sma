@@ -9,7 +9,7 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.7NOREAPI"
+#define VERSION "2.8NOREAPI"
 #define AUTHOR "karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
@@ -73,21 +73,25 @@ new rune_sound_path[64] = "sound/rm_reloaded/portal_gun.wav";
 
 
 public plugin_precache() {	
+	
+	/* Чтение конфигурации */
+	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
+	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
+
+	rune_model_id = precache_model(rune_model_path)
+	
+	// Загрузка словаря
+	rm_register_dictionary("runemod_portal_item.txt");
+	
 	// Регистрация руны
 	rm_register_rune(rune_name,rune_descr,Float:{25.0,25.0,25.0}, rune_model_path, rune_sound_path, rune_model_id);
 	
 	// Класс руны: предмет
 	rm_base_use_rune_as_item( );
 	
-	/* Чтение конфигурации */
-	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
-	rm_read_cfg_str(rune_name,"sound",rune_sound_path,rune_sound_path,charsmax(rune_sound_path));
-
 	g_idPortalModel = precache_model(g_sPortalModel)
 	g_idPortalGunModelV = precache_model(g_sPortalGunModelV)
 	precache_model(g_sPortalGunModelP)
-	
-	rune_model_id = precache_model(rune_model_path)
 	
 	precache_sound(g_sPortalGunSoundShot1)
 	precache_sound(g_sPortalGunSoundShot2)

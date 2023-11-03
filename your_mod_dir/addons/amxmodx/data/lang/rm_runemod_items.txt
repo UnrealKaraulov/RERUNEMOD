@@ -19,8 +19,6 @@ rm_vip_item_name = VIP-Статус
 rm_vip_item_desc = Получите VIP-Статус до конца карты
 rm_servercmd_item_name = Команда сервера
 rm_servercmd_item_desc = Стандартное описание команды сервера
-rm_portal_rune_name = Портал
-rm_portal_rune_desc = Игрок может открывать порталы и ходить по ним
 
 [en]
 rm_alcohol_bad_item_name = RUSSIAN VODKA
@@ -43,5 +41,3 @@ rm_vip_item_name = VIP
 rm_vip_item_desc = Give VIP for this map
 rm_servercmd_item_name = Server cmd
 rm_servercmd_item_desc = Default 'Server cmd' description
-rm_portal_rune_name = Portal
-rm_portal_rune_desc = Player can use PORTAL weapon
