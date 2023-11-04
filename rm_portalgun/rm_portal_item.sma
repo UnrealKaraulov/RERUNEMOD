@@ -81,7 +81,7 @@ public plugin_precache() {
 	rune_model_id = precache_model(rune_model_path)
 	
 	// Загрузка словаря
-	rm_register_dictionary("runemod_portal_item.txt");
+	rm_register_dictionary("runemod_pg_item.txt");
 	
 	// Регистрация руны
 	rm_register_rune(rune_name,rune_descr,Float:{25.0,25.0,25.0}, rune_model_path, rune_sound_path, rune_model_id);

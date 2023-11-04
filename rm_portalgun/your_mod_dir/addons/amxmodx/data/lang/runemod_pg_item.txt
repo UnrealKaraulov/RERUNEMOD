@@ -1,6 +1,6 @@
 [ru]
-rm_re_portal_item_name = Портал пушка (ЛКМ/ПКМ)
-rm_re_portal_item_desc = Выберите нож и нажмите 1 раз 'DROP' (G)
+rm_portal_item_name = Портал (ЛКМ/ПКМ)
+rm_portal_item_desc = Игрок может открывать порталы и ходить по ним.
 [en]
-rm_re_portal_item_name = Portal Gun (LMB/RMB mouse)
-rm_re_portal_item_desc = Select knife and press DROP (G) one time
+rm_portal_item_name = Portal Gun
+rm_portal_item_desc = Player can use PORTAL weapon (knife)
