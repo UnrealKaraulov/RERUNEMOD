@@ -988,13 +988,23 @@ public rm_lock_pickup(id, iBlock)
 }
 
 // Игрок находится под действием руны?
-public rm_is_player_has_rune(id, iBlock)
+public rm_is_player_has_rune(id)
 {
 	if (is_real_player(id))
 	{
 		return active_rune_id[id] >= 0;
 	}
 	return 0;
+}
+
+// Получить активную руну игрока
+public rm_player_active_rune(id)
+{
+	if (is_real_player(id))
+	{
+		return active_rune_id[id];
+	}
+	return -1;
 }
 
 // Сбросить подсветку игрока

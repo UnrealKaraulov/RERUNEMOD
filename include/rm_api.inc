@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.6.11"
+#define RUNEMOD_VERSION "3.7.0"
 
 
 #define HUD_CHANNEL_ID 3
@@ -58,7 +58,7 @@
 
 
 /*
-* Регистрации новой руны
+* Регистрации нового предмета или руны
 *
 * @param RuneName		Название руны
 * @param RuneDesc		Описание руны
@@ -155,7 +155,7 @@ public rm_register_dictionary(const dictname[])
 }
 
 /*
-* Вызывается когда игрок поднимает руну
+* Вызывается когда игрок поднимает предмет или руну
 *
 * @param id				Номер игрока
 * @param ent			Руна или 0 если нет руны
@@ -183,7 +183,7 @@ stock rm_give_rune_callback(OwnIndex, id, ent, rune_id)
 }
 
 /*
-* Вызывается когда руна появляется на карте
+* Вызывается когда предмет или руна появляется на карте
 *
 * @param ent				Руна
 * @param rune_id			Номер руны
@@ -209,7 +209,7 @@ stock rm_spawn_rune_callback(OwnIndex, ent, rune_id)
 }
 
 /*
-* Вызывается когда руна удаляется с карты
+* Вызывается когда предмет или руна удаляется с карты
 *
 * @param ent				Руна
 * 
@@ -532,6 +532,34 @@ stock bool:rm_base_player_has_rune(id)
 	}
 	callfunc_push_int(id);
 	return callfunc_end() > 0;
+}
+
+
+/*
+* Какая у игрока активная руна?
+*
+* @param id				Номер игрока
+* 
+* @return -1 или номер руны
+*/
+
+stock rm_base_player_get_rune(id)
+{
+	new BasePluginIndex = rm_base_plugin_id();
+	new BasePluginRegFunc = get_func_id("rm_player_active_rune",BasePluginIndex);
+	if (BasePluginRegFunc == -1)
+	{
+		log_amx("NO BASE FUNC FOUND 4");
+		return false;
+	}
+	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
+	if(Temp != 1)
+	{
+		log_amx("CALL BASE FUNC ERROR 4");
+		return false;
+	}
+	callfunc_push_int(id);
+	return callfunc_end();
 }
 
 /*

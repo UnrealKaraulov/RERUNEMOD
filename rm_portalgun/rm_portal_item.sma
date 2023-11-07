@@ -140,6 +140,8 @@ public plugin_init() {
 	RegisterHam(Ham_Item_PostFrame, "weapon_knife", "@knife_postframe")
 	register_forward(FM_UpdateClientData, "@update_client_data_p", 1)
 	
+	register_clcmd("drop", "@cmd_drop")
+	
 	register_touch(PORTAL_CLASSNAME, "*", "@portal_touch")
 }
 
@@ -398,83 +400,6 @@ public bool:is_can_portal(iPlayer)
 	return PLUGIN_HANDLED
 }
 
-@cmd_say_portalgun(id) {
-	if(~get_user_flags(id) & ADMIN_MENU)
-		return PLUGIN_CONTINUE
-	
-	new menu = menu_create("\yPortal Gun", "@menu_portalgun_handler")
-	new players[32], num
-	new str[64], player_num[11]
-
-	get_players(players, num, "ch")
-
-	for(new i; i < num; i++) {
-		get_user_name(players[i], str, charsmax(str))
-		if(HAS_PORTAL_GUN(players[i])) {
-			add(str, charsmax(str), " \r[remove gun]")
-		}
-		else {
-			add(str, charsmax(str), " \y[add gun]")
-		}
-		
-		num_to_str(players[i], player_num, charsmax(player_num))
-		menu_additem(menu, str, player_num, 0)
-	}
-	
-	menu_display(id, menu, 0)
-	
-	return PLUGIN_HANDLED
-}
-
-@menu_portalgun_handler(id, menu, item) {
-	if(item == MENU_EXIT) {
-		menu_destroy(menu)
-		
-		return PLUGIN_HANDLED
-	}
-
-	new data[6], name[64], access, callback
-	
-	menu_item_getinfo(menu, item, access, data, charsmax(data), name, charsmax(name), callback)
-
-	new player = str_to_num(data)
-
-	if(!is_user_connected(player)) {
-		menu_destroy(menu)
-		@cmd_say_portalgun(id)
-		client_print(id, print_center, "Player not connected")
-		
-		return PLUGIN_HANDLED
-	}
-
-	if(HAS_PORTAL_GUN(player)) {
-		portal_remove_pair(player)
-		HAS_PORTAL_GUN(player) = 0
-		
-		if(is_user_alive(player) && VISIBLE_PORTAL_GUN(player) && get_user_weapon(player) == CSW_KNIFE) {
-			VISIBLE_PORTAL_GUN(player) = 0
-			ExecuteHamB(Ham_Item_Deploy, get_pdata_cbase(player, m_pActiveItem))
-		}
-		else {
-			VISIBLE_PORTAL_GUN(player) = 0
-		}
-		
-		client_print(player, print_chat, "[%s] Portal Gun was removed by admin.", PLUGIN)
-	}
-	else {
-		portal_create_pair(player)
-		HAS_PORTAL_GUN(player) = 1
-		VISIBLE_PORTAL_GUN(player) = 0
-		
-		client_print(player, print_chat, "[%s] You received a portal gun! Select knife and press G!", PLUGIN)
-	}
-
-	menu_destroy(menu)
-	@cmd_say_portalgun(id)
-
-	return PLUGIN_HANDLED
-}
-
 public native_give(id) {
 	if(HAS_PORTAL_GUN(id))
 		return 0
@@ -492,8 +417,6 @@ public native_give(id) {
 	return 1
 }
 
-
-
 public  native_remove(id) {
 	if(!HAS_PORTAL_GUN(id))
 		return 0
@@ -504,8 +427,7 @@ public  native_remove(id) {
 	{
 		set_pev_string(id, pev_viewmodel2, g_knifeV)
 		set_pev_string(id, pev_weaponmodel2, g_knifeP)
-		client_cmd(id,"slot2");
-		client_cmd(id,"slot2");
+		client_cmd(id,"slot1;slot1;slot2;slot2");
 	}
 	return 1
 }
