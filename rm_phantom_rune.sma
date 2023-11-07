@@ -1,10 +1,11 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <rm_api>
+#include <fun>
 
 new Float:g_Phantom[MAX_PLAYERS + 1] = {0.0,...};
 new Float:g_Phantom_origins[MAX_PLAYERS + 1][3];
-new bool:g_Phantom_activated[MAX_PLAYERS + 1] = {false, ...};
+new g_Phantom_activated[MAX_PLAYERS + 1] = {0, ...};
 
 new rune_model_id = -1;
 
@@ -14,9 +15,12 @@ new rune_descr[] = "rm_phantom_rune_desc";
 new rune_model_path[64] = "models/rm_reloaded/rune_magenta.mdl";
 new rune_sound_path[64] = "sound/rm_reloaded/phantom.wav";
 
+new Float:g_flNoclipSpeed = 500.0;
+new Float:g_flMaxDistance = 1300.0;
+
 public plugin_init()
 {
-	register_plugin("RM_PHANTOM","2.5","Karaulov"); 
+	register_plugin("RM_PHANTOM","3.0","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,255.0}, rune_model_path, rune_sound_path, rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	
@@ -29,18 +33,46 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	
+	// Скорость в призрачном режиме
+	rm_read_cfg_flt(rune_name,"NOCLIP_SPEED",g_flNoclipSpeed,g_flNoclipSpeed);
+	
+	// Возврат обратно при превышении дистанции
+	rm_read_cfg_flt(rune_name,"NOCLIP_DISTANCE",g_flMaxDistance,g_flMaxDistance);
 }
 
 public PM_Move(const id)
 {
 	if( is_real_player(id) )
 	{
-		if (g_Phantom_activated[id])
+		if (g_Phantom_activated[id] == 1)
 		{
-			set_entvar(id, var_speed, 500.0);
-			set_entvar(id, var_maxspeed, 240.0);
+			new cmd = get_pmove( pm_cmd );
+			set_movevar(mv_maxspeed, g_flNoclipSpeed);
+			set_user_maxspeed(id,  g_flNoclipSpeed);
+			set_pmove(pm_maxspeed, g_flNoclipSpeed);
+			set_pmove(pm_clientmaxspeed, g_flNoclipSpeed);
+			new Float:fmove = get_ucmd(cmd, ucmd_forwardmove);
+			if (fmove > 20.0 && fmove < g_flNoclipSpeed)
+				fmove = g_flNoclipSpeed;
+			else if (fmove < -20.0 && fmove > -g_flNoclipSpeed)
+				fmove = -g_flNoclipSpeed;
+			set_ucmd(cmd, ucmd_forwardmove, fmove);
+			
+			
+			fmove = get_ucmd(cmd, ucmd_sidemove);
+			if (fmove > 20.0 && fmove < g_flNoclipSpeed)
+				fmove = g_flNoclipSpeed;
+			else if (fmove < -20.0 && fmove > -g_flNoclipSpeed)
+				fmove = -g_flNoclipSpeed;
+			set_ucmd(cmd, ucmd_sidemove, fmove);
+		}
+		else if (g_Phantom_activated[id] == 2)
+		{
+			set_user_maxspeed(id, 1.0)
 			set_pmove(pm_maxspeed, 300.0)
 			set_pmove(pm_clientmaxspeed, 240.0)
+			g_Phantom_activated[id] = 0;
 		}
 	}
 }
@@ -77,14 +109,13 @@ public rm_give_rune(id)
 public rm_drop_rune(id)
 {
 	g_Phantom[id] = 0.0;
-	if (g_Phantom_activated[id] && is_user_alive(id))
+	if (g_Phantom_activated[id] == 1 && is_user_alive(id))
 	{
 		if (!rm_unstuck_player(id) && !is_empty_origin(id))
 		{
 			engfunc(EngFunc_SetOrigin, id, g_Phantom_origins[id]);
 		}
 	}
-	g_Phantom_activated[id] = false;
 	reset_origins(id);
 	deactivate_phantom_mode(id);
 	if (task_exists(id))
@@ -101,9 +132,7 @@ public activate_phantom_mode(id)
 {
 	UTIL_ScreenFade(id,{0,0,255},1.0,6.0,240,FFADE_MODULATE,true,true);
 	set_entvar(id, var_movetype, MOVETYPE_NOCLIP);
-	g_Phantom_activated[id] = true;
-	set_entvar(id, var_speed, 500.0);
-	set_entvar(id, var_maxspeed, 240.0);
+	g_Phantom_activated[id] = 1;
 }
 
 public deactivate_phantom_mode(id)
@@ -112,7 +141,7 @@ public deactivate_phantom_mode(id)
 	{
 		UTIL_ScreenFade(id, _, _, _,_,true,true);
 		set_entvar(id, var_movetype, MOVETYPE_WALK);
-		g_Phantom_activated[id] = false;
+		g_Phantom_activated[id] = 2;
 		reset_origins(id);
 	}
 }
@@ -121,7 +150,7 @@ public phantom_think(id)
 {
 	if (g_Phantom[id] > 0.0 )
 	{
-		if (!g_Phantom_activated[id])
+		if (g_Phantom_activated[id] == 0)
 		{
 			if (get_entvar(id, var_button) & IN_FORWARD)
 			{
@@ -129,12 +158,12 @@ public phantom_think(id)
 				{
 					if (is_empty_origin(id))
 					{
-						get_entvar(id, var_origin, g_Phantom_origins[id])
+						get_entvar(id, var_origin, g_Phantom_origins[id]);
 					}
 					else 
 					{
-						new Float:Origin[3]
-						get_entvar(id, var_origin, Origin)
+						new Float:Origin[3];
+						get_entvar(id, var_origin, Origin);
 						if ( get_distance_f(Origin,g_Phantom_origins[id]) < 5.0 )
 						{
 							activate_phantom_mode(id);
@@ -154,7 +183,9 @@ public phantom_think(id)
 		}
 		else 
 		{
-			if (get_gametime() - g_Phantom[id] > 5.0)
+			new Float:Origin[3];
+			get_entvar(id, var_origin, Origin);
+			if (get_gametime() - g_Phantom[id] > 3.5 || get_distance_f(Origin,g_Phantom_origins[id]) > g_flMaxDistance)
 			{
 				if (!rm_unstuck_player(id) && !is_empty_origin(id))
 				{

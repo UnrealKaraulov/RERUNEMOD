@@ -33,6 +33,7 @@ public plugin_init()
 	register_plugin("RM_TELEPORT","2.7","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0},rune_model_path, rune_sound_path, rune_model_id);
 	g_pCommonTr = create_tr2();
+	
 	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "knife_attack_pressed", 1);
 	
 	/* Чтение конфигурации */

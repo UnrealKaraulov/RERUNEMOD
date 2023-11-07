@@ -21,12 +21,9 @@ new Float:g_fSpeed = 750.0;
 
 public plugin_init()
 {
-	register_plugin("RM_SPEED","2.5","Karaulov");
+	register_plugin("RM_SPEED","2.6","Karaulov");
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,0.0,255.0}, rune_model_path, rune_sound_path,rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
-	
-	update_server_speed(0);
-	set_task(25.0, "update_server_speed");
 	
 	/* Чтение конфигурации */
 	new cost = 9000;
@@ -40,11 +37,6 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
-}
-
-public update_server_speed(id)
-{
-	server_cmd("sv_maxspeed 9999")
 }
 
 public plugin_precache()
@@ -66,9 +58,25 @@ public PM_Move(const id)
 	{
 		if (g_iSpeed[id] == 1 && get_entvar(id, var_button) & MovingBits )
 		{
-			set_user_maxspeed(id,  g_fSpeed)
-			set_pmove(pm_maxspeed, g_fSpeed)
-			set_pmove(pm_clientmaxspeed, g_fSpeed)
+			new cmd = get_pmove( pm_cmd );
+			set_movevar(mv_maxspeed, g_fSpeed);
+			set_user_maxspeed(id,  g_fSpeed);
+			set_pmove(pm_maxspeed, g_fSpeed);
+			set_pmove(pm_clientmaxspeed, g_fSpeed);
+			
+			new Float:fmove = get_ucmd(cmd, ucmd_forwardmove);
+			if (fmove > 20.0 && fmove < g_fSpeed)
+				fmove = g_fSpeed;
+			else if (fmove < -20.0 && fmove > -g_fSpeed)
+				fmove = -g_fSpeed;
+			set_ucmd(cmd, ucmd_forwardmove, fmove);
+			
+			fmove = get_ucmd(cmd, ucmd_sidemove);
+			if (fmove > 20.0 && fmove < g_fSpeed)
+				fmove = g_fSpeed;
+			else if (fmove < -20.0 && fmove > -g_fSpeed)
+				fmove = -g_fSpeed;
+			set_ucmd(cmd, ucmd_sidemove, fmove);
 		}
 		else if (g_iSpeed[id] == 2)
 		{
@@ -77,6 +85,7 @@ public PM_Move(const id)
 			set_pmove(pm_clientmaxspeed, 240.0)
 			g_iSpeed[id] = 0;
 		}
+		
 	}
 }
 
