@@ -15,9 +15,11 @@ new rune_sound_path[64] = "sound/rm_reloaded/protect.wav";
 
 new rune_model_id = -1;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_PROTECT","2.8","Karaulov"); 
+	register_plugin("RM_PROTECT","2.9","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,0.0}, rune_model_path, rune_sound_path,rune_model_id);
 	RegisterHookChain(RG_CSGameRules_FPlayerCanTakeDamage, "CSGameRules_FPlayerCanTakeDmg", .post = false)
 	
@@ -30,6 +32,21 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()

@@ -18,9 +18,11 @@ new rune_sound_path[64] = "sound/rm_reloaded/phantom.wav";
 new Float:g_flNoclipSpeed = 500.0;
 new Float:g_flMaxDistance = 1300.0;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_PHANTOM","3.0","Karaulov"); 
+	register_plugin("RM_PHANTOM","3.1","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,255.0}, rune_model_path, rune_sound_path, rune_model_id);
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post=false);
 	
@@ -39,6 +41,21 @@ public plugin_init()
 	
 	// Возврат обратно при превышении дистанции
 	rm_read_cfg_flt(rune_name,"NOCLIP_DISTANCE",g_flMaxDistance,g_flMaxDistance);
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public PM_Move(const id)

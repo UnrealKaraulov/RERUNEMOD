@@ -13,9 +13,11 @@ new rune_model_path[64] = "models/rm_reloaded/w_dollar.mdl";
 new g_iMinMoney = 5000;
 new g_iMaxMoney = 5000;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_CASH","2.4","Karaulov"); 
+	register_plugin("RM_CASH","2.5","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	// Класс руны: предмет
 	rm_base_use_rune_as_item( );
@@ -31,6 +33,21 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()

@@ -17,9 +17,11 @@ new rune_model_path[64] = "models/rm_reloaded/w_mjolnir.mdl";
 
 new Float:g_fCooldown = 3.0;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_MJOLNIR","1.5","Karaulov");
+	register_plugin("RM_MJOLNIR","1.6","Karaulov");
 	rm_register_dictionary("runemod_mr_item.txt");
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,100.0,0.0}, rune_model_path, _,rune_model_id);
 	rm_base_use_rune_as_item( );
@@ -41,6 +43,22 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()
@@ -49,20 +67,6 @@ public plugin_precache()
 	rm_read_cfg_str(rune_name,"model",rune_model_path,rune_model_path,charsmax(rune_model_path));
 	
 	rune_model_id = precache_model(rune_model_path);
-}
-
-public client_putinserver(id)
-{
-	g_bHasmjolnir[id] = false;
-	if (task_exists(id))
-		remove_task(id);
-}
-
-public client_disconnected(id)
-{
-	g_bHasmjolnir[id] = false;
-	if (task_exists(id))
-		remove_task(id);
 }
 
 public rm_give_rune(id)

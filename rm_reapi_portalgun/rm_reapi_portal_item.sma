@@ -17,7 +17,7 @@ native pg_is_has_player(id);
 
 public plugin_init()
 {
-	register_plugin("RM_INVIS","2.6","Karaulov"); 
+	register_plugin("RM_INVIS","2.7","Karaulov"); 
 	rm_register_dictionary("runemod_re_portal_item.txt");
 	rm_register_rune(rune_name,rune_descr,Float:{99.0, 197.0, 218.0}, rune_model_path, rune_sound_path, rune_model_id);
 	rm_base_use_rune_as_item( );

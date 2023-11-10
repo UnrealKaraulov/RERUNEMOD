@@ -13,10 +13,11 @@ new rune_descr[] = "rm_invis_rune_desc";
 new rune_model_path[64] = "models/rm_reloaded/rune_sky.mdl";
 new rune_sound_path[64] = "sound/rm_reloaded/invis.wav";
 
+new g_iCfgSpawnSecondsDelay = 0;
 
 public plugin_init()
 {
-	register_plugin("RM_INVIS","2.6","Karaulov"); 
+	register_plugin("RM_INVIS","2.7","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{99.0, 197.0, 218.0}, rune_model_path, rune_sound_path, rune_model_id);
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, "CPlayer_TakeDamage_Post", .post = true);
 	
@@ -29,6 +30,21 @@ public plugin_init()
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()

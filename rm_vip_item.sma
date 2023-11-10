@@ -11,9 +11,11 @@ new rune_model_path[64] = "models/rm_reloaded/w_vip.mdl";
 
 new g_uVipFlags = 0;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_VIP_FLAG","1.2","Karaulov"); 
+	register_plugin("RM_VIP_FLAG","1.3","Karaulov"); 
 	
 	new rune_flags[] = "ab";
 	/* Чтение конфигурации */
@@ -38,6 +40,21 @@ public plugin_init()
 	new max_count = 1;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()

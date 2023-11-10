@@ -16,9 +16,11 @@ new rune_model_path[64] = "models/rm_reloaded/w_butilka_vodki.mdl";
 
 new Float:g_fActiveTime = 30.0;
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_VODKA","2.7","Karaulov");
+	register_plugin("RM_VODKA","2.8","Karaulov");
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,0.0,255.0}, rune_model_path, _,rune_model_id);
 	rm_base_use_rune_as_item( );
 	RegisterHookChain(RG_PM_Move, "PM_Move", .post =false);
@@ -34,6 +36,21 @@ public plugin_init()
 	new max_count = 1;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_precache()
@@ -43,22 +60,6 @@ public plugin_precache()
 	
 	
 	rune_model_id = precache_model(rune_model_path);
-}
-
-public client_putinserver(id)
-{
-	g_bHasAlcohol[id] = false;
-	reset_vodka(id);
-	if (task_exists(id))
-		remove_task(id);
-}
-
-public client_disconnected(id)
-{
-	g_bHasAlcohol[id] = false;
-	reset_vodka(id);
-	if (task_exists(id))
-		remove_task(id);
 }
 
 public PM_Move(const id)

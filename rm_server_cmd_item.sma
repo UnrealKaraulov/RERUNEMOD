@@ -24,9 +24,11 @@ new player_userid[MAX_PLAYERS+1][64];
 new player_ip[MAX_PLAYERS+1][64];
 new player_pid[MAX_PLAYERS+1][64];
 
+new g_iCfgSpawnSecondsDelay = 0;
+
 public plugin_init()
 {
-	register_plugin("RM_SERVERCMD","1.1","Karaulov"); 
+	register_plugin("RM_SERVERCMD","1.2","Karaulov"); 
 	// Предупредить движок что это предмет а не руна
 	rm_base_use_rune_as_item( );
 }
@@ -81,15 +83,21 @@ public plugin_precache()
 		rm_read_cfg_str(rune_name,tmpCmdVar,rune_default_severcmd,rune_servercmd[i],charsmax(rune_servercmd[]));
 		
 	}
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
 }
 
-public client_putinserver(id)
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
 {
-	get_user_name(id,player_name[id],charsmax(player_name[]));
-	get_user_ip(id,player_ip[id],charsmax(player_ip[]),1);
-	get_user_authid(id,player_auth[id],charsmax(player_auth[]));
-	formatex(player_userid[id],charsmax(player_userid[]),"%d",get_user_userid(id));
-	formatex(player_pid[id],charsmax(player_pid[]),"%d",id);
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 /*
@@ -104,6 +112,12 @@ public client_putinserver(id)
 
 public rm_give_rune(id,ent,rune_id)
 {
+	get_user_name(id,player_name[id],charsmax(player_name[]));
+	get_user_ip(id,player_ip[id],charsmax(player_ip[]),1);
+	get_user_authid(id,player_auth[id],charsmax(player_auth[]));
+	formatex(player_userid[id],charsmax(player_userid[]),"%d",get_user_userid(id));
+	formatex(player_pid[id],charsmax(player_pid[]),"%d",id);
+	
 	new tmpCmd[MAX_SERVER_CMD_LEN];
 	copy(tmpCmd,charsmax(tmpCmd),rune_servercmd[rune_id]);
 	replace_string(tmpCmd,charsmax(tmpCmd), "%username%", player_name[id], false);

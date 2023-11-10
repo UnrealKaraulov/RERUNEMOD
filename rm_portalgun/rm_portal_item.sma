@@ -9,8 +9,8 @@ https://next21.ru/2013/04/%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD-portal-gun/
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "2.8NOREAPI"
-#define AUTHOR "karaulov, Polarhigh" // aka trofian
+#define VERSION "2.9NOREAPI"
+#define AUTHOR "Polarhigh, karaulov, Polarhigh" // aka trofian
 
 #define IGNORE_ALL	(IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
 #define m_pActiveItem 373
@@ -71,6 +71,7 @@ new rune_descr[] = "rm_portal_item_desc";
 new rune_model_path[64] = "models/next_portalgun/w_portalgun.mdl";
 new rune_sound_path[64] = "sound/rm_reloaded/portal_gun.wav";
 
+new g_iCfgSpawnSecondsDelay = 0;
 
 public plugin_precache() {	
 	
@@ -116,6 +117,27 @@ public plugin_precache() {
 	new max_count = 10;
 	rm_read_cfg_int(rune_name,"MAX_COUNT_ON_MAP",max_count,max_count);
 	rm_base_set_max_count( max_count );
+	
+	// Задержка между спавнами
+	rm_read_cfg_int(rune_name,"DELAY_BETWEEN_NEXT_SPAWN",g_iCfgSpawnSecondsDelay,g_iCfgSpawnSecondsDelay);
+}
+
+new Float:flLastSpawnTime = 0.0;
+
+public rm_spawn_rune(iEnt)
+{
+	if (floatround(floatabs(get_gametime() - flLastSpawnTime)) > g_iCfgSpawnSecondsDelay)
+	{
+		new Float:flOrigin[3];
+		get_entvar(iEnt,var_origin,flOrigin);
+		flOrigin[2]+=16;
+		set_entvar(iEnt, var_origin,flOrigin);
+		set_entvar(iEnt, var_avelocity,Float:{0.0,70.0,0.0});
+		flLastSpawnTime = get_gametime();
+		return SPAWN_SUCCESS;
+	}
+	
+	return SPAWN_ERROR;
 }
 
 public plugin_init() {
@@ -147,7 +169,7 @@ public plugin_init() {
 
 public rm_give_rune(id)
 {
-	if (is_user_bot(id))
+	if (is_user_bot(id) || HAS_PORTAL_GUN(id))
 		return NO_RUNE_PICKUP_SUCCESS;
 	native_give(id)
 	rm_base_highlight_player(id);
