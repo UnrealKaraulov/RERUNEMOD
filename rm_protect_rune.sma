@@ -81,21 +81,7 @@ public rm_drop_rune(id)
 
 public update_protect_state(id)
 {
-	set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
-	show_dhudmessage(id, "CHARGE: [ %d%% ]", g_protection[id] * 20);
-	
-	new iPlayers[ 32 ], iNum;
-	get_players( iPlayers, iNum, "bch" );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new spec_id = iPlayers[ i ];
-		new specTarget = get_entvar(spec_id, var_iuser2);
-		if (specTarget == id)
-		{
-			set_dhudmessage(0, 255, 213, -1.0, 0.55, 0, 0.0, 1.05, 0.0, 0.0);
-			show_dhudmessage(spec_id, "CHARGE: [ %d%% ]",  g_protection[id] * 20);
-		}
-	}
+	rm_show_dhud_message(id, DHUD_POS_ITEM2,{255, 119, 0},1.04,true,"SHIELD POWER: [ %d%% ]", g_protection[id] * 20);
 }
 
 

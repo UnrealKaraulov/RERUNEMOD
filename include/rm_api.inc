@@ -4,11 +4,20 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.0"
+#define RUNEMOD_VERSION "3.7.1"
 
 
 #define HUD_CHANNEL_ID 3
 #define HUD_CHANNEL_ID_2 2
+
+#define DHUD_POS_NOTIFY 1
+#define DHUD_POS_RUNE 2
+#define DHUD_POS_ITEM1 3
+#define DHUD_POS_ITEM2 4
+#define DHUD_POS_ITEM3 5
+#define DHUD_POS_ITEM4 6
+#define DHUD_POS_ITEM5 7
+#define DHUD_POS_ITEM6 8
 
 #define RUNE_CLASSNAME "rune_model"
 
@@ -1160,3 +1169,27 @@ stock rm_current_plugin_id()
 	return g_hCurrentPlugin;
 }
 
+stock rm_show_dhud_message(id, posid, color[3], Float:ftime,bool:specs, const formatstr[], any:...)
+{
+	static dhud_text[512];
+	vformat(dhud_text, charsmax(dhud_text), formatstr, 6);
+	
+	set_dhudmessage(color[0], color[1], color[2], -1.0, 0.46 + posid * 0.045, 0, 0.0, ftime, 0.0, 0.0);
+	show_dhudmessage(id, dhud_text);
+	
+	if (specs)
+	{
+		new iPlayers[ 32 ], iNum;
+		get_players( iPlayers, iNum, "bch" );
+		for( new i = 0; i < iNum; i++ )
+		{
+			new spec_id = iPlayers[ i ];
+			new specTarget = get_entvar(spec_id, var_iuser2);
+			if (specTarget == id)
+			{
+				set_dhudmessage(color[0], color[1], color[2], -1.0,  0.51 + posid * 0.05, 0, 0.0, ftime, 0.0, 0.0);
+				show_dhudmessage(spec_id, dhud_text);
+			}
+		}
+	}
+}

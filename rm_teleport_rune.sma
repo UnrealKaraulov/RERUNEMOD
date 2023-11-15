@@ -221,16 +221,14 @@ public cant_teleport_msg(id,type)
 	{
 		if (type == 0)
 		{
-			set_dhudmessage(255, 221, 0, -1.0, 0.55, 0, 0.0, 0.0, 1.1, 0.0)
-			show_dhudmessage(id, "COOLDOWN");
+			rm_show_dhud_message(id, DHUD_POS_RUNE,{255, 178, 143},3.04,true,"TELEPORT: [ RECHARGING ]");
 		}
 		else 
 		{
 			client_cmd(id,"spk ^"%s^"", "buttons/button9.wav");
-			set_dhudmessage(238, 255, 0, -1.0, 0.55, 0, 0.0, 0.0, 1.1, 0.0);
-			show_dhudmessage(id, "NO ACCESS");
+			rm_show_dhud_message(id, DHUD_POS_RUNE,{255, 184, 130},3.04,true,"TELEPORT: [ INVALID TARGET ]");
 		}
-		g_MsgTime[id] = get_gametime();
+		g_MsgTime[id] = get_gametime() + 2.0;
 	}
 }
 

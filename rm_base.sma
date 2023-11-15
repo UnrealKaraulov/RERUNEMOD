@@ -752,9 +752,8 @@ public rm_print_register_api(id)
 {
 	if (get_gametime() - g_fLastRegisterPrint[id] > 1.0)
 	{
-		g_fLastRegisterPrint[id] = get_gametime();
-		set_dhudmessage(50, 255, 100, -1.0, 0.61, 0, 0.0, 0.0, 1.5, 0.0);
-		show_dhudmessage(id, "%s: %L",runemod_prefix, LANG_PLAYER, "runemod_print_need_register");
+		g_fLastRegisterPrint[id] = get_gametime() + 8.0;
+		rm_show_dhud_message(id, DHUD_POS_NOTIFY,{255, 94, 0},10.0,false,"%s: %L",runemod_prefix, LANG_PLAYER, "runemod_print_need_register");
 	}
 }
 

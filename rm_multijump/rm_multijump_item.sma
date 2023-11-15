@@ -86,22 +86,7 @@ public rm_give_rune(id)
 
 public update_jump_state(id)
 {
-	set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
-	show_dhudmessage(id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],g_iMultiJumpCount);
-	
-		
-	new iPlayers[ 32 ], iNum;
-	get_players( iPlayers, iNum, "bch" );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new spec_id = iPlayers[ i ];
-		new specTarget = get_entvar(spec_id, var_iuser2);
-		if (specTarget == id)
-		{
-			set_dhudmessage(255, 150, 0, -1.0, 0.60, 0, 0.0, 0.55, 0.0, 0.0);
-			show_dhudmessage(spec_id, "JUMP: [ %d / %d ]", g_bHasMultiJump[id],g_iMultiJumpCount);
-		}
-	}
+	rm_show_dhud_message(id, DHUD_POS_ITEM3,{108, 209, 0},0.54,true,"JUMPS: [ %d / %d ]", g_bHasMultiJump[id],g_iMultiJumpCount);
 }
 
 public HC_CBasePlayer_Jump_Pre(id) 

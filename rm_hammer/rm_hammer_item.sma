@@ -91,34 +91,11 @@ public update_stun_state(id)
 {
 	if (get_gametime() - g_fStun_time[id] > g_fCooldown)
 	{
-		set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
-		show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
+		rm_show_dhud_message(id, DHUD_POS_ITEM1,{108, 209, 0},0.54,true,"HAMMER: [ ACTIVE ]");
 	}
 	else 
 	{
-		set_dhudmessage(255, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
-		show_dhudmessage(id, "HAMMER: [  WAIT ]");
-	}
-		
-	new iPlayers[ 32 ], iNum;
-	get_players( iPlayers, iNum, "bch" );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new spec_id = iPlayers[ i ];
-		new specTarget = get_entvar(spec_id, var_iuser2);
-		if (specTarget == id)
-		{
-			if (get_gametime() - g_fStun_time[id] > g_fCooldown)
-			{
-				set_dhudmessage(100, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
-				show_dhudmessage(id, "HAMMER: [ ACTIVE ]");
-			}
-			else 
-			{
-				set_dhudmessage(255, 150, 0, -1.0, 0.65, 0, 0.0, 0.55, 0.0, 0.0);
-				show_dhudmessage(id, "HAMMER: [  WAIT ]");
-			}
-		}
+		rm_show_dhud_message(id, DHUD_POS_ITEM1,{255, 178, 143},0.54,true,"HAMMER: [ RECHARGING ]");
 	}
 }
 
