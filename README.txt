@@ -7,7 +7,7 @@
 3. Скопируйте полученные файлы из compiled (При успешной компиляции) на сервер по пути /addons/amxmodx/plugins/
 4. Измените plugins-RunemodReloaded.ini: удалите ненужные вам руны из списка.
 5. Скопируйте plugins-RunemodReloaded.ini на сервер по пути /addons/amxmodx/configs/
-6. Скопируйте содержимое папки cstrike на сервер с заменой
+6. Скопируйте содержимое папки your_mod_dir на сервер в папку с модом с заменой
 7. Смените карту на сервере
 
 Если все сделали верно, останется только настроить /addons/amxmodx/configs/plugins/runemod.cfg

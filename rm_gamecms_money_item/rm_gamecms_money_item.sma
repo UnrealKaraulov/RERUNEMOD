@@ -30,9 +30,12 @@ new g_iMaxMoney = 5;
 
 new g_iCfgSpawnSecondsDelay = 0;
 
+new Float:g_fDhudMultipler = 1.0;
+
 public plugin_init()
 {
 	register_plugin("RM_GAMECMS_CASH","2.5","Karaulov"); 
+	rm_register_dictionary("runemod_gamecms_item.txt");
 	rm_register_rune(rune_name,rune_descr,Float:{255.0,255.0,255.0}, rune_model_path,_,rune_model_id);
 	rm_base_use_rune_as_item( );
 	// Предмет может поднять только зарегистрированный в GAMECMS
@@ -45,6 +48,8 @@ public plugin_init()
 	
 	rm_read_cfg_flt(rune_name,"MIN_MONEY",g_fMinMoney,g_fMinMoney);
 	rm_read_cfg_flt(rune_name,"MAX_MONEY",g_fMaxMoney,g_fMaxMoney);
+	
+	rm_read_cfg_flt(rune_name,"CASH_MULTIPLIER",g_fDhudMultipler,g_fDhudMultipler);
 	
 	// Прибегнуть к хитрости
 	g_iMinMoney = floatround(g_fMinMoney * 10.0); // for example 1.55555 to 15 or 5.55555 to 55
@@ -83,7 +88,11 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	cmsapi_add_user_money(id, float( random_num(g_iMinMoney,g_iMaxMoney) ) / 10.0 );
+	new Float:give_cash = float( random_num(g_iMinMoney,g_iMaxMoney) ) / 10.0;
+
+	cmsapi_add_user_money(id, give_cash );
+	
+	rm_show_dhud_message(id, DHUD_POS_NOTIFY, {255, 94, 0}, 7.0, false, "%L", LANG_PLAYER, "rm_gamecms_money_give", give_cash * g_fDhudMultipler);
 }
 
 public plugin_natives() 

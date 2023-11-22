@@ -1,0 +1,8 @@
+[ru]
+rm_gamecms_money_item_name = Рубли
+rm_gamecms_money_item_desc = Дает деньги на сайт
+rm_gamecms_money_give = Вы получили %f рублей на сайте!
+[en]
+rm_gamecms_money_item_name = Cash[RUB]
+rm_gamecms_money_item_desc = RUB to website
+rm_gamecms_money_give = You got %f RUB on website!
