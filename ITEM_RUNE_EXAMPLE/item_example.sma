@@ -4,6 +4,7 @@ public plugin_init()
 {
 	register_plugin("PLUGIN NAME", "1.0 VERSION", "AUTHOR");
 	rm_register_rune("ITEM NAME","ITEM DESCRIPTION", /* ITEM COLOR */ Float:{0.0,100.0,0.0}, "path/to/item.mdl", "path/to/itempickup/sound.wav", model_index_of_item_mdl);
+	rm_base_use_rune_as_item( );
 }
 
 
