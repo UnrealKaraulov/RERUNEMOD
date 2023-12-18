@@ -1208,7 +1208,7 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		if (runemod_spawned_items >= runemod_max_items)
 		{
 #if defined DEBUG_ENABLED
-	log_amx("[TRACE] Can't create due runemod_max_items limit reached. [%d of %d]", runemod_spawned_items,runemod_max_items);
+			log_amx("[TRACE] Can't create due runemod_max_items limit reached. [%d of %d]", runemod_spawned_items,runemod_max_items);
 #endif
 			return false;
 		}
@@ -1218,7 +1218,7 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		if (runemod_spawned_runes >= runemod_max_runes)
 		{
 #if defined DEBUG_ENABLED
-	log_amx("[TRACE] Can't create due runemod_max_runes limit reached. [%d of %d]", runemod_spawned_runes,runemod_max_runes);
+			log_amx("[TRACE] Can't create due runemod_max_runes limit reached. [%d of %d]", runemod_spawned_runes,runemod_max_runes);
 #endif
 			return false;
 		}
@@ -1722,7 +1722,7 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 		else 
 		{
 #if defined DEBUG_ENABLED
-	log_amx("[TRACE] No available runes. Please check all runes configs for errors.");
+			log_amx("[TRACE] No available runes. Please check all runes configs for errors.");
 #endif
 		}
 	}
