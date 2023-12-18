@@ -1747,7 +1747,7 @@ public RM_SPAWN_RUNE( id )
 		new iEnt = spawn_has_ent[i];
 		if (iEnt > 0 && (is_nullent(iEnt) || !is_valid_ent(iEnt)))
 		{
-			log_amx("[CRITICAL ERROR] Spawn point %d corrupted by another plugin!!!!!!",i);
+			log_error(AMX_ERR_NOTFOUND, "[CRITICAL ERROR] Spawn point %d corrupted by another plugin!!!!!!",i);
 			spawn_has_ent[i] = 0;
 			spawn_filled_size--;
 		}
