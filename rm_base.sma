@@ -599,6 +599,7 @@ public RemoveAllRunes()
 			}
 				
 			rm_remove_rune_callback(rune_list_id[rune_id],iEnt);
+			rune_list_count[rune_id] = 0;
 		}
 		
 		runemod_spawned_items = 0;
@@ -1200,12 +1201,15 @@ public rm_is_rune_item_api(rune_id)
 public bool:spawn_one_rune(rune_id, spawn_id)
 {
 #if defined DEBUG_ENABLED
-	log_amx("[TRACE] Create new rune '%s' in spawn number '%i' max spawn count '%i'", rune_list_name[rune_id], spawn_id, spawn_array_size);
+	log_amx("[TRACE] Trying to create new rune '%s' in spawn '%i' max spawns '%i'", rune_list_name[rune_id], spawn_id, spawn_array_size);
 #endif
 	if (rune_list_isItem[rune_id])
 	{
 		if (runemod_spawned_items >= runemod_max_items)
 		{
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] Can't create due runemod_max_items limit reached. [%d of %d]", runemod_spawned_items,runemod_max_items);
+#endif
 			return false;
 		}
 	}
@@ -1213,6 +1217,9 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	{
 		if (runemod_spawned_runes >= runemod_max_runes)
 		{
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] Can't create due runemod_max_runes limit reached. [%d of %d]", runemod_spawned_runes,runemod_max_runes);
+#endif
 			return false;
 		}
 	}
@@ -1270,8 +1277,6 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	set_entvar(iEnt, var_sequence, ACT_IDLE);
 	set_entvar(iEnt, var_framerate, 1.0);
 	
-	
-	
 	rm_set_rune_runeid(iEnt,rune_id);
 	rm_set_rune_spawnid(iEnt,spawn_id);
 	rm_set_rune_num(iEnt, -1);
@@ -1293,6 +1298,9 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	
 	if (!rm_spawn_rune_callback(rune_list_id[rune_id],iEnt,rune_id))
 	{
+		spawn_filled_size--;
+		spawn_has_ent[spawn_id] = 0;
+		rune_list_count[rune_id]--;
 		set_entvar(iEnt, var_nextthink, get_gametime())
 		set_entvar(iEnt, var_flags, FL_KILLME);
 		return false;
@@ -1548,29 +1556,13 @@ public rm_get_next_rune( spawn_id )
 	// Если не найдено подходящей руны, берем любую
 	if (rune_id == -1)
 	{
-		rune_id = 0;
-		if (runemod_only_items)
+		for(new i = 0; i < runes_registered; i++ )
 		{
-			for(new n = 0; n < runes_registered;n++)
+			new cur_rune_count = rune_list_count[i];
+			if (cur_rune_count < rune_list_maxcount[i])
 			{
-				if (rune_list_isItem[n] && !rune_list_disabled[n])
-				{
-					rune_id = n;
-					if (random_num(1,10) > 5)
-						break;
-				}
-			}
-		}
-		else 
-		{
-			for(new n = 0; n < runes_registered;n++)
-			{
-				if (!rune_list_disabled[n])
-				{
-					rune_id = n;
-					if (random_num(1,10) > 5)
-						break;
-				}
+				rune_id = i;
+				break;
 			}
 		}
 	}
@@ -1595,7 +1587,12 @@ public spawn_runes( )
 	get_players( iPlayers, iNum ,"ah" );
 	
 	if (iNum < runemod_min_players || iNum > runemod_max_players)
+	{
+#if defined DEBUG_ENABLED
+		log_amx("[TRACE] Can't create rune because player limit reached!");
+#endif
 		return;
+	}
 	
 	if (spawn_filled_size >= spawn_array_size)
 	{
@@ -1609,7 +1606,12 @@ public spawn_runes( )
 	{
 		need_runes--;
 		if (need_runes <= 0)
+		{
+#if defined DEBUG_ENABLED
+			log_amx("Created %d runes!", runemod_perspawn - need_runes);
+#endif
 			return;
+		}
 	}
 
 	if (!reversed)
@@ -1622,7 +1624,12 @@ public spawn_runes( )
 			}
 			
 			if (need_runes <= 0)
+			{
+#if defined DEBUG_ENABLED
+				log_amx("Created %d runes!", runemod_perspawn - need_runes);
+#endif
 				return;
+			}
 		}
 	}
 	else 
@@ -1635,7 +1642,12 @@ public spawn_runes( )
 			}
 			
 			if (need_runes <= 0)
+			{
+#if defined DEBUG_ENABLED
+				log_amx("Created %d runes!", runemod_perspawn - need_runes);
+#endif
 				return;
+			}
 		}
 	}
 	
@@ -1650,21 +1662,32 @@ public spawn_runes( )
 			}
 			
 			if (need_runes <= 0)
+			{
+#if defined DEBUG_ENABLED
+				log_amx("Created %d runes!", runemod_perspawn - need_runes);
+#endif
 				return;
+			}
 		}
 	}
 	
 	if (need_runes == runemod_perspawn)
 	{
 		spawn_runes_tries++;
-		if (spawn_runes_tries > 1)
+#if defined DEBUG_ENABLED
+		if (spawn_runes_tries > 2)
 		{
-			log_amx("Warning! I can't create any runes.", need_runes);
+			log_amx("Warning! I can't create any runes with current settings.");
+			log_amx("Please check your runemod and runes config!");
 		}
+#endif
 	}
 	else 
 	{
 		spawn_runes_tries = 0;
+#if defined DEBUG_ENABLED
+		log_amx("Created %d runes!", runemod_perspawn - need_runes);
+#endif
 	}
 }
 
@@ -1695,6 +1718,12 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 		if (rune_id >= 0 && rune_id < runes_registered)
 		{
 			return spawn_one_rune( rune_id, spawn_id );
+		}
+		else 
+		{
+#if defined DEBUG_ENABLED
+	log_amx("[TRACE] No available runes. Please check all runes configs for errors.");
+#endif
 		}
 	}
 	return false;
