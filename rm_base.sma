@@ -1742,6 +1742,17 @@ public RM_SPAWN_RUNE( id )
 			spawn_runes( );
 	}
 	
+	for(new i = 0; i < spawn_array_size; i++)
+	{
+		new iEnt = spawn_has_ent[i];
+		if (iEnt > 0 && (is_nullent(iEnt) || !is_valid_ent(iEnt)))
+		{
+			log_amx("[CRITICAL ERROR] Spawn point %d corrupted by another plugin!!!!!!",i);
+			spawn_has_ent[i] = 0;
+			spawn_filled_size--;
+		}
+	}
+	
 	set_task(float(runemod_spawntime), "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID);
 }
 
