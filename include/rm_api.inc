@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.3"
+#define RUNEMOD_VERSION "3.7.4"
 
 
 #define HUD_CHANNEL_ID 3
@@ -1172,10 +1172,10 @@ stock rm_current_plugin_id()
 stock rm_show_dhud_message(id, posid, color[3], Float:ftime,bool:specs, const formatstr[], any:...)
 {
 	static dhud_text[512];
-	vformat(dhud_text, charsmax(dhud_text), formatstr, 6);
+	vformat(dhud_text, charsmax(dhud_text), formatstr, 7);
 	
 	set_dhudmessage(color[0], color[1], color[2], -1.0, 0.46 + posid * 0.045, 0, 0.0, ftime, 0.0, 0.0);
-	show_dhudmessage(id, dhud_text);
+	show_dhudmessage(id, "%s", dhud_text);
 	
 	if (specs)
 	{
@@ -1188,7 +1188,7 @@ stock rm_show_dhud_message(id, posid, color[3], Float:ftime,bool:specs, const fo
 			if (specTarget == id)
 			{
 				set_dhudmessage(color[0], color[1], color[2], -1.0,  0.51 + posid * 0.05, 0, 0.0, ftime, 0.0, 0.0);
-				show_dhudmessage(spec_id, dhud_text);
+				show_dhudmessage(spec_id, "%s", dhud_text);
 			}
 		}
 	}
