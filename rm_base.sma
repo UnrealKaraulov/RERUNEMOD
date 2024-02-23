@@ -1103,7 +1103,7 @@ public fill_new_spawn_points( )
 					{
 						g_fLastSpawnRefreshTime = get_gametime();
 						get_entvar(id, var_absmin, fMins );
-						fOrigin[2] = fMins[2] + 1.0;
+						fOrigin[2] = fMins[2] + 4.0;
 						spawn_pos[g_iRefreshSpawnId] = fOrigin;
 						break;
 					}
@@ -1127,7 +1127,7 @@ public fill_new_spawn_points( )
 			{
 				get_entvar(id, var_absmin, fMins );
 				
-				fOrigin[2] = fMins[2] + 1.0;
+				fOrigin[2] = fMins[2] + 4.0;
 				
 				spawn_pos[spawn_array_size] = fOrigin;
 				spawn_has_ent[spawn_array_size] = 0;
@@ -1186,7 +1186,7 @@ public rm_swap_rune_id( iEnt, new_rune_id )
 	fOrigin = spawn_pos[rm_get_rune_spawnid(iEnt)];
 	
 	if (!rune_list_isItem[new_rune_id] && runemod_random_mode <= 0)
-		fOrigin[2] += 50.0;
+		fOrigin[2] += 45.0;
 	
 	entity_set_origin(iEnt, fOrigin);
 }
@@ -1248,8 +1248,6 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		set_entvar(iEnt, var_modelindex, rune_list_model_id[rune_id]);
 	}
 	
-	set_entvar(iEnt, var_gravity, 0.0 )
-
 	if (!rune_list_isItem[rune_id] && runemod_random_mode == 0)
 	{
 		set_entvar(iEnt, var_renderfx, kRenderFxGlowShell);
@@ -1265,11 +1263,13 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		set_entvar(iEnt, var_rendermode, kRenderTransTexture);
 	}
 	
-	set_entvar(iEnt, var_mins, Float:{-15.0,-15.0,-15.0});
+	set_entvar(iEnt, var_mins, Float:{-15.0,-15.0,-2.0});
 	set_entvar(iEnt, var_maxs, Float:{15.0,15.0,15.0});
 	set_entvar(iEnt, var_solid, SOLID_TRIGGER );
 	set_entvar(iEnt, var_movetype, MOVETYPE_FLY);
 	set_entvar(iEnt, var_velocity, Float:{0.0,0.0,0.0});
+	set_entvar(iEnt, var_gravity, 0.0 )
+	
 	
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
 		set_entvar(iEnt, var_avelocity,Float:{0.0,125.0,0.0});
@@ -1287,13 +1287,13 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	fOrigin = spawn_pos[spawn_id];
 	
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
-		fOrigin[2] += 50.0;
+		fOrigin[2] += 45.0;
 	
 	entity_set_origin(iEnt, fOrigin);
 	
 	spawn_iEnt_Origin[spawn_id][0] = floatround(fOrigin[0]);
 	spawn_iEnt_Origin[spawn_id][1] = floatround(fOrigin[1]);
-	spawn_iEnt_Origin[spawn_id][2] = floatround(fOrigin[2]) + 10;
+	spawn_iEnt_Origin[spawn_id][2] = floatround(fOrigin[2]);
 	
 	
 	if (!rm_spawn_rune_callback(rune_list_id[rune_id],iEnt,rune_id))

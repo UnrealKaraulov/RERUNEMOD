@@ -32,7 +32,7 @@ new g_iCfgSpawnSecondsDelay = 0;
 
 public plugin_init()
 {
-	register_plugin("RM_TELEPORT","2.8","Karaulov"); 
+	register_plugin("RM_TELEPORT","2.81","Karaulov"); 
 	rm_register_rune(rune_name,rune_descr,Float:{0.0,255.0,0.0},rune_model_path, rune_sound_path, rune_model_id);
 	g_pCommonTr = create_tr2();
 	
@@ -105,24 +105,6 @@ public rm_drop_rune(id)
 	g_Teleport[id] = 0.0;
 }
 
-public bool:is_player_point( id, Float:coords[3] )
-{
-	new iPlayers[ 32 ], iNum;
-	new Float:fOrigin[3];
-	get_players( iPlayers, iNum  );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new iPlayer = iPlayers[ i ];
-		if (iPlayer != id && is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer))
-		{
-			get_entvar(iPlayer, var_origin, fOrigin );
-			if (get_distance_f(fOrigin,coords) < 256.0)
-				return true;
-		}
-	}
-	return false;
-}
-
 public bool:get_teleport_point(iPlayer, Float:newTeleportPoint[3])
 {
 	new iEyesOrigin[ 3 ];
@@ -137,41 +119,31 @@ public bool:get_teleport_point(iPlayer, Float:newTeleportPoint[3])
 	new Float:vecEyesEndOrigin[ 3 ];
 	IVecFVec( iEyesEndOrigin, vecEyesEndOrigin );
 	
-	if (is_player_point(iPlayer,vecEyesEndOrigin))
-	{
-		xs_vec_copy(vecEyesEndOrigin, newTeleportPoint)
-		return true;
-	}
-	
 	new maxDistance = get_distance(iEyesOrigin,iEyesEndOrigin);
+	if (maxDistance < 24)
+	{
+		return false;
+	}
 	
 	new Float:vecDirection[ 3 ];
-	velocity_by_aim( iPlayer, 32, vecDirection );
+	velocity_by_aim( iPlayer, 24, vecDirection );
 	
 	new Float:vecAimOrigin[ 3 ];
-	new Float:vecAimOriginPrev[ 3 ];
 	xs_vec_add( vecEyesOrigin, vecDirection, vecAimOrigin );
 
-	new i = 0;
-	while (i < maxDistance) {
-		i+=32;
-		xs_vec_copy(vecAimOrigin, vecAimOriginPrev);
-		if ( get_distance_f(vecAimOrigin,vecEyesEndOrigin) < 64.0 )
-		{
-			xs_vec_copy(vecAimOrigin, newTeleportPoint);
-			return true;
-		}
-		
+	xs_vec_copy(vecEyesOrigin, newTeleportPoint);
+	
+	new i = 24;
+	while (i <= maxDistance) 
+	{
 		xs_vec_add( vecAimOrigin, vecDirection, vecAimOrigin );
-		if(!rm_is_hull_vacant(iPlayer, vecAimOrigin, HULL_HEAD,g_pCommonTr) )
+		if(!rm_is_hull_vacant(iPlayer, vecAimOrigin, HULL_HEAD, g_pCommonTr) )
 		{
-			xs_vec_copy(vecAimOriginPrev, newTeleportPoint);
 			return true;
 		}
+		xs_vec_copy(vecAimOrigin, newTeleportPoint);
+		i+=24
 	}
-	
-	
-	xs_vec_copy(vecAimOrigin, newTeleportPoint);
 	return false;
 }
 
