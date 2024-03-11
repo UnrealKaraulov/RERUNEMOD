@@ -1,0 +1,6 @@
+[ru]
+rm_healthnade_item_name = Healthnade
+rm_healthnade_item_desc = Игрок получает исцеляющую гранату
+[en]
+rm_healthnade_item_name = Healthnade
+rm_healthnade_item_desc = Give player healthnade

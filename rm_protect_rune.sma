@@ -81,7 +81,7 @@ public rm_drop_rune(id)
 
 public update_protect_state(id)
 {
-	rm_show_dhud_message(id, DHUD_POS_ITEM2,{255, 119, 0},1.04,true,"SHIELD POWER: [ %d%% ]", g_protection[id] * 20);
+	rm_show_dhud_message(id, DHUD_POS_ITEM2,{255, 119, 0},1.05,true,"SHIELD POWER: [ %d%% ]", g_protection[id] * 20);
 }
 
 

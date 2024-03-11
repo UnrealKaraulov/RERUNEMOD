@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.4"
+#define RUNEMOD_VERSION "3.7.5"
 
 
 #define HUD_CHANNEL_ID 3
@@ -151,22 +151,23 @@ stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:out)
 */
 public rm_register_dictionary(const dictname[])
 {
-	register_dictionary(dictname);
 	new BasePluginIndex = rm_base_plugin_id();
 	new BasePluginRegFunc = get_func_id("rm_register_dictionary_api",BasePluginIndex);
 	if (BasePluginRegFunc == -1)
 	{
 		log_amx("NO BASE FUNC FOUND 2");
-		return PLUGIN_HANDLED;
+		return false;
 	}
 	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
 		log_amx("CALL BASE FUNC ERROR 2");
-		return PLUGIN_HANDLED;
+		return false;
 	}
 	callfunc_push_str(dictname);
-	return callfunc_end();
+	callfunc_end();
+	register_dictionary("runemod_gamecms_item.txt");
+	return true;
 }
 
 /*

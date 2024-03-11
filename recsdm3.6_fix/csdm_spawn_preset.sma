@@ -107,6 +107,11 @@ public read_cfg(action, line[], section[])
 
 readSpawns()
 {
+	new iEnt = NULLENT;
+	while((iEnt = rg_find_ent_by_class(iEnt, "info_player_csdm")))
+		set_entvar(iEnt, var_flags, get_entvar(iEnt, var_flags) | FL_KILLME);
+	
+
 	new Map[32], config[32],  MapFile[256];
 
 	get_mapname(Map, charsmax(Map));
@@ -361,7 +366,7 @@ public m_MainHandler(id, menu, item)
 					CT_num++;
 			}
 
-			client_print(id,print_chat,"Всего точек: %d; Для всех: %d; T: %d; CT: %d.^nОригинальных: X: %f  Y: %f  Z: %f",
+			client_print(id,print_chat,"Всего точек: %d; Для всех: %d; T: %d; CT: %d.^nОригинальных: X: %f	Y: %f  Z: %f",
 				g_TotalSpawns, RD_num, TR_num, CT_num, Org[0], Org[1], Org[2]);
 
 			menu_display(id, g_MainMenuID, 0);
@@ -657,7 +662,7 @@ delete_spawn(ent)
 	if (file_exists(MapFile))
 	{
 		new Data[124], len, line, pos[11][8], currentVec[3];
-    
+	
 		while ((line = read_file(MapFile, line, Data, charsmax(Data), len)) != 0) 
 		{
 			if (strlen(Data) < 2) {
