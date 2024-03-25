@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.5"
+#define RUNEMOD_VERSION "3.7.6"
 
 
 #define HUD_CHANNEL_ID 3
@@ -158,15 +158,17 @@ public rm_register_dictionary(const dictname[])
 		log_amx("NO BASE FUNC FOUND 2");
 		return false;
 	}
+	register_dictionary(dictname);
+	
 	new Temp = callfunc_begin_i(BasePluginRegFunc,BasePluginIndex);
 	if(Temp != 1)
 	{
 		log_amx("CALL BASE FUNC ERROR 2");
 		return false;
 	}
+	
 	callfunc_push_str(dictname);
 	callfunc_end();
-	register_dictionary("runemod_gamecms_item.txt");
 	return true;
 }
 
