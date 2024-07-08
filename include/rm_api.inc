@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.6"
+#define RUNEMOD_VERSION "3.7.7"
 
 
 #define HUD_CHANNEL_ID 3
@@ -116,7 +116,7 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 /* Конфигурация */
 stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], out[], outlen)
 {
-	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	new const FILENAME[] = "plugins/runemod_extended.ini";
 	if (!ini_read_string(FILENAME, RuneName, RuneParam, out, outlen))
 	{
 		ini_write_string(FILENAME, RuneName, RuneParam, DefaultValue);
@@ -125,7 +125,7 @@ stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], out[], outlen)
 }
 stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &out)
 {
-	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	new const FILENAME[] = "plugins/runemod_extended.ini";
 	if (!ini_read_int(FILENAME, RuneName, RuneParam, out))
 	{
 		ini_write_int(FILENAME, RuneName, RuneParam, DefaultValue);
@@ -134,7 +134,7 @@ stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &out)
 }
 stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:out)
 {
-	new const FILENAME[] = "/plugins/runemod_extended.ini";
+	new const FILENAME[] = "plugins/runemod_extended.ini";
 	if (!ini_read_float(FILENAME, RuneName, RuneParam, out))
 	{
 		ini_write_float(FILENAME, RuneName, RuneParam, DefaultValue);

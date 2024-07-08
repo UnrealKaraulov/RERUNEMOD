@@ -61,7 +61,6 @@ new runemod_default_pickup_path[MAX_RESOURCE_PATH_LENGTH];
 // Время работы мода
 new runemod_start_time_hours = -1;
 new runemod_end_time_hours = -1;
-
 new runemod_time[16];
 
 // Очередь HUD сообщений
