@@ -1664,7 +1664,7 @@ public spawn_runes( )
 		}
 	}
 	
-	if (spawn_runes_tries > 2)
+	if (spawn_runes_tries > 1)
 	{
 		spawn_runes_tries = 0;
 		for(new i = 0; i < spawn_array_size; i++)
@@ -1688,7 +1688,7 @@ public spawn_runes( )
 	{
 		spawn_runes_tries++;
 #if defined DEBUG_ENABLED
-		if (spawn_runes_tries > 2)
+		if (spawn_runes_tries > 1)
 		{
 			log_amx("Warning! I can't create any runes with current settings.");
 			log_amx("Please check your runemod and runes config!");
