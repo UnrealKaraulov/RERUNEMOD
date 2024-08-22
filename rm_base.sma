@@ -5,7 +5,7 @@
 #include <xs>
 #include <rm_api>
 
-#define DEBUG_ENABLED
+//#define DEBUG_ENABLED
 
 // Koличecтвo pyн
 new runes_registered = 0;
