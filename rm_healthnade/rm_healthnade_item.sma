@@ -4,6 +4,7 @@
 #include <rm_api>
 #include <healthnade>
 
+
 new item_name[] = "rm_healthnade_item_name";
 new item_descr[] = "rm_healthnade_item_desc";
 
@@ -74,6 +75,6 @@ public rm_give_rune(id)
 	//HealthNade_GiveNade(id) > 0 срабатывает как надо
 	if (HealthNade_HasNade(id))
 		return NO_RUNE_PICKUP_SUCCESS;
-	HealthNade_GiveNade(id);
+	HealthNade_GiveNade(id, 1);
 	return HealthNade_HasNade(id) ? RUNE_PICKUP_SUCCESS : NO_RUNE_PICKUP_SUCCESS;
 }
