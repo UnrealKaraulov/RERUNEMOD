@@ -1,0 +1,6 @@
+[ru]
+rm_molotovnade_item_name = Molotov
+rm_molotovnade_item_desc = Игрок получает молотов
+[en]
+rm_molotovnade_item_name = Molotov
+rm_molotovnade_item_desc = Give player Molotov

@@ -5,7 +5,7 @@
 #include <xs>
 #include <rm_api>
 
-//#define DEBUG_ENABLED
+#define DEBUG_ENABLED
 
 // Koличecтвo pyн
 new runes_registered = 0;
@@ -1100,11 +1100,18 @@ public fill_new_spawn_points( )
 					get_entvar(id, var_origin, fOrigin );
 					if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
 					{
-						g_fLastSpawnRefreshTime = get_gametime();
-						get_entvar(id, var_absmin, fMins );
-						fOrigin[2] = fMins[2] + 4.0;
-						spawn_pos[g_iRefreshSpawnId] = fOrigin;
-						break;
+						// Для тех что приподняты
+						fOrigin[2] += 25.0;
+						if (rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
+						{
+							g_fLastSpawnRefreshTime = get_gametime();
+							
+							get_entvar(id, var_absmin, fMins );
+							fOrigin[2] = fMins[2] + 4.0;
+							
+							spawn_pos[g_iRefreshSpawnId] = fOrigin;
+							break;
+						}
 					}
 				}
 			}
@@ -1124,16 +1131,19 @@ public fill_new_spawn_points( )
 			get_entvar(id, var_origin, fOrigin );
 			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
 			{
-				get_entvar(id, var_absmin, fMins );
-				
-				fOrigin[2] = fMins[2] + 4.0;
-				
-				spawn_pos[spawn_array_size] = fOrigin;
-				spawn_has_ent[spawn_array_size] = 0;
-				
-				spawn_array_size++;
-				if (spawn_array_size >= MAX_REGISTER_RUNES || spawn_array_size >= runemod_spawncount)
-					return;
+				fOrigin[2] += 25.0;
+				if (rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
+				{
+					get_entvar(id, var_absmin, fMins );
+					fOrigin[2] = fMins[2] + 4.0;
+					
+					spawn_pos[spawn_array_size] = fOrigin;
+					spawn_has_ent[spawn_array_size] = 0;
+					
+					spawn_array_size++;
+					if (spawn_array_size >= MAX_REGISTER_RUNES || spawn_array_size >= runemod_spawncount)
+						return;
+				}
 			}
 		}
 	}
@@ -1262,19 +1272,22 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 		set_entvar(iEnt, var_rendermode, kRenderTransTexture);
 	}
 	
-	set_entvar(iEnt, var_mins, Float:{-15.0,-15.0,-2.0});
-	set_entvar(iEnt, var_maxs, Float:{15.0,15.0,15.0});
 	set_entvar(iEnt, var_solid, SOLID_TRIGGER );
 	set_entvar(iEnt, var_movetype, MOVETYPE_FLY);
 	set_entvar(iEnt, var_velocity, Float:{0.0,0.0,0.0});
-	set_entvar(iEnt, var_gravity, 0.0 )
-	
+	set_entvar(iEnt, var_gravity, 0.0);
 	
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
 		set_entvar(iEnt, var_avelocity,Float:{0.0,125.0,0.0});
 		
 	set_entvar(iEnt, var_sequence, ACT_IDLE);
 	set_entvar(iEnt, var_framerate, 1.0);
+	
+	entity_set_size(iEnt, Float:{-13.0,-13.0,-1.0}, Float:{13.0,13.0,14.0});
+	
+	/*set_entvar(iEnt, var_mins, Float:{-13.0,-13.0,-1.0});
+	set_entvar(iEnt, var_maxs, Float:{13.0,13.0,14.0});*/
+	
 	
 	rm_set_rune_runeid(iEnt,rune_id);
 	rm_set_rune_spawnid(iEnt,spawn_id);
@@ -1286,9 +1299,10 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 	fOrigin = spawn_pos[spawn_id];
 	
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
-		fOrigin[2] += 45.0;
+		fOrigin[2] += 25.0;
 	
 	entity_set_origin(iEnt, fOrigin);
+	
 	
 	spawn_iEnt_Origin[spawn_id][0] = floatround(fOrigin[0]);
 	spawn_iEnt_Origin[spawn_id][1] = floatround(fOrigin[1]);

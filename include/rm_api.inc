@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.7"
+#define RUNEMOD_VERSION "3.7.8"
 
 
 #define HUD_CHANNEL_ID 3
@@ -43,6 +43,11 @@
 
 #if !defined _ini_file_included
 	#include <ini_file>
+#endif
+
+#if !defined _easy_cfg_included
+#define _easy_cfg_has_internal
+#include <easy_cfg>
 #endif
 
 // Пpoвepкa peaльный ли игpoк
@@ -114,33 +119,23 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 }
 
 /* Конфигурация */
-stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], out[], outlen)
+stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], outstr[], outlen)
 {
-	new const FILENAME[] = "plugins/runemod_extended.ini";
-	if (!ini_read_string(FILENAME, RuneName, RuneParam, out, outlen))
-	{
-		ini_write_string(FILENAME, RuneName, RuneParam, DefaultValue);
-		copy(out,outlen,DefaultValue);
-	}
+	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_read_str(RuneName,RuneParam, DefaultValue, outstr, outlen);
 }
-stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &out)
+stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &outval)
 {
-	new const FILENAME[] = "plugins/runemod_extended.ini";
-	if (!ini_read_int(FILENAME, RuneName, RuneParam, out))
-	{
-		ini_write_int(FILENAME, RuneName, RuneParam, DefaultValue);
-		out = DefaultValue;
-	}
+	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_read_int(RuneName,RuneParam,DefaultValue,outval);
 }
-stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:out)
+
+stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:outval)
 {
-	new const FILENAME[] = "plugins/runemod_extended.ini";
-	if (!ini_read_float(FILENAME, RuneName, RuneParam, out))
-	{
-		ini_write_float(FILENAME, RuneName, RuneParam, DefaultValue);
-		out = DefaultValue;
-	}
+	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_read_flt(RuneName,RuneParam,DefaultValue,outval);
 }
+
 
 /*
 * Регистрации нового ланг файла (словарь)
