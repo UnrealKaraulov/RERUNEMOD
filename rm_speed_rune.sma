@@ -34,6 +34,9 @@ public plugin_init()
 	
 	/* Чтение конфигурации */
 	rm_read_cfg_flt(rune_name,"SPEED",g_fSpeed,g_fSpeed);
+	
+	if (g_fSpeed < 400.0)
+		g_fSpeed = 400.0;
 
 	// Максимальное количество предметов/рун которые могут быть на карте в одно время
 	new max_count = 10;

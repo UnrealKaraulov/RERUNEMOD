@@ -73,7 +73,8 @@ new active_rune_id[MAX_PLAYERS + 1] = {-1,...};
 new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
 
 // Возможность отключить RUNEMOD на определенных картах или раундах
-new runemod_active, runemod_active_status = 1;
+new runemod_active = 1
+new runemod_active_status = 1;
 
 // Только предметы!
 new runemod_only_items;
@@ -459,6 +460,7 @@ public REMOVE_RUNE_MONITOR()
 	{
 		return;
 	}
+	
 	new hours;
 	time(hours);
 	
@@ -479,21 +481,18 @@ public REMOVE_RUNE_MONITOR()
 			}
 		}
 	}
+	else if (runemod_start_time_hours <= hours && hours < runemod_end_time_hours)
+	{
+		if (runemod_active_status != 1)
+		{
+			set_cvar_num("runemod_active", 1);
+		}
+	}
 	else 
 	{
-		if (runemod_start_time_hours <= hours && hours < runemod_end_time_hours)
+		if (runemod_active_status != 0)
 		{
-			if (runemod_active_status != 1)
-			{
-				set_cvar_num("runemod_active", 1);
-			}
-		}
-		else 
-		{
-			if (runemod_active_status != 0)
-			{
-				set_cvar_num("runemod_active", 0);
-			}
+			set_cvar_num("runemod_active", 0);
 		}
 	}
 }

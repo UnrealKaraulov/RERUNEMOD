@@ -1,0 +1,6 @@
+[ru]
+rm_eminade_item_name = Emi
+rm_eminade_item_desc = Игрок получает ЭМИ гранату
+[en]
+rm_eminade_item_name = Emi
+rm_eminade_item_desc = Give player Emi
