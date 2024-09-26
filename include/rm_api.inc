@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.9"
+#define RUNEMOD_VERSION "3.7.10"
 
 
 #define HUD_CHANNEL_ID 3
@@ -54,7 +54,7 @@
 #define is_real_player(%0) (%0 > 0 && %0 <= MAX_PLAYERS)
 
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
-#define MAX_REGISTER_RUNES 128
+#define MAX_REGISTER_RUNES 1024
 
 // Максимальное количество спавн точек
 #define MAX_SPAWN_POINTS 256
@@ -1135,7 +1135,7 @@ stock bool:rm_unstuck_player(id)
 }
 
 
-static g_hBasePlugin = -1;
+stock g_hBasePlugin = -1;
 	
 stock rm_base_plugin_id()
 {
@@ -1157,7 +1157,7 @@ stock rm_base_plugin_id()
 }
 
 
-static g_hCurrentPlugin = -1;
+stock g_hCurrentPlugin = -1;
 
 stock rm_current_plugin_id()
 {
