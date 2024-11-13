@@ -1,0 +1,6 @@
+[ru]
+rm_wss_deagle_item_name = Deagle
+rm_wss_deagle_item_desc = Игрок получает Deagle
+[en]
+rm_wss_deagle_item_name = Deagle
+rm_wss_deagle_item_desc = Give player Deagle

@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.10"
+#define RUNEMOD_VERSION "3.7.11"
 
 
 #define HUD_CHANNEL_ID 3
@@ -41,9 +41,7 @@
 	#include <screenfade_util>
 #endif
 
-#if !defined _ini_file_included
-	#include <ini_file>
-#endif
+#define _easy_cfg_internal
 
 #if !defined _easy_cfg_included
 #define _easy_cfg_has_internal
