@@ -438,6 +438,18 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	active_rune_id[id] = -1;
 }
 
+public plugin_pause()
+{
+	RemoveAllRunes();
+}
+
+public plugin_unpause()
+{
+	RemoveAllRunes();
+	REMOVE_RUNE_MONITOR();
+	RM_SPAWN_RUNE();
+}
+
 // Зарегистрировать словарь в RUNEMOD
 public rm_register_dictionary_api(const dictname[])
 {
@@ -1082,6 +1094,90 @@ public fill_new_spawn_points( )
 	new Float:fOrigin[3];
 	new Float:fMins[3];
 	
+	if (spawn_array_size >= MAX_SPAWN_POINTS || spawn_array_size >= runemod_spawncount)
+	{
+#if defined DEBUG_ENABLED
+		log_amx("[TRACE] No free spawn slots! %i of %i/%i filled!", spawn_array_size, MAX_SPAWN_POINTS,runemod_spawncount);
+#endif
+	}
+	else 
+	{
+	#if defined DEBUG_ENABLED
+		new tmpArraySize = spawn_array_size;
+	#endif		
+		get_players( iPlayers, iNum, "ah" );
+		for( new i = 0; i < iNum; i++ )
+		{
+			new id = iPlayers[ i ];
+			if (is_user_onground(id))
+			{
+				get_entvar(id, var_origin, fOrigin );
+				if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
+				{
+					fOrigin[2] += 25.0;
+					if (rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
+					{
+						get_entvar(id, var_absmin, fMins );
+						fOrigin[2] = fMins[2] + 4.0;
+						
+						spawn_pos[spawn_array_size] = fOrigin;
+						spawn_has_ent[spawn_array_size] = 0;
+						
+						spawn_array_size++;
+						if (spawn_array_size >= MAX_REGISTER_RUNES || spawn_array_size >= runemod_spawncount)
+							return;
+					}
+				}
+			}
+		}
+		#if defined DEBUG_ENABLED
+		if (tmpArraySize == spawn_array_size)
+		{
+			log_amx("[TRACE] No added spawn points... Tracing...");
+			for( new i = 0; i < iNum; i++ )
+			{
+				new id = iPlayers[ i ];
+				if (is_user_onground(id))
+				{
+					get_entvar(id, var_origin, fOrigin );
+					if (!is_no_spawn_point(fOrigin))
+					{
+						log_amx("[TRACE] User %i on spawn point!", id );
+					}
+					else if (!is_no_rune_point(fOrigin))
+					{
+						log_amx("[TRACE] User %i has near runes [%f,%f,%f]!", id, fOrigin[0],fOrigin[1],fOrigin[2] );
+						for (new i = 0; i < spawn_array_size; i++)
+						{
+							if ( get_distance_f(fOrigin,spawn_pos[i]) < float(runemod_spawn_distance) )
+							{
+								log_amx("[TRACE] Found rune spawn %i at [%f,%f,%f]!", i, spawn_pos[i][0],spawn_pos[i][1],spawn_pos[i][2] );
+								break;
+							}
+						}
+					}
+					else if (!rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
+					{
+						log_amx("[TRACE] User %i no vacant hull!", id );
+					}
+					else 
+					{
+						fOrigin[2] += 25.0;
+						if (!rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
+						{
+							log_amx("[TRACE] User %i no vacant hull Z+25.0!", id );
+						}
+					}
+				}
+				else 
+				{
+					log_amx("[TRACE] User %i no ground!", id );
+				}
+			}
+		}
+		#endif	
+	}
+	
 	if (runemod_spawn_lifetime > 0 && spawn_array_size > 0 && get_gametime() - g_fLastSpawnRefreshTime > runemod_spawn_lifetime)
 	{
 		if (g_iRefreshSpawnId >= spawn_array_size)
@@ -1107,7 +1203,6 @@ public fill_new_spawn_points( )
 							
 							get_entvar(id, var_absmin, fMins );
 							fOrigin[2] = fMins[2] + 4.0;
-							
 							spawn_pos[g_iRefreshSpawnId] = fOrigin;
 							break;
 						}
@@ -1118,34 +1213,6 @@ public fill_new_spawn_points( )
 		g_iRefreshSpawnId++;
 	}
 
-	if (spawn_array_size >= MAX_SPAWN_POINTS || spawn_array_size >= runemod_spawncount)
-		return;
-		
-	get_players( iPlayers, iNum, "ah" );
-	for( new i = 0; i < iNum; i++ )
-	{
-		new id = iPlayers[ i ];
-		if (is_user_onground(id))
-		{
-			get_entvar(id, var_origin, fOrigin );
-			if (is_no_spawn_point(fOrigin) && is_no_rune_point(fOrigin) && rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr) )
-			{
-				fOrigin[2] += 25.0;
-				if (rm_is_hull_vacant(id, fOrigin, HULL_HUMAN,g_pCommonTr))
-				{
-					get_entvar(id, var_absmin, fMins );
-					fOrigin[2] = fMins[2] + 4.0;
-					
-					spawn_pos[spawn_array_size] = fOrigin;
-					spawn_has_ent[spawn_array_size] = 0;
-					
-					spawn_array_size++;
-					if (spawn_array_size >= MAX_REGISTER_RUNES || spawn_array_size >= runemod_spawncount)
-						return;
-				}
-			}
-		}
-	}
 }
 
 // Меняет руну местами
@@ -1742,7 +1809,7 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 }
 
 // Taймep coздaния cпaвнoв и зaпoлнeния иx pyнaми
-public RM_SPAWN_RUNE( id )
+public RM_SPAWN_RUNE()
 {
 #if defined DEBUG_ENABLED
 	log_amx("[TRACE] RM_SPAWN_RUNE tick");
