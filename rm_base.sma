@@ -594,7 +594,8 @@ public RemoveAllRunes()
 		runemod_spawned_items = 0;
 		runemod_spawned_runes = 0;
 		
-		spawn_has_ent[i] = 0;
+		if (spawn_has_ent[i] > 0)
+			spawn_has_ent[i] = 0;
 	}
 }
 
@@ -1124,7 +1125,7 @@ public fill_new_spawn_points( )
 						fOrigin[2] = fMins[2] + 4.0;
 						for( new n = 0; n < spawn_array_size; n++)
 						{
-							if (spawn_has_ent[spawn_array_size] < 0)
+							if (spawn_has_ent[n] < 0)
 							{
 								spawn_pos[n] = fOrigin;
 								spawn_has_ent[n] = 0;
@@ -1202,7 +1203,7 @@ public fill_new_spawn_points( )
 		if (g_iRefreshSpawnId >= spawn_array_size)
 			g_iRefreshSpawnId = 0;
 		
-		if (spawn_has_ent[spawn_array_size] <= 0)
+		if (spawn_has_ent[spawn_array_size] == 0)
 		{
 			get_players( iPlayers, iNum, "ach" );
 			
