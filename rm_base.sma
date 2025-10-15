@@ -1791,7 +1791,7 @@ public spawn_runes( )
 
 bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 {
-	if (spawn_has_ent[spawn_id] > 0)
+	if (spawn_has_ent[spawn_id] > 0 || spawn_has_ent[spawn_id] < 0)
 		return false;
 	
 	if (runemod_spawn_nolook && !forceview)
