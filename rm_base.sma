@@ -187,7 +187,9 @@ public plugin_init()
 	RegisterHookChain(RG_RoundEnd, "DropAllRunes", .post = false);
 	RegisterHookChain(RG_CSGameRules_RestartRound, "RestartRound", .post = false)
 	
-	register_concmd( "drop", "cmd_drop" );
+	// На случай если кто-то блокирует "drop" дважды проверяем
+	RegisterHookChain(RG_CBasePlayer_DropPlayerItem, "RG_CBasePlayer_DropPlayerItem_Pre", .post = false);
+	register_clcmd( "drop", "cmd_drop" );
 	
 	g_pCommonTr = create_tr2()
 	
@@ -212,12 +214,12 @@ public plugin_init()
 	mp_maxmoney = get_cvar_pointer("mp_maxmoney");
 	
 	// Часть кода отвечающая за отключения мода при совпадении префикса или названия карты
-	new sMapName[32];
+	static sMapName[32];
 	rh_get_mapname(sMapName, charsmax(sMapName), MNT_TRUE);
 	
 	add(runemod_ignore_prefix_list,charsmax(runemod_ignore_prefix_list)," ");
 	
-	new sMapPrefix[32];
+	static sMapPrefix[32];
 	new i = 0, iPos = 0;
 	while((iPos = split_string(runemod_ignore_prefix_list[i], " ", sMapPrefix, charsmax(sMapPrefix))) > 0)
 	{
@@ -234,8 +236,8 @@ public plugin_init()
 	
 	if (strlen(runemod_time) > 2)
 	{
-		new hour1[3];
-		new hour2[3];
+		static hour1[3];
+		static hour2[3];
 		parse(runemod_time, hour1, charsmax(hour1), hour2, charsmax(hour2));
 		if (hour1[0] != EOS && hour2[0] != EOS)
 		{
@@ -489,7 +491,7 @@ public REMOVE_RUNE_MONITOR()
 		return;
 	}
 	
-	new hours;
+	static hours;
 	time(hours);
 	
 	if (runemod_start_time_hours > runemod_end_time_hours)
@@ -535,20 +537,65 @@ public get_runeid_by_pluginid( pid )
 	}
 	return -1;
 }
-
-new Float:player_drop_time[MAX_PLAYERS + 1];
-
 // Выбрать нож и нажать 2 раза DROP что бы выбросить руну
 public cmd_drop(id)
 {
-	if (get_user_weapon(id) == CSW_KNIFE)
+	static Float:player_drop_time[MAX_PLAYERS + 1] = {0.0,...};
+	static iWeaponsTest[MAX_PLAYERS+1];
+	
+	if (id <= 0 || id > MAX_PLAYERS)
+		return PLUGIN_CONTINUE;
+		
+	new tmpwId = get_user_weapon(id);
+	
+	if (tmpwId == iWeaponsTest[id])
 	{
-		if (get_gametime() - player_drop_time[id] < 0.25 && active_rune_id[id] >= 0 && lock_rune_pickup[id] == 0)
+		if (get_gametime() - player_drop_time[id] < 0.30)
 		{
-			player_drop_rune( id );
+			if (active_rune_id[id] >= 0)
+			{
+				player_drop_rune(id);
+				player_drop_time[id] = get_gametime();
+				iWeaponsTest[id] = tmpwId;
+				return PLUGIN_HANDLED;
+			}
 		}
 		player_drop_time[id] = get_gametime();
 	}
+	
+	iWeaponsTest[id] = tmpwId;
+	return PLUGIN_CONTINUE;
+}
+
+public RG_CBasePlayer_DropPlayerItem_Pre(id)
+{
+	static Float:player_drop_time[MAX_PLAYERS + 1] = {0.0,...};
+	static iWeaponsTest[MAX_PLAYERS+1];
+	
+	if (id <= 0 || id > MAX_PLAYERS)
+		return HC_CONTINUE;
+		
+	new tmpwId = get_user_weapon(id);
+	
+	if (tmpwId == iWeaponsTest[id])
+	{
+		if (get_gametime() - player_drop_time[id] < 0.30)
+		{
+			if (active_rune_id[id] >= 0)
+			{
+				player_drop_rune(id);
+				player_drop_time[id] = get_gametime();
+				iWeaponsTest[id] = tmpwId;
+				
+				SetHookChainReturn(ATYPE_INTEGER, 0);
+				return HC_SUPERCEDE;
+			}
+		}
+		player_drop_time[id] = get_gametime();
+	}
+	
+	iWeaponsTest[id] = tmpwId;
+	return HC_CONTINUE;
 }
 
 // 3aбpaть pyны в конце payндa
@@ -812,7 +859,7 @@ public CBasePlayer_Spawn_Post(const id)
 		if (runemod_custom_spawn_support <= 0)
 			return;
 		
-		new Float:origin[3];
+		static Float:origin[3];
 		get_entvar(id, var_origin, origin);
 
 		AddPlayerSpawn(origin);
@@ -822,7 +869,7 @@ public CBasePlayer_Spawn_Post(const id)
 			new iEnt = spawn_has_ent[i];
 			if (iEnt > 0 && !is_nullent(iEnt))
 			{
-				new Float:runeOrigin[3];
+				static Float:runeOrigin[3];
 				get_entvar(iEnt, var_origin, runeOrigin);
 
 				if (get_distance_f(origin, runeOrigin) < 32.0)
@@ -849,7 +896,7 @@ public rm_highlight_screen(rune_id, id, hpower)
 {
 	if (runemod_screen_highlight && is_real_player(id))
 	{
-		new bColor[3];
+		static bColor[3];
 		bColor[0] = floatround(rune_list_model_color[rune_id][0]);
 		bColor[1] = floatround(rune_list_model_color[rune_id][1]);
 		bColor[2] = floatround(rune_list_model_color[rune_id][2]);
@@ -885,14 +932,14 @@ public player_drop_rune(id)
 					new is_item = rune_list_isItem[rune_id];
 					if (!is_item)
 					{
-						new iPlayers[ 32 ], iNum;
+						static iPlayers[ 32 ], iNum;
 						
 						if (runemod_notify_players_drop)
 							get_players( iPlayers, iNum, "ch" );
 						else 
 							get_players( iPlayers, iNum, "bch" );
 							
-						new username[MAX_NAME_LENGTH];
+						static username[MAX_NAME_LENGTH];
 						if (runemod_notify_players_drop)
 							get_user_name(id,username,charsmax(username));
 						
@@ -933,11 +980,11 @@ public rm_drop_item_api(plug_id,id)
 	new rune_id = get_runeid_by_pluginid(plug_id);
 	if (rune_id >= 0 && is_user_connected(id))
 	{
-		new username[MAX_NAME_LENGTH];
+		static username[MAX_NAME_LENGTH];
 		if (runemod_notify_players_drop)
 			get_user_name(id,username,charsmax(username));
 						
-		new iPlayers[ 32 ], iNum;
+		static iPlayers[ 32 ], iNum;
 		
 		if (runemod_notify_players_drop)
 			get_players( iPlayers, iNum, "ch" );
@@ -973,11 +1020,11 @@ public rm_drop_item_api_by_rune_id(rune_id,id)
 {
 	if (rune_id >= 0 && is_user_connected(id))
 	{
-		new username[MAX_NAME_LENGTH];
+		static username[MAX_NAME_LENGTH];
 		if (runemod_notify_players_drop)
 			get_user_name(id,username,charsmax(username));
 						
-		new iPlayers[ 32 ], iNum;
+		static iPlayers[ 32 ], iNum;
 		
 		if (runemod_notify_players_drop)
 			get_players( iPlayers, iNum, "ch" );
@@ -1094,9 +1141,9 @@ public bool:is_no_rune_point( Float:coords[3] )
 // Пpeимeщecтвo в тoм чтo кaждый paз coздaютcя нoвыe cпaвны.
 public fill_new_spawn_points( )
 {
-	new iPlayers[ 32 ], iNum;
-	new Float:fOrigin[3];
-	new Float:fMins[3];
+	static iPlayers[ 32 ], iNum;
+	static Float:fOrigin[3];
+	static Float:fMins[3];
 	
 	if (spawn_array_size >= MAX_SPAWN_POINTS || spawn_array_size >= runemod_spawncount)
 	{
@@ -1277,11 +1324,11 @@ public rm_swap_rune_id( iEnt, new_rune_id )
 	
 	rm_set_rune_runeid(iEnt,new_rune_id);
 	
-	new Float:fOrigin[3];
+	static Float:fOrigin[3];
 	fOrigin = spawn_pos[rm_get_rune_spawnid(iEnt)];
 	
 	if (!rune_list_isItem[new_rune_id] && runemod_random_mode <= 0)
-		fOrigin[2] += 45.0;
+		fOrigin[2] += 25.0;
 	
 	entity_set_origin(iEnt, fOrigin);
 }
@@ -1381,7 +1428,7 @@ public bool:spawn_one_rune(rune_id, spawn_id)
 
 	SetTouch(iEnt,"rune_touch");
 	
-	new Float:fOrigin[3];
+	static Float:fOrigin[3];
 	fOrigin = spawn_pos[spawn_id];
 	
 	if (!rune_list_isItem[rune_id] && runemod_random_mode <= 0)
@@ -1449,14 +1496,14 @@ public bool:rm_give_rune_to_player_api( player_id, rune_id )
 				client_print_color(player_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
 			}
 			
-			new iPlayers[ 32 ], iNum;
+			static iPlayers[ 32 ], iNum;
 			
 			if (runemod_notify_players)
 				get_players( iPlayers, iNum, "ch" );
 			else 
 				get_players( iPlayers, iNum, "bch" );
 			
-			new username[MAX_NAME_LENGTH];
+			static username[MAX_NAME_LENGTH];
 			if (runemod_notify_players)
 				get_user_name(player_id,username,charsmax(username));
 			
@@ -1561,11 +1608,11 @@ public rune_touch(const rune_ent, const player_id)
 					client_print_color(player_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
 				}
 				
-				new username[MAX_NAME_LENGTH];
+				static username[MAX_NAME_LENGTH];
 				if (runemod_notify_players)
 					get_user_name(player_id,username,charsmax(username));
 				
-				new iPlayers[ 32 ], iNum;
+				static iPlayers[ 32 ], iNum;
 				if (runemod_notify_players)
 					get_players( iPlayers, iNum, "ch" );
 				else 
@@ -1682,7 +1729,7 @@ public spawn_runes( )
 #if defined DEBUG_ENABLED
 	log_amx("[TRACE] Need create '%i' runes.", need_runes);
 #endif
-	new iPlayers[ 32 ], iNum;
+	static iPlayers[ 32 ], iNum;
 	get_players( iPlayers, iNum ,"ah" );
 	
 	if (iNum < runemod_min_players || iNum > runemod_max_players)
@@ -1797,12 +1844,12 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 	
 	if (runemod_spawn_nolook && !forceview)
 	{
-		new iPlayers[ 32 ], iNum;
+		static iPlayers[ 32 ], iNum;
 		get_players( iPlayers, iNum, "ach" );
 		for(new i = 0; i < iNum;i++)
 		{
 			new lookplayer = iPlayers[i];
-			if (fm_is_in_viewcone(lookplayer,spawn_pos[spawn_id]) && fm_is_visible(lookplayer,spawn_pos[spawn_id]))
+			if (fm_is_in_viewcone_my(lookplayer,spawn_pos[spawn_id]) && fm_is_visible_my(lookplayer,spawn_pos[spawn_id]))
 			{
 				return false;
 			}
@@ -1875,7 +1922,7 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 {
 	if (runemod_active && !g_bCurrentMapIgnored)
 	{
-		new iPlayers[ 32 ], iNum;
+		static iPlayers[ 32 ], iNum;
 		get_players( iPlayers, iNum, "ach" );
 		for( new i = 0; i < iNum; i++ )
 		{
@@ -1959,7 +2006,26 @@ public user_think(id)
 						
 						if (get_distance(iEntOriginEnd,spawn_iEnt_Origin[i]) < 25)
 						{
-							RM_UPDATE_HUD_RUNE(id,iEnt);
+							static Float:fOrigin[3];
+							fOrigin[0] = float(spawn_iEnt_Origin[i][0]);
+							fOrigin[1] = float(spawn_iEnt_Origin[i][1]);
+							fOrigin[2] = float(spawn_iEnt_Origin[i][2]);
+							if (fm_is_visible_my(id, fOrigin, 1))
+							{
+								static Float:fOrigin2[3];
+								get_entvar(iEnt,var_origin,fOrigin2);
+								if (get_distance_f(fOrigin, fOrigin2) > 2.5)
+								{
+									spawn_iEnt_Origin[i][0] = floatround(fOrigin2[0]);
+									spawn_iEnt_Origin[i][1] = floatround(fOrigin2[1]);
+									spawn_iEnt_Origin[i][2] = floatround(fOrigin2[2]);
+									spawn_pos[i] = fOrigin2;
+								}
+								else 
+								{
+									RM_UPDATE_HUD_RUNE(id,iEnt);
+								}
+							}
 							break;
 						}
 					}
@@ -1997,11 +2063,11 @@ public rm_shopmenu(id)
 	{
 		return PLUGIN_CONTINUE;
 	}
-	new tmpmenuitem[190];
+	static tmpmenuitem[190];
 	formatex(tmpmenuitem, charsmax(tmpmenuitem),"%L",id,"runemod_menu_shopmenu");
 	
 	new vmenu = menu_create(tmpmenuitem, "rm_shopmenu_handler")
-	new runeidstr[16];
+	static runeidstr[16];
 	for(new i = 0; i < runes_registered; i++)
 	{
 		if (rune_list_icost[i] > 0 && (!runemod_only_items || rune_list_isItem[i]) )
@@ -2027,7 +2093,8 @@ public rm_shopmenu_handler(id, vmenu, item)
 		return PLUGIN_HANDLED;
 	}
 
-	new data[6], iName[64], accs, callback;
+	static data[6], iName[64];
+	new accs, callback;
 	menu_item_getinfo(vmenu, item, accs, data, 5, iName, 63, callback);
 
 	if (equali(data, "exit"))
@@ -2141,20 +2208,20 @@ stock RM_SCREENFADE(id = 0, iColor[3] = { 0, 0, 0 }, Float:flFxTime = -1.0, Floa
 }
 
 // the dot product is performed in 2d, making the view cone infinitely tall
-stock bool:fm_is_in_viewcone(index, const Float:point[3]) {
-	new Float:angles[3];
+stock bool:fm_is_in_viewcone_my(index, const Float:point[3]) {
+	static Float:angles[3];
 	get_entvar(index, var_angles, angles);
 	engfunc(EngFunc_MakeVectors, angles);
 	global_get(glb_v_forward, angles);
 	angles[2] = 0.0;
 
-	new Float:origin[3], Float:diff[3], Float:norm[3];
+	static Float:origin[3], Float:diff[3], Float:norm[3];
 	get_entvar(index, var_origin, origin);
 	xs_vec_sub(point, origin, diff);
 	diff[2] = 0.0;
 	xs_vec_normalize(diff, norm);
 
-	new Float:dot, Float:fov;
+	static Float:dot, Float:fov;
 	dot = xs_vec_dot(norm, angles);
 	get_entvar(index, var_fov, fov);
 	if (dot >= floatcos(fov * M_PI / 360.0))
@@ -2163,28 +2230,50 @@ stock bool:fm_is_in_viewcone(index, const Float:point[3]) {
 	return false
 }
 
-stock bool:fm_is_visible(index, const Float:point[3], ignoremonsters = 0) {
-	new Float:start[3], Float:view_ofs[3];
+stock bool:fm_is_visible_my(index, const Float:point[3], ignoremonsters = 0) {
+	static Float:start[3], Float:view_ofs[3];
 	get_entvar(index, var_origin, start);
 	get_entvar(index, var_view_ofs, view_ofs);
 	xs_vec_add(start, view_ofs, start);
 
-	engfunc(EngFunc_TraceLine, start, point, ignoremonsters, index, 0);
+	engfunc(EngFunc_TraceLine, start, point, ignoremonsters, index, g_pCommonTr);
 
-	new Float:fraction;
-	get_tr2(0, TR_flFraction, fraction);
+	static Float:fraction;
+	get_tr2(g_pCommonTr, TR_flFraction, fraction);
 	if (fraction == 1.0)
 		return true
 
 	return false
 }
 
+stock bool:fm_is_visible_hull(index, const Float:point[3], hull = 0, ignoremonsters = 0) {
+	static Float:start[3], Float:view_ofs[3];
+	get_entvar(index, var_origin, start);
+	get_entvar(index, var_view_ofs, view_ofs);
+	xs_vec_add(start, view_ofs, start);
+
+	if(hull) {
+		// Hull trace - учитывает размеры entity
+		engfunc(EngFunc_TraceHull, start, point, ignoremonsters, hull, index, g_pCommonTr);
+	} else {
+		// Line trace
+		engfunc(EngFunc_TraceLine, start, point, ignoremonsters, index, g_pCommonTr);
+	}
+
+	static Float:fraction;
+	get_tr2(g_pCommonTr, TR_flFraction, fraction);
+	
+	new bool:visible = fraction == 1.0;
+	
+	return visible;
+}
+
 
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
 stock bool:is_no_player_point( Float:coords[3] , Float:dist = 128.0)
 {
-	new iPlayers[ 32 ], iNum;
-	new Float:fOrigin[3];
+	static iPlayers[ 32 ], iNum;
+	static Float:fOrigin[3];
 	get_players( iPlayers, iNum, "ah" );
 	for( new i = 0; i < iNum; i++ )
 	{
@@ -2205,7 +2294,8 @@ stock bool:is_no_spawn_point( Float:coords[3] )
 		return true;
 	}
 
-	new ent = -1, classname[64]
+	new ent = -1;
+	static classname[64];
 	while((ent = find_ent_in_sphere(ent, coords, float(runemod_respawn_distance))))
 	{
 		get_entvar(ent, var_classname,classname,charsmax(classname))
@@ -2225,7 +2315,7 @@ stock bool:is_no_custom_spawn(const Float:coords[3])
 		return true;
 
 	new size = ArraySize(g_PlayerSpawns);
-	new Float:pt[3];
+	static Float:pt[3];
 
 	for (new i = 0; i < size; i++)
 	{
@@ -2239,7 +2329,7 @@ stock bool:is_no_custom_spawn(const Float:coords[3])
 stock AddPlayerSpawn(const Float:origin[3])
 {
 	new size = ArraySize(g_PlayerSpawns);
-	new Float:pt[3];
+	static Float:pt[3];
 
 	// Проверка на дубликаты (20 юнитов)
 	for (new i = 0; i < size; i++)
