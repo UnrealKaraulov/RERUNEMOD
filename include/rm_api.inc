@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.15"
+#define RUNEMOD_VERSION "3.7.16"
 
 
 #define HUD_CHANNEL_ID 3
@@ -44,7 +44,6 @@
 #define _easy_cfg_internal
 
 #if !defined _easy_cfg_included
-#define _easy_cfg_has_internal
 #include <easy_cfg>
 #endif
 
@@ -119,18 +118,18 @@ stock rm_register_rune(RuneName[], RuneDesc[], Float:RuneColor[3], rModel[] = ""
 /* Конфигурация */
 stock rm_read_cfg_str(RuneName[], RuneParam[], DefaultValue[], outstr[], outlen)
 {
-	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_set_path("plugins/runemod_extended");
 	cfg_read_str(RuneName,RuneParam, DefaultValue, outstr, outlen);
 }
 stock rm_read_cfg_int(RuneName[], RuneParam[], DefaultValue, &outval)
 {
-	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_set_path("plugins/runemod_extended");
 	cfg_read_int(RuneName,RuneParam,DefaultValue,outval);
 }
 
 stock rm_read_cfg_flt(RuneName[], RuneParam[], Float:DefaultValue, &Float:outval)
 {
-	cfg_set_path("plugins/runemod_extended.ini");
+	cfg_set_path("plugins/runemod_extended");
 	cfg_read_flt(RuneName,RuneParam,DefaultValue,outval);
 }
 

@@ -1,6 +1,0 @@
-[ru]
-rm_re_portal_item_name = Портал пушка (ЛКМ/ПКМ)
-rm_re_portal_item_desc = Выберите нож и нажмите 1 раз 'DROP' (G)
-[en]
-rm_re_portal_item_name = Portal Gun (LMB/RMB mouse)
-rm_re_portal_item_desc = Select knife and press DROP (G) one time

@@ -164,8 +164,15 @@ new g_bScreenFadeAllowed = false;
 new Float:g_fLastSpawnRefreshTime = 0.0;
 new g_iRefreshSpawnId = 0;
 
+// Массивы состояния игроков
+new bool:g_bUserConnected[MAX_PLAYERS + 1] = {false, ...};
+new bool:g_bUserBot[MAX_PLAYERS + 1] = {false, ...};
+new bool:g_bUserAlive[MAX_PLAYERS + 1] = {false, ...};
+
 #define PLAYER_SPAWN_MAX 32
 #define PLAYER_SPAWN_DEDUP_DIST 20.0
+#define NOTIFY_DROP 0
+#define NOTIFY_PICKUP 1
 
 new Array:g_PlayerSpawns;
 
@@ -177,12 +184,12 @@ public plugin_init()
 	
 	create_cvar("rm_runemod", RUNEMOD_VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 	
-	RegisterHookChain(RG_CBasePlayer_Spawn, "CBasePlayer_Spawn_Post", true);
 	
 	set_task(float(runemod_spawntime) / 2.0, "RM_SPAWN_RUNE", SPAWN_SEARCH_TASK_ID);
 	set_task(UPDATE_RUNE_DESCRIPTION_HUD_TIME, "UPDATE_RUNE_DESCRIPTION", UPDATE_RUNE_DESCRIPTION_HUD_ID, _, _, "b");
 	set_task(10.0, "REMOVE_RUNE_MONITOR", UPDATE_RUNE_DESCRIPTION_HUD_ID+1, _, _, "b");
 	
+	RegisterHookChain(RG_CBasePlayer_Spawn, "CBasePlayer_Spawn_Post", true);
 	RegisterHookChain(RG_CBasePlayer_Killed, "CBasePlayer_Killed_Post", true);
 	RegisterHookChain(RG_RoundEnd, "DropAllRunes", .post = false);
 	RegisterHookChain(RG_CSGameRules_RestartRound, "RestartRound", .post = false)
@@ -432,16 +439,18 @@ public client_putinserver(id)
 	player_drop_rune(id);
 	player_drop_all_items(id);
 	active_rune_id[id] = -1;
+	g_bUserConnected[id] = true;
+	g_bUserAlive[id] = false;
+	g_bUserBot[id] = is_user_bot(id) || is_user_hltv(id);
 	
-	if (!is_user_bot(id))
+	if (!g_bUserBot[id])
 		set_task(0.4, "user_think", id, _, _, "b");
 }
-/*
 public client_connect(id)
 {
-	g_bRegGameCMS[id] = false;
+	g_bUserAlive[id] = false;
+	g_bUserBot[id] = is_user_bot(id) || is_user_hltv(id);
 }
-*/
 
 // 3aбpaть pyнy пpи oтключeнии игpoкa
 public client_disconnected(id, bool:drop, message[], maxlen)
@@ -454,16 +463,37 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 	player_drop_rune(id);
 	player_drop_all_items(id);
 	active_rune_id[id] = -1;
+	g_bUserConnected[id] = false;
+}
+
+public update_all_player_stat()
+{
+	for(new i = 1; i <= MAX_PLAYERS;i++)
+	{
+		if (is_user_connected(i))
+		{
+			g_bUserConnected[i] = true;
+			g_bUserBot[i] = is_user_bot(i) || is_user_hltv(i);
+			g_bUserAlive[i] = bool:is_user_alive(i);
+		}
+		else 
+		{
+			g_bUserConnected[i] = g_bUserAlive[i] = g_bUserBot[i] = false;
+		}
+	}
 }
 
 public plugin_pause()
 {
+	// Очистить карту от рун, т.к могут стать не валидными
 	RemoveAllRunes();
+	// Предотвратить нежелательне последствия
+	DropAllRunes();
 }
 
 public plugin_unpause()
 {
-	RemoveAllRunes();
+	update_all_player_stat();
 	REMOVE_RUNE_MONITOR();
 	RM_SPAWN_RUNE();
 }
@@ -537,6 +567,7 @@ public get_runeid_by_pluginid( pid )
 	}
 	return -1;
 }
+
 // Выбрать нож и нажать 2 раза DROP что бы выбросить руну
 public cmd_drop(id)
 {
@@ -833,6 +864,8 @@ public CBasePlayer_Killed_Post(pVictim, pAttacker, pGib)
 		lock_rune_pickup[pVictim] = 0;
 		player_drop_rune(pVictim);
 		player_drop_all_items(pVictim);
+		// После
+		g_bUserAlive[pVictim] = false;
 	}
 }
 
@@ -841,17 +874,17 @@ public CBasePlayer_Spawn_Post(const id)
 {
 	if (is_real_player(id))
 	{
+		if (is_user_alive(id))
+			g_bUserAlive[id] = true;
+		
 		if (runemod_newround_remove > 0)
 		{
-			if (is_real_player(id))
-			{
-				lock_rune_pickup[id] = 0;
-				player_drop_rune(id);
-				player_drop_all_items(id);
-			}
+			lock_rune_pickup[id] = 0;
+			player_drop_rune(id);
+			player_drop_all_items(id);
 		}
 		
-		if (runemod_rune_shop > 0 && is_user_alive(id))
+		if (runemod_rune_shop > 0 && g_bUserAlive[id])
 		{
 			client_print_color(id, print_team_red, "^4%s^3: %L!",runemod_prefix, LANG_PLAYER, "runemod_print_shopmenu");
 		}
@@ -927,44 +960,10 @@ public player_drop_rune(id)
 			new rune_id = active_rune_id[id];
 			if (rune_id >= 0)
 			{
-				if (is_user_connected(id))
+				if (g_bUserConnected[id])
 				{
-					new is_item = rune_list_isItem[rune_id];
-					if (!is_item)
-					{
-						static iPlayers[ 32 ], iNum;
-						
-						if (runemod_notify_players_drop)
-							get_players( iPlayers, iNum, "ch" );
-						else 
-							get_players( iPlayers, iNum, "bch" );
-							
-						static username[MAX_NAME_LENGTH];
-						if (runemod_notify_players_drop)
-							get_user_name(id,username,charsmax(username));
-						
-						for( new i = 0; i < iNum; i++ )
-						{
-							new spec_id = iPlayers[ i ];
-							if (runemod_notify_players_drop)
-							{
-								if ( spec_id != id )
-								{
-									client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune_noty", username, LANG_PLAYER, rune_list_name[rune_id]);
-								}
-							}
-							else 
-							{
-								new specTarget = get_entvar(spec_id, var_iuser2);
-								if (spec_id != id && specTarget == id)
-								{
-									client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
-								}
-							}
-						}
-						
-						client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_rune", LANG_PLAYER, rune_list_name[rune_id]);
-					}
+					new bool:is_item = rune_list_isItem[rune_id];
+					rm_drop_notify(id, rune_id, is_item, NOTIFY_DROP);
 				}
 				rm_drop_rune_callback(rune_list_id[rune_id], id, rune_id);
 			}
@@ -974,51 +973,94 @@ public player_drop_rune(id)
 	}
 }
 
+stock rm_drop_notify(const id, const rune_id, const bool:is_item, const notify_type = NOTIFY_DROP)
+{
+    // 1. Объявление переменных
+    static username[MAX_NAME_LENGTH];
+    static bool:notify_all;
+    static message_lang_key[64];
+    static message_lang_key_noty[64];
+    
+    // 2. Определение параметров уведомления
+    switch(notify_type) {
+        case NOTIFY_DROP: {
+            notify_all = bool:runemod_notify_players_drop;
+            if(is_item) {
+                formatex(message_lang_key, charsmax(message_lang_key), "runemod_drop_item");
+                formatex(message_lang_key_noty, charsmax(message_lang_key_noty), "runemod_drop_item_noty");
+            } else {
+                formatex(message_lang_key, charsmax(message_lang_key), "runemod_drop_rune");
+                formatex(message_lang_key_noty, charsmax(message_lang_key_noty), "runemod_drop_rune_noty");
+            }
+        }
+        case NOTIFY_PICKUP: {
+            notify_all = bool:runemod_notify_players;
+            if(is_item) {
+                formatex(message_lang_key, charsmax(message_lang_key), "runemod_pickup_item");
+            } else {
+                formatex(message_lang_key, charsmax(message_lang_key), "runemod_pickup_rune");
+            }
+            formatex(message_lang_key_noty, charsmax(message_lang_key_noty), "runemod_player_pickup_noty");
+        }
+    }
+    
+    // 3. Получение имени игрока, если нужно
+    if(notify_all) {
+        get_user_name(id, username, charsmax(username));
+    }
+    
+    // 4. Отправка уведомлений другим игрокам
+    for(new i = 1; i <= MAX_PLAYERS; i++) {
+        if(!g_bUserConnected[i] || i == id) {
+            continue;
+        }
+        
+        if(notify_all) {
+            // Уведомление всех игроков
+            client_print_color(i, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, message_lang_key_noty, username, LANG_PLAYER, rune_list_name[rune_id]);
+        } else {
+            // Уведомление только наблюдающих
+            new specTarget = get_entvar(i, var_iuser2);
+            if(specTarget == id) {
+                client_print_color(i, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, message_lang_key, LANG_PLAYER, rune_list_name[rune_id]);
+                
+                // Дополнительное сообщение для рун
+                if(notify_type == NOTIFY_PICKUP && !is_item) {
+                    client_print_color(i, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
+                }
+            }
+        }
+    }
+    
+    // 5. Отправка уведомления самому игроку
+    if(notify_type == NOTIFY_PICKUP) {
+        client_print_color(id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, message_lang_key, LANG_PLAYER, rune_list_name[rune_id]);
+        
+        if(!is_item) {
+            client_print_color(id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
+        }
+        
+        // Проигрывание звука подбора
+        client_cmd(id, "spk ^"%s^"", rune_list_sound[rune_id]);
+    } else {
+        client_print_color(id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, message_lang_key, LANG_PLAYER, rune_list_name[rune_id]);
+    }
+}
+
 // Сообщение о том что действие предмета прекратилось
 public rm_drop_item_api(plug_id,id)
 {
 	new rune_id = get_runeid_by_pluginid(plug_id);
-	if (rune_id >= 0 && is_user_connected(id))
+	if (rune_id >= 0 && g_bUserConnected[id])
 	{
-		static username[MAX_NAME_LENGTH];
-		if (runemod_notify_players_drop)
-			get_user_name(id,username,charsmax(username));
-						
-		static iPlayers[ 32 ], iNum;
-		
-		if (runemod_notify_players_drop)
-			get_players( iPlayers, iNum, "ch" );
-		else 
-			get_players( iPlayers, iNum, "bch" );
-			
-		for( new i = 0; i < iNum; i++ )
-		{
-			new spec_id = iPlayers[ i ];
-			if (runemod_notify_players_drop)
-			{
-				if ( spec_id != id )
-				{
-					client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item_noty", username, LANG_PLAYER, rune_list_name[rune_id]);
-				}
-			}
-			else 
-			{
-				new specTarget = get_entvar(spec_id, var_iuser2);
-				if (specTarget == id)
-				{
-					client_print_color(spec_id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item", LANG_PLAYER, rune_list_name[rune_id]);
-				}
-			}
-		}
-		
-		client_print_color(id, print_team_red, "^4%s^3 %L",runemod_prefix, LANG_PLAYER, "runemod_drop_item", LANG_PLAYER, rune_list_name[rune_id]);
+		rm_drop_notify(id, rune_id, true, NOTIFY_DROP);
 	}
 }
 
 // Сообщение о том что действие предмета прекратилось по номеру руны
 public rm_drop_item_api_by_rune_id(rune_id,id)
 {
-	if (rune_id >= 0 && is_user_connected(id))
+	if (rune_id >= 0 && g_bUserConnected[id])
 	{
 		static username[MAX_NAME_LENGTH];
 		if (runemod_notify_players_drop)
@@ -1087,7 +1129,7 @@ public rm_player_active_rune(id)
 // Сбросить подсветку игрока
 public rm_reset_highlight(id)
 {
-	if (is_user_connected(id))
+	if (g_bUserConnected[id])
 	{
 		RM_SCREENFADE(id, _, _, _,_,true,true);
 		if (!is_nullent(id))
@@ -1486,54 +1528,7 @@ public bool:rm_give_rune_to_player_api( player_id, rune_id )
 		
 		if (rm_give_rune_callback(rune_list_id[rune_id],player_id, 0, rune_id))
 		{
-			if (is_item)
-			{
-				client_print_color(player_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_pickup_item", LANG_PLAYER, rune_list_name[rune_id]);
-			}
-			else 
-			{
-				client_print_color(player_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_pickup_rune", LANG_PLAYER, rune_list_name[rune_id]);
-				client_print_color(player_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
-			}
-			
-			static iPlayers[ 32 ], iNum;
-			
-			if (runemod_notify_players)
-				get_players( iPlayers, iNum, "ch" );
-			else 
-				get_players( iPlayers, iNum, "bch" );
-			
-			static username[MAX_NAME_LENGTH];
-			if (runemod_notify_players)
-				get_user_name(player_id,username,charsmax(username));
-			
-			for( new i = 0; i < iNum; i++ )
-			{
-				new spec_id = iPlayers[ i ];
-				if (runemod_notify_players)
-				{
-					if ( spec_id != player_id )
-					{
-						client_print_color(spec_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_player_pickup_noty", username, LANG_PLAYER, rune_list_name[rune_id]);
-					}
-				}
-				else 
-				{
-					new specTarget = get_entvar(spec_id, var_iuser2);
-					if (specTarget == player_id)
-					{
-						if (is_item)
-						{
-							client_print_color(spec_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_pickup_item", LANG_PLAYER, rune_list_name[rune_id]);
-						}
-						else 
-						{
-							client_print_color(spec_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_pickup_rune", LANG_PLAYER, rune_list_name[rune_id]);
-							client_print_color(spec_id, print_team_red, "^4%s^3 %L", runemod_prefix, LANG_PLAYER, "runemod_hintdrop_rune");
-						}
-					}
-				}
-			}
+			rm_drop_notify(player_id, rune_id, is_item, NOTIFY_PICKUP);
 			
 			client_cmd(player_id,"spk ^"%s^"", rune_list_sound[rune_id]);
 			
@@ -1556,10 +1551,10 @@ public rune_touch(const rune_ent, const player_id)
 	if (!is_nullent(rune_ent) && is_real_player(player_id) && !lock_rune_pickup[player_id])
 	{
 		new rune_id = rm_get_rune_runeid(rune_ent)
-		if (rune_id < 0 || rune_id >= runes_registered || !is_user_alive(player_id))
+		if (rune_id < 0 || rune_id >= runes_registered || !g_bUserAlive[player_id])
 			return PLUGIN_CONTINUE;
 			
-		if (runemod_bot_pickup == 0 && is_user_bot(player_id))
+		if (runemod_bot_pickup == 0 && g_bUserBot[player_id])
 		{
 			return PLUGIN_CONTINUE;
 		}
@@ -1844,14 +1839,15 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 	
 	if (runemod_spawn_nolook && !forceview)
 	{
-		static iPlayers[ 32 ], iNum;
-		get_players( iPlayers, iNum, "ach" );
-		for(new i = 0; i < iNum;i++)
+		for(new i = 1; i <= MAX_PLAYERS; i++)
 		{
-			new lookplayer = iPlayers[i];
-			if (fm_is_in_viewcone_my(lookplayer,spawn_pos[spawn_id]) && fm_is_visible_my(lookplayer,spawn_pos[spawn_id]))
+			if (g_bUserConnected[i] && g_bUserAlive[i] && !g_bUserBot[i])
 			{
-				return false;
+				new lookplayer = i;
+				if (fm_is_in_viewcone_my(lookplayer, spawn_pos[spawn_id]) && fm_is_visible_my(lookplayer, spawn_pos[spawn_id]))
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -1922,38 +1918,36 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 {
 	if (runemod_active && !g_bCurrentMapIgnored)
 	{
-		static iPlayers[ 32 ], iNum;
-		get_players( iPlayers, iNum, "ach" );
-		for( new i = 0; i < iNum; i++ )
+		for(new i = 1; i <= MAX_PLAYERS; i++)
 		{
-			new id = iPlayers[ i ];
-			if (active_rune_id[id] >= 0)
+			if (g_bUserConnected[i] && g_bUserAlive[i] && !g_bUserBot[i])
 			{
-				RM_UPDATE_HUD(id,active_rune_id[id]);
+				if (active_rune_id[i] >= 0)
+				{
+					RM_UPDATE_HUD(i, active_rune_id[i]);
+				}
 			}
 		}
-		
-		get_players( iPlayers, iNum, "bch" );
-		for( new i = 0; i < iNum; i++ )
+
+		for(new i = 1; i <= MAX_PLAYERS; i++)
 		{
+			if (!g_bUserConnected[i] || g_bUserAlive[i])
+				continue;
+
 			new bool:highlightfound = false;
-			new id = iPlayers[ i ];
-			new specTarget = get_entvar(id, var_iuser2);
-			if (is_real_player(specTarget))
+			new specTarget = get_entvar(i, var_iuser2);
+			if (is_real_player(specTarget) && active_rune_id[specTarget] >= 0)
 			{
-				if (active_rune_id[specTarget] >= 0)
+				RM_UPDATE_HUD(i, active_rune_id[specTarget]);
+				if (!highlightfound && runemod_screen_highlight > 0)
 				{
-					RM_UPDATE_HUD(id,active_rune_id[specTarget]);
-					if (!highlightfound && runemod_screen_highlight > 0)
-					{
-						highlightfound = true;
-						rm_highlight_screen(active_rune_id[specTarget],id,RUNEMODE_DEFAULT_HIGHLIGHT_POWER);
-					}
+					highlightfound = true;
+					rm_highlight_screen(active_rune_id[specTarget], i, RUNEMODE_DEFAULT_HIGHLIGHT_POWER);
 				}
 			}
 			if (!highlightfound && runemod_screen_highlight > 0)
 			{
-				rm_reset_highlight(id);
+				rm_reset_highlight(i);
 			}
 		}
 	}
@@ -1963,24 +1957,15 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 // TODO: Можно улучшить (но тогда увеличиться нагрузка слегка)
 public user_think(id)
 {
-	static iOriginStart[3];
-	static iOriginEnd[3];
-	
-	static Float:fEntOriginStart[3];
-	
-	static iEntOriginEnd[3];
-	
-	static iMaxDistance;
-	static iCurDistance;
-	
-	static iEnt;
-	
-	static i;
+	static iMaxDistance,iCurDistance,iEnt,n;
 	
 	if (runemod_active && !g_bCurrentMapIgnored && runemod_random_mode == 0)
 	{
-		if (is_user_alive(id))
+		if (g_bUserAlive[id])
 		{
+			static iOriginStart[3];
+			static iOriginEnd[3];
+			
 			get_user_origin( id, iOriginStart, Origin_Eyes );
 			get_user_origin( id, iOriginEnd, Origin_AimEndEyes );
 			
@@ -1988,38 +1973,41 @@ public user_think(id)
 			
 			if (iMaxDistance > 0)
 			{
+				static Float:fEntOriginStart[3];
+				
 				fEntOriginStart[0] = (float(iOriginEnd[0] - iOriginStart[0]) / iMaxDistance);
 				fEntOriginStart[1] = (float(iOriginEnd[1] - iOriginStart[1]) / iMaxDistance);
 				fEntOriginStart[2] = (float(iOriginEnd[2] - iOriginStart[2]) / iMaxDistance);
 
-				for(i = 0; i < spawn_array_size;i++)
+				for(n = 0; n < spawn_array_size;n++)
 				{
-					iEnt = spawn_has_ent[i];
+					iEnt = spawn_has_ent[n];
 					if (iEnt <= 0)
 						continue;
-					iCurDistance = get_distance(iOriginStart,spawn_iEnt_Origin[i]);
+					iCurDistance = get_distance(iOriginStart,spawn_iEnt_Origin[n]);
 					if (iCurDistance < iMaxDistance)
 					{
+						static iEntOriginEnd[3];
 						iEntOriginEnd[0] = floatround(fEntOriginStart[0] * iCurDistance + iOriginStart[0]);
 						iEntOriginEnd[1] = floatround(fEntOriginStart[1] * iCurDistance + iOriginStart[1]);
 						iEntOriginEnd[2] = floatround(fEntOriginStart[2] * iCurDistance + iOriginStart[2]);
 						
-						if (get_distance(iEntOriginEnd,spawn_iEnt_Origin[i]) < 25)
+						if (get_distance(iEntOriginEnd,spawn_iEnt_Origin[n]) < 25)
 						{
 							static Float:fOrigin[3];
-							fOrigin[0] = float(spawn_iEnt_Origin[i][0]);
-							fOrigin[1] = float(spawn_iEnt_Origin[i][1]);
-							fOrigin[2] = float(spawn_iEnt_Origin[i][2]);
+							fOrigin[0] = float(spawn_iEnt_Origin[n][0]);
+							fOrigin[1] = float(spawn_iEnt_Origin[n][1]);
+							fOrigin[2] = float(spawn_iEnt_Origin[n][2]);
 							if (fm_is_visible_my(id, fOrigin, 1))
 							{
 								static Float:fOrigin2[3];
 								get_entvar(iEnt,var_origin,fOrigin2);
 								if (get_distance_f(fOrigin, fOrigin2) > 2.5)
 								{
-									spawn_iEnt_Origin[i][0] = floatround(fOrigin2[0]);
-									spawn_iEnt_Origin[i][1] = floatround(fOrigin2[1]);
-									spawn_iEnt_Origin[i][2] = floatround(fOrigin2[2]);
-									spawn_pos[i] = fOrigin2;
+									spawn_iEnt_Origin[n][0] = floatround(fOrigin2[0]);
+									spawn_iEnt_Origin[n][1] = floatround(fOrigin2[1]);
+									spawn_iEnt_Origin[n][2] = floatround(fOrigin2[2]);
+									spawn_pos[n] = fOrigin2;
 								}
 								else 
 								{
@@ -2087,7 +2075,7 @@ public rm_shopmenu(id)
 
 public rm_shopmenu_handler(id, vmenu, item)
 {
-	if (item == MENU_EXIT || !is_user_connected(id))
+	if (item == MENU_EXIT || !g_bUserConnected[id])
 	{
 		menu_destroy(vmenu);
 		return PLUGIN_HANDLED;
@@ -2150,7 +2138,7 @@ public rm_runeshop(id)
 
 public rm_buy_rune_api(id,rune_name[])
 {
-	if (!is_real_player(id) || !is_user_alive(id))
+	if (!is_real_player(id) || !g_bUserAlive[id])
 	{
 		return 0;
 	}
@@ -2272,15 +2260,15 @@ stock bool:fm_is_visible_hull(index, const Float:point[3], hull = 0, ignoremonst
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
 stock bool:is_no_player_point( Float:coords[3] , Float:dist = 128.0)
 {
-	static iPlayers[ 32 ], iNum;
-	static Float:fOrigin[3];
-	get_players( iPlayers, iNum, "ah" );
-	for( new i = 0; i < iNum; i++ )
+	for(new i = 1; i <= MAX_PLAYERS; i++)
 	{
-		new iPlayer = iPlayers[ i ];
-		get_entvar(iPlayer, var_origin, fOrigin );
-		if (get_distance_f(fOrigin,coords) < dist)
+		if (g_bUserConnected[i] && g_bUserAlive[i])
+		{
+			static Float:fOrigin[3];
+			get_entvar(i, var_origin, fOrigin);
+			if (get_distance_f(fOrigin, coords) < dist)
 			return false;
+		}
 	}
 	return true;
 }

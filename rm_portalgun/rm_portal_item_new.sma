@@ -73,14 +73,23 @@ new g_iCfgSpawnSecondsDelay = 0;
 new Float:flLastSpawnTime = 0.0;
 
 // Новые конфигурационные переменные
-new Float:g_fMaxEntitySize = 100.0;
-new g_szBlockedEntities[2048];
+// Сущности которые не могут пройти сквозь портал по класснейму
 new Array:g_aBlockedEntities;
-new bool:g_bCheckEntitySize = true;
 new bool:g_bCheckBlockedEntities = true;
-new Float:g_fPortalCooldown_IN = 0.01;
-new Float:g_fPortalCooldown_OUT = 0.3;
+new g_szBlockedEntities[2048];
+// Запрещёнка которую игрок не сможет пронести с собой в портал
+new Array:g_aForbiddenEntities;
+new bool:g_bCheckForbiddenEntities = true;
+new g_szForbiddenEntities[2048];
+// Сущности которые не смогут пройти в портал по размерам
+new Float:g_fMaxEntitySize = 100.0;
+new bool:g_bCheckEntitySize = true;
+// Перезарядка входного и выходного порталов
+new Float:g_fPortalCooldown_IN = 0.02;
+new Float:g_fPortalCooldown_OUT = 0.6;
+// Время смены оружия
 new Float:g_fDeployCooldown = 1.0;
+// Дальность на которую можно открыть портал
 new g_iMaxPortalDistance = 4000;
 
 enum _:portalBox_t {
@@ -100,7 +109,8 @@ public plugin_precache() {
 
 	// Чтение новых конфигурационных параметров
 	rm_read_cfg_flt(rune_name, "MAX_ENTITY_SIZE", 100.0, g_fMaxEntitySize);
-	rm_read_cfg_str(rune_name, "BLOCKED_ENTITIES", "func_door,func_door_rotating,func_breakable,func_wall,func_illusionary,func_train,trigger_multiple,trigger_once,info_target,ambient_generic", g_szBlockedEntities, charsmax(g_szBlockedEntities));
+	rm_read_cfg_str(rune_name, "BLOCKED_ENTITIES", "func_,trigger_,info_,ambient_", g_szBlockedEntities, charsmax(g_szBlockedEntities));
+	rm_read_cfg_str(rune_name, "FORBIDDEN_ENTITIES", RUNE_CLASSNAME, g_szForbiddenEntities, charsmax(g_szForbiddenEntities));
 	
 	new temp;
 	rm_read_cfg_int(rune_name, "CHECK_ENTITY_SIZE", 1, temp);
@@ -108,6 +118,9 @@ public plugin_precache() {
 	
 	rm_read_cfg_int(rune_name, "CHECK_BLOCKED_ENTITIES", 1, temp);
 	g_bCheckBlockedEntities = bool:temp;
+	
+	rm_read_cfg_int(rune_name, "CHECK_FORBIDDEN_ENTITIES", 1, temp);
+	g_bCheckForbiddenEntities = bool:temp;
 	
 	rm_read_cfg_flt(rune_name, "PORTAL_COOLDOWN_IN", 0.01, g_fPortalCooldown_IN);
 	rm_read_cfg_flt(rune_name, "PORTAL_COOLDOWN_OUT", 0.3, g_fPortalCooldown_OUT);
@@ -151,7 +164,10 @@ public plugin_init() {
 	
 	// Инициализация массива заблокированных сущностей
 	g_aBlockedEntities = ArrayCreate(64);
+	g_aForbiddenEntities = ArrayCreate(64);
+	
 	parse_blocked_entities();
+	parse_forbidden_entities();
 	
 	g_pCommonTr = create_tr2();
 	
@@ -178,10 +194,12 @@ public plugin_end() {
 	if(g_aBlockedEntities != Invalid_Array) {
 		ArrayDestroy(g_aBlockedEntities);
 	}
+	if(g_aForbiddenEntities != Invalid_Array) {
+		ArrayDestroy(g_aForbiddenEntities);
+	}
 }
 
-// Исправленная функция парсинга заблокированных сущностей
-// Полностью переписанная функция парсинга заблокированных сущностей
+// Функция парсинга заблокированных сущностей
 parse_blocked_entities() {
 	if(!g_bCheckBlockedEntities || strlen(g_szBlockedEntities) == 0) {
 		return;
@@ -192,23 +210,20 @@ parse_blocked_entities() {
 		ArrayClear(g_aBlockedEntities);
 	}
 	
-	new temp[2048];
-	copy(temp, charsmax(temp), g_szBlockedEntities);
-	
-	log_amx("[PORTAL] Raw blocked entities string: '%s'", temp);
+	log_amx("[PORTAL] Raw blocked entities string: '%s'", g_szBlockedEntities);
 	
 	// Разбиваем строку по запятым
 	new classname[32];
 	new start, end;
-	new len = strlen(temp);
+	new len = strlen(g_szBlockedEntities);
 	new count = 0;
 	
 	for(start = 0, end = 0; end <= len; end++) {
 		// Если нашли запятую или конец строки
-		if(temp[end] == ',' || temp[end] == 0) {
+		if(g_szBlockedEntities[end] == ',' || g_szBlockedEntities[end] == 0) {
 			if(end > start) {
 				// Копируем подстроку
-				copyc(classname, charsmax(classname), temp[start], ',');
+				copyc(classname, charsmax(classname), g_szBlockedEntities[start], ',');
 				trim(classname);
 				
 				// Убираем возможные пробелы
@@ -233,6 +248,54 @@ parse_blocked_entities() {
 	
 	log_amx("[PORTAL] Successfully loaded %d blocked entities", count);
 }
+parse_forbidden_entities() {
+	if(!g_bCheckForbiddenEntities || strlen(g_szForbiddenEntities) == 0) {
+		return;
+	}
+	
+	// Очищаем массив на случай повторного вызова
+	if(ArraySize(g_aForbiddenEntities) > 0) {
+		ArrayClear(g_aForbiddenEntities);
+	}
+	
+	log_amx("[PORTAL] Raw forbidden entities string: '%s'", g_szForbiddenEntities);
+	
+	// Разбиваем строку по запятым
+	new classname[32];
+	new start, end;
+	new len = strlen(g_szForbiddenEntities);
+	new count = 0;
+	
+	for(start = 0, end = 0; end <= len; end++) {
+		// Если нашли запятую или конец строки
+		if(g_szForbiddenEntities[end] == ',' || g_szForbiddenEntities[end] == 0) {
+			if(end > start) {
+				// Копируем подстроку
+				copyc(classname, charsmax(classname), g_szForbiddenEntities[start], ',');
+				trim(classname);
+				
+				// Убираем возможные пробелы
+				while(classname[0] == ' ') {
+					copy(classname, charsmax(classname), classname[1]);
+				}
+				
+				new classlen = strlen(classname);
+				while(classlen > 0 && classname[classlen-1] == ' ') {
+					classname[--classlen] = 0;
+				}
+				
+				// Добавляем в массив если не пустой
+				if(strlen(classname) > 0) {
+					ArrayPushString(g_aForbiddenEntities, classname);
+					count++;
+				}
+			}
+			start = end + 1; // Переходим к следующему элементу
+		}
+	}
+	
+	log_amx("[PORTAL] Successfully loaded %d forbidden entities", count);
+}
 
 // Улучшенная функция проверки размера сущности
 bool:is_entity_size_valid(const id) {
@@ -240,13 +303,13 @@ bool:is_entity_size_valid(const id) {
 		return true;
 	}
 	
-	static Float:min[3], Float:max[3];
-	get_entvar(id, var_mins, min);
-	get_entvar(id, var_maxs, max);
+	static Float:mins[3], Float:maxs[3];
+	get_entvar(id, var_mins, mins);
+	get_entvar(id, var_maxs, maxs);
 	
-	new Float:size_x = floatabs(max[0] - min[0]);
-	new Float:size_y = floatabs(max[1] - min[1]);
-	new Float:size_z = floatabs(max[2] - min[2]);
+	new Float:size_x = floatabs(maxs[0] - mins[0]);
+	new Float:size_y = floatabs(maxs[1] - mins[1]);
+	new Float:size_z = floatabs(maxs[2] - mins[2]);
 	
 	// Проверяем общий объем entity
 	new Float:volume = size_x * size_y * size_z;
@@ -264,7 +327,7 @@ bool:is_entity_size_valid(const id) {
 	return true;
 }
 
-// Функция проверки, заблокирована ли сущность
+// Сущность не сможет пройти сквозь портал
 bool:is_entity_blocked(const classname[]) {
 	if(!g_bCheckBlockedEntities || ArraySize(g_aBlockedEntities) == 0) {
 		return false;
@@ -274,12 +337,26 @@ bool:is_entity_blocked(const classname[]) {
 	for(new i = 0; i < ArraySize(g_aBlockedEntities); i++) {
 		ArrayGetString(g_aBlockedEntities, i, temp, charsmax(temp));
 		
-		// Прямое сравнение имен классов
-		if(equal(classname, temp)) {
+		// Совпадение по префиксу
+		if(containi(classname, temp) == 0) {
 			return true;
 		}
+	}
+	
+	return false;
+}
+
+// Игрок не сможет пронести запрещёнку сквозь портал
+bool:is_entity_forbidden(const classname[]) {
+	if(!g_bCheckForbiddenEntities || ArraySize(g_aForbiddenEntities) == 0) {
+		return false;
+	}
+	
+	new temp[32];
+	for(new i = 0; i < ArraySize(g_aForbiddenEntities); i++) {
+		ArrayGetString(g_aForbiddenEntities, i, temp, charsmax(temp));
 		
-		// Дополнительная проверка на частичное совпадение (на всякий случай)
+		// Совпадение по префиксу
 		if(containi(classname, temp) == 0) {
 			return true;
 		}
@@ -559,6 +636,10 @@ bool:is_can_portal(const iPlayer) {
 		return;
 	}
 	
+	if(g_bCheckForbiddenEntities && is_entity_forbidden(classname)) {
+		return;
+	}
+	
 	// Проверка размера сущности
 	if(g_bCheckEntitySize && !is_entity_size_valid(toucher)) {
 		return;
@@ -573,13 +654,10 @@ bool:is_can_portal(const iPlayer) {
 	new portal_type = g_portals[owner][PORTAL_1] == portal ? PORTAL_1 : PORTAL_2;
 	new other_portal_type = portal_type == PORTAL_1 ? PORTAL_2 : PORTAL_1;
 	
-	// Проверяем что второй портал существует
-	if(!is_entity(g_portals[owner][other_portal_type])) {
-		return;
-	}
 	
 	new other_portal = g_portals[owner][other_portal_type];
 	
+	// Проверяем что второй портал существует
 	if (!is_entity(other_portal))
 	{
 		return;
@@ -795,9 +873,10 @@ bool:portal_create_pair(const player) {
 
 portal_open(id, const portalBox[portalBox_t], type, bool:sound = false) {
 	// Если уже есть портал этого типа - удаляем
-	if(g_portals[id][type] != 0 && is_entity(g_portals[id][type])) {
-		new old_portal = g_portals[id][type];
-		rg_remove_entity(old_portal);
+	if(g_portals[id][type] != 0) {
+		if(is_entity(g_portals[id][type])) {
+			rg_remove_entity(g_portals[id][type]);
+		}
 		g_portals[id][type] = 0;
 	}
 
@@ -901,22 +980,22 @@ bool:portal_teleport(const id, const entPortalOut, const entPortalIn) {
 	if(xs_vec_angle(VEC_FLOOR, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_FL) bitPortalAprxmOrig[Portal_End] |= Portal_On_Floor;
 	if(xs_vec_angle(VEC_CEILING, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_CE) bitPortalAprxmOrig[Portal_End] |= Portal_On_Ceiling;
 	
-	static Float:min[3];
-	static Float:max[3];
-	get_entvar(id, var_mins, min);
-	get_entvar(id, var_maxs, max);
+	static Float:mins[3];
+	static Float:maxs[3];
+	get_entvar(id, var_mins, mins);
+	get_entvar(id, var_maxs, maxs);
 	
 	new classname[32];
 	get_entvar(id, var_classname, classname, charsmax(classname));
 	
-	if(!xs_vec_nearlyequal(min, Vec3Zero) && !xs_vec_nearlyequal(max, Vec3Zero)) {
+	if(!xs_vec_nearlyequal(mins, Vec3Zero) && !xs_vec_nearlyequal(maxs, Vec3Zero)) {
 		static Float:boxSize[3];
 		static Float:zCenter;
-		boxSize[0] = (floatabs(min[0]) + floatabs(max[0])) / 2.0;
-		boxSize[1] = (floatabs(min[1]) + floatabs(max[1])) / 2.0;
-		boxSize[2] = (floatabs(min[2]) + floatabs(max[2])) / 2.0;
+		boxSize[0] = (floatabs(mins[0]) + floatabs(maxs[0])) / 2.0;
+		boxSize[1] = (floatabs(mins[1]) + floatabs(maxs[1])) / 2.0;
+		boxSize[2] = (floatabs(mins[2]) + floatabs(maxs[2])) / 2.0;
 		
-		zCenter = boxSize[2] > max[2] ? (max[2] - boxSize[2]) : (boxSize[2] - max[2]);
+		zCenter = boxSize[2] > maxs[2] ? (maxs[2] - boxSize[2]) : (boxSize[2] - maxs[2]);
 		
 		static Float:portalMin[3];
 		static Float:portalMax[3];
@@ -1053,7 +1132,6 @@ bool:portalBox_create(const Float:shotFrom[3], const Float:shotDirection[3], pla
 	get_tr2(g_pCommonTr, TR_vecEndPos, pointEnd);
 	get_tr2(g_pCommonTr, TR_vecPlaneNormal, normal);
 	
-	// ВАЖНО: Эта строка была пропущена!
 	portalBox_create2(pointEnd, normal, outPortalBox);
 	
 	static firstPortalBox[portalBox_t];

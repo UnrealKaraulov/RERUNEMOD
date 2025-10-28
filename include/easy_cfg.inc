@@ -3,8 +3,6 @@
 #endif
 #define _easy_cfg_included
 
-#define _easy_cfg_has_internal
-
 #if defined _ini_file_included
 	#assert "Error! ini_file not supported! Please remove <ini_file> from includes!"
 #endif
@@ -19,120 +17,128 @@
 #define ini_read_float internal_ini_read_float
 #define ini_write_float internal_ini_write_float
 
-new stock cfg_path[64] = "plugins/easy_cfg.ini";
+new stock cfg_path[64] = "plugins/easy_cfg";
 new stock cfg_max_key_value = -1; // -1 for nolimit
 
-stock cfg_set_path(const path[], max_key_val = -1)
+stock bool:cfg_set_path(const path[], max_key_val = -1)
 {
 	copy(cfg_path,charsmax(cfg_path),path);
 	cfg_max_key_value = max_key_val;
+	return true;
 }
 
-stock cfg_get_path(path[], len)
+stock bool:cfg_get_path(path[], len)
 {
 	new szFile[64]; // as in ini_file
 	formatex(szFile[get_configsdir(szFile,charsmax(szFile))], charsmax(szFile), "/%s.ini", cfg_path);
 	copy(path,len,szFile);
+	return true;
 }
 
-stock cfg_read_str(const section[], const arg[], default_val[], out_val[], outlen)
+stock bool:cfg_read_str(const section[], const arg[], default_val[], out_val[], outlen)
 {
 	if (!ini_read_string(cfg_path, section, arg, out_val, outlen))
 	{
 		ini_write_string(cfg_path, section, arg, default_val);
 		copy(out_val,outlen,default_val);
+		return false;
 	}
+	return true;
 }
-stock cfg_read_int(const section[], const arg[], const default_val, &out_val)
+stock bool:cfg_read_int(const section[], const arg[], const default_val, &out_val)
 {
 	if (!ini_read_int(cfg_path, section, arg, out_val))
 	{
 		ini_write_int(cfg_path, section, arg, default_val);
 		out_val = default_val;
+		return false;
 	}
+	return true;
 }
-stock cfg_read_bool(const section[], const arg[], const bool:default_val, &bool:out_val)
+stock bool:cfg_read_bool(const section[], const arg[], const bool:default_val, &bool:out_val)
 {
 	static tmp_bool[16];
 	if (!ini_read_string(cfg_path, section, arg, tmp_bool, charsmax(tmp_bool)))
 	{
 		ini_write_string(cfg_path, section, arg, default_val ? "true" : "false");
 		out_val = default_val;
+		return false;
 	}
 	else 
 	{
 		out_val = equali(tmp_bool,"true") != 0;
+		return true;
 	}
 }
-stock cfg_read_flt(const section[], const arg[], const Float:default_val, &Float:out_val)
+stock bool:cfg_read_flt(const section[], const arg[], const Float:default_val, &Float:out_val)
 {
 	if (!ini_read_float(cfg_path, section, arg, out_val))
 	{
 		ini_write_float(cfg_path, section, arg, default_val);
 		out_val = default_val;
+		return false;
 	}
+	return true;
 }
 
-stock cfg_write_str(const section[], const arg[], val[])
+stock bool:cfg_write_str(const section[], const arg[], val[])
 {
-	ini_write_string(cfg_path, section, arg, val);
+	return ini_write_string(cfg_path, section, arg, val);
 }
-stock cfg_write_int(const section[], const arg[], const val)
+stock bool:cfg_write_int(const section[], const arg[], const val)
 {
-	ini_write_int(cfg_path, section, arg, val);
+	return ini_write_int(cfg_path, section, arg, val);
 }
-stock cfg_write_bool(const section[], const arg[], const bool:val)
+stock bool:cfg_write_bool(const section[], const arg[], const bool:val)
 {
-	ini_write_string(cfg_path, section, arg, val ? "true" : "false");
+	return ini_write_string(cfg_path, section, arg, val ? "true" : "false");
 }
-stock cfg_write_flt(const section[], const arg[], const Float:val)
+stock bool:cfg_write_flt(const section[], const arg[], const Float:val)
 {
-	ini_write_float(cfg_path, section, arg, val);
+	return ini_write_float(cfg_path, section, arg, val);
 }
 
-stock cfg_clear()
+stock bool:cfg_clear()
 {
 	new szFile[512] = {EOS};
 	new hFile = 0;
 	
 	formatex(szFile[get_configsdir(szFile, charsmax(szFile))], charsmax(szFile), "/%s.ini", cfg_path);
 	if (!(hFile = fopen(szFile, "wb")))
-		return 0;
+		return false;
 		
 	fclose(hFile);
-	return 1;
+	return true;
 }
 
-#if defined _easy_cfg_internal
-
-stock internal_ini_read_int(const file[], const section[], const key[], &value)
+stock bool:internal_ini_read_int(const file[], const section[], const key[], &value)
 {
 	new szBuffer[64] = {EOS};
 	if (!internal_ini_read(file, section, key, szBuffer, charsmax(szBuffer)))
-		return 0;
+		return false;
 
 	value = str_to_num(szBuffer);
-	return 1;
+	return true;
 }
 
-stock internal_ini_write_int(const file[], const section[], const key[], value)
+stock bool:internal_ini_write_int(const file[], const section[], const key[], value)
 {
 	new szBuffer[64] = {EOS};
 	num_to_str(value, szBuffer, charsmax(szBuffer));
 	return internal_ini_write(file, section, key, szBuffer);
 }
 
-stock internal_ini_read_float(const file[], const section[], const key[], &Float:value)
+stock bool:internal_ini_read_float(const file[], const section[], const key[], &Float:value)
 {
 	new szBuffer[64] = {EOS};
 	if (!internal_ini_read(file, section, key, szBuffer, charsmax(szBuffer)))
-		return 0;
+		return false;
 
 	value = str_to_float(szBuffer);
-	return 1;
+	return true;
 }
 
-stock internal_ini_write_float(const file[], const section[], const key[], Float:value)
+stock bool:internal_ini_write_float(const file[], const section[], const key[], Float:value)
 {
 	new szBuffer[64] = {EOS};
 	formatex(szBuffer, charsmax(szBuffer), "%.5f", value);
@@ -140,12 +146,12 @@ stock internal_ini_write_float(const file[], const section[], const key[], Float
 	return internal_ini_write(file, section, key, szBuffer);
 }
 
-stock internal_ini_read_string(const file[], const section[], const key[], dest[], len)
+stock bool:internal_ini_read_string(const file[], const section[], const key[], dest[], len)
 {
 	return internal_ini_read(file, section, key, dest, len);
 }
 
-stock internal_ini_write_string(const file[], const section[], const key[], value[])
+stock bool:internal_ini_write_string(const file[], const section[], const key[], value[])
 {
 	return internal_ini_write(file, section, key, value);
 }
@@ -165,7 +171,7 @@ stock internal_ini_copyc(dest[], len, const src[], ch)
 }
 
 
-stock internal_ini_read(const file[], const section[], const key[], dest[], len)
+stock bool:internal_ini_read(const file[], const section[], const key[], dest[], len)
 {
 	static var1 = 0,var2 = 0, bool:var3, bool:var4;
 	return internal_ini_read_techno(file,section,key,dest,len,var1,var2,var3,var4);
@@ -173,7 +179,7 @@ stock internal_ini_read(const file[], const section[], const key[], dest[], len)
 
 #define EASYCFG_BUFFER_CHUNK 512
 
-stock internal_ini_read_techno(const file[], const section[], const key[], dest[], len, &begin_key_offs,&end_key_offs,&bool:sec_found,&bool:key_found)
+stock bool:internal_ini_read_techno(const file[], const section[], const key[], dest[], len, &begin_key_offs,&end_key_offs,&bool:sec_found,&bool:key_found)
 {
 	new hFile = 0;
 	new iRetVal = 0;
@@ -186,7 +192,7 @@ stock internal_ini_read_techno(const file[], const section[], const key[], dest[
 	formatex(szFile[get_configsdir(szFile, charsmax(szFile))], charsmax(szFile), "/%s.ini", file);
 
 	if (!(hFile = fopen(szFile, "rt")))
-		return 0;
+		return false;
 
 	while (!feof(hFile))
 	{
@@ -262,10 +268,10 @@ stock internal_ini_read_techno(const file[], const section[], const key[], dest[
 	}
 
 	fclose(hFile);
-	return iRetVal;
+	return iRetVal > 0;
 }
 
-stock internal_ini_write(const file[], const section[], const key[], value[])
+stock bool:internal_ini_write(const file[], const section[], const key[], value[])
 {
 	new hFile = 0;
 	static newLine = 10;
@@ -279,7 +285,7 @@ stock internal_ini_write(const file[], const section[], const key[], value[])
 	if (!key_found && sec_found)
 	{
 		if (!(hFile = fopen(szFile, "a+t")))
-			return 0;
+			return false;
 		
 		// insert new key/val to line_end
 		fseek(hFile, line_end, SEEK_SET);
@@ -290,7 +296,7 @@ stock internal_ini_write(const file[], const section[], const key[], value[])
 	else if (key_found)
 	{
 		if (!(hFile = fopen(szFile, "rt")))
-			return 0;
+			return false;
 		
 		// skip line_beg/line_end and insert new key/val
 		static szTempFile[512];
@@ -300,7 +306,7 @@ stock internal_ini_write(const file[], const section[], const key[], value[])
 		if (!hTemp)
 		{
 			fclose(hFile);
-			return 0;
+			return false;
 		}
 
 		fseek(hFile, 0, SEEK_SET);
@@ -343,7 +349,7 @@ stock internal_ini_write(const file[], const section[], const key[], value[])
 	else
 	{	
 		if (!(hFile = fopen(szFile, "a+t")))
-			return 0;
+			return false;
 		fprintf(hFile, "[%s]", section);
 		fwrite(hFile, newLine, BLOCK_BYTE);
 		fprintf(hFile, "%s = %s", key, value);
@@ -351,7 +357,7 @@ stock internal_ini_write(const file[], const section[], const key[], value[])
 		fclose(hFile);
 	}
 	
-	return 1;
+	return true;
 }
 
 stock cut_float_better(str[])
@@ -377,4 +383,3 @@ stock cut_float_better(str[])
 		}
 	}
 }
-#endif
