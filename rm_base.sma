@@ -74,7 +74,7 @@ new active_rune_id[MAX_PLAYERS + 1] = {-1,...};
 new lock_rune_pickup[MAX_PLAYERS + 1] = {0,...};
 
 // Возможность отключить RUNEMOD на определенных картах или раундах
-new runemod_active = 1
+new runemod_active = 1;
 new runemod_active_status = 1;
 
 // Только предметы!
@@ -191,7 +191,7 @@ public plugin_init()
 	
 	RegisterHookChain(RG_CBasePlayer_Spawn, "CBasePlayer_Spawn_Post", true);
 	RegisterHookChain(RG_CBasePlayer_Killed, "CBasePlayer_Killed_Post", true);
-	RegisterHookChain(RG_RoundEnd, "DropAllRunes", .post = false);
+	RegisterHookChain(RG_RoundEnd, "DropAllRunes_RoundEnd", .post = false);
 	RegisterHookChain(RG_CSGameRules_RestartRound, "RestartRound", .post = false)
 	
 	// На случай если кто-то блокирует "drop" дважды проверяем
@@ -516,7 +516,7 @@ public REMOVE_RUNE_MONITOR()
 		}
 	}
 	
-	if (runemod_start_time_hours == -1 || runemod_start_time_hours == -1 || runemod_start_time_hours == runemod_end_time_hours)
+	if (runemod_start_time_hours == -1 || runemod_end_time_hours == -1 || runemod_start_time_hours == runemod_end_time_hours)
 	{
 		return;
 	}
@@ -630,7 +630,7 @@ public RG_CBasePlayer_DropPlayerItem_Pre(id)
 }
 
 // 3aбpaть pyны в конце payндa
-public DropAllRunes( )
+public DropAllRunes_RoundEnd( )
 {
 	if (runemod_newround_remove > 0)
 	{
@@ -640,6 +640,15 @@ public DropAllRunes( )
 			player_drop_rune(id);
 			player_drop_all_items(id);
 		}
+	}
+}
+
+public DropAllRunes( )
+{
+	for(new id = 1; id < MAX_PLAYERS + 1;id++)
+	{
+		player_drop_rune(id);
+		player_drop_all_items(id);
 	}
 }
 
@@ -743,7 +752,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 		rune_list_model_id[i] = rune_default_model_id;
 	}
 	
-	if( strlen(rSound) > 0 && file_exists( rune_list_sound[i], true ) )
+	if( strlen(rSound) > 0 && file_exists( rSound, true ) )
 	{
 		//server_print("INIT RUNE: SOUND FOUND");
 		if (contain(rSound,"sound/") == 0)
@@ -760,7 +769,7 @@ public RM_RegisterPlugin(PluginIndex,RuneName[],RuneDesc[],Float:RuneColor1,Floa
 			copy(rune_list_sound[i],charsmax(rune_list_sound[]), rune_default_pickup_sound[6]);
 	}
 	
-	rune_list_maxcount[i] = 999999;
+	rune_list_maxcount[i] = RUNE_MAX_UNLIMITED;
 	
 	rune_list_model_color[i][0] = RuneColor1;
 	rune_list_model_color[i][1] = RuneColor2;
@@ -827,9 +836,9 @@ public OnAPIMemberConnected(id, memberId, memberName[])
 // Предупредить игрока о необходимости зарегистрироваться на веб сайте
 public rm_print_register_api(id)
 {
-	if (get_gametime() - g_fLastRegisterPrint[id] > 1.0)
+	if (get_gametime() > g_fLastRegisterPrint[id])
 	{
-		g_fLastRegisterPrint[id] = get_gametime() + 8.0;
+		g_fLastRegisterPrint[id] = get_gametime() + 10.0;
 		rm_show_dhud_message(id, DHUD_POS_NOTIFY,{255, 94, 0},10.0,false,"%s: %L",runemod_prefix, LANG_PLAYER, "runemod_print_need_register");
 	}
 }

@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.7.16"
+#define RUNEMOD_VERSION "3.8"
 
 
 #define HUD_CHANNEL_ID 3
@@ -18,6 +18,8 @@
 #define DHUD_POS_ITEM4 6
 #define DHUD_POS_ITEM5 7
 #define DHUD_POS_ITEM6 8
+
+#define RUNE_MAX_UNLIMITED 999999
 
 #define RUNE_CLASSNAME "rune_model"
 
