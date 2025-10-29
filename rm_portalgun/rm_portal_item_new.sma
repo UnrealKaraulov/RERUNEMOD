@@ -5,16 +5,11 @@
 #include <rm_api>
 
 #define PLUGIN "RM_PORTAL"
-#define VERSION "3.0_NEW"
+#define VERSION "3.1_NEW"
 #define AUTHOR "trofian, polarhigh, karaulov"
 
 #define IGNORE_ALL (IGNORE_MISSILE | IGNORE_MONSTERS | IGNORE_GLASS)
 
-#define PORTAL_CLASSNAME "portal_custom"
-#define PORTAL_LOCK_TIME 1.0
-#define PORTAL_DESTINATION_SHIFT 4.0
-#define PORTAL_WIDTH 46.0
-#define PORTAL_HEIGHT 72.0
 
 #define GUN_SHOOT_DELAY 0.45
 
@@ -38,10 +33,16 @@
 #define xs_1_neg(%1) %1 = -%1
 
 
+#define PORTAL_CLASSNAME "portal_custom"
+#define PORTAL_LOCK_TIME 1.0
+#define PORTAL_DESTINATION_SHIFT 4.0
+#define PORTAL_WIDTH 46.0
+#define PORTAL_HEIGHT 72.0
+
 #define PBOX_SHIFT 1.0		// Начальный сдвиг от стены
-#define PBOX_DEPTH 3.0		// Глубина портала	
-#define PBOX_STEP 0.5		// Шаг движения
-#define PBOX_ITERS 70		// Количество итераций
+#define PBOX_DEPTH 2.0		// Глубина портала	
+#define PBOX_STEP 1.0		// Шаг движения
+#define PBOX_ITERS 50		// Количество итераций
 
 new const Float:Vec3Zero[3] = {0.0, 0.0, 0.0};
 
@@ -58,8 +59,8 @@ new const g_sSparksSpriteOrange[] = "sprites/next_portalgun/orange.spr";
 new g_pCommonTr;
 new g_idPortalGunModelV;
 new g_idPortalModel;
+new g_iPortalWeaponAnim[MAX_PLAYERS + 1] = {0,...};
 new g_portals[MAX_PLAYERS + 1][2];
-new g_iPortalWeaponAnim[MAX_PLAYERS + 1];
 new g_iPlayerData[MAX_PLAYERS + 1][2];
 new g_idSparksSpriteBlue;
 new g_idSparksSpriteOrange;
@@ -76,21 +77,26 @@ new Float:flLastSpawnTime = 0.0;
 // Сущности которые не могут пройти сквозь портал по класснейму
 new Array:g_aBlockedEntities;
 new bool:g_bCheckBlockedEntities = true;
-new g_szBlockedEntities[2048];
+new g_szBlockedEntities[2048] = {EOS};
 // Запрещёнка которую игрок не сможет пронести с собой в портал
 new Array:g_aForbiddenEntities;
 new bool:g_bCheckForbiddenEntities = true;
-new g_szForbiddenEntities[2048];
+new g_szForbiddenEntities[2048] = {EOS};
 // Сущности которые не смогут пройти в портал по размерам
 new Float:g_fMaxEntitySize = 100.0;
 new bool:g_bCheckEntitySize = true;
-// Перезарядка входного и выходного порталов
-new Float:g_fPortalCooldown_IN = 0.02;
-new Float:g_fPortalCooldown_OUT = 0.6;
+// Перезарядка порталов для сущностей
+new Float:g_fPortalEntityCooldown = 0.05;
+// Перезарядка порталов для игроков
+new Float:g_flLastTeleportTime[MAX_PLAYERS + 1][2];
+// Иммунитет после телепорта (на игрока, секунды)
+new Float:g_fPortalPlayerCooldown = 0.5;
 // Время смены оружия
+new Float:nextDeployTime[MAX_PLAYERS + 1] = {0.0,...};
 new Float:g_fDeployCooldown = 1.0;
 // Дальность на которую можно открыть портал
 new g_iMaxPortalDistance = 4000;
+
 
 enum _:portalBox_t {
 	Float:ppointUL[3],
@@ -109,8 +115,11 @@ public plugin_precache() {
 
 	// Чтение новых конфигурационных параметров
 	rm_read_cfg_flt(rune_name, "MAX_ENTITY_SIZE", 100.0, g_fMaxEntitySize);
-	rm_read_cfg_str(rune_name, "BLOCKED_ENTITIES", "func_,trigger_,info_,ambient_", g_szBlockedEntities, charsmax(g_szBlockedEntities));
-	rm_read_cfg_str(rune_name, "FORBIDDEN_ENTITIES", RUNE_CLASSNAME, g_szForbiddenEntities, charsmax(g_szForbiddenEntities));
+	
+	formatex(g_szBlockedEntities,charsmax(g_szBlockedEntities), "%s,func_,trigger_,info_,ambient_", RUNE_CLASSNAME);
+	
+	rm_read_cfg_str(rune_name, "BLOCKED_ENTITIES", g_szBlockedEntities, g_szBlockedEntities, charsmax(g_szBlockedEntities));
+	rm_read_cfg_str(rune_name, "FORBIDDEN_ENTITIES", "", g_szForbiddenEntities, charsmax(g_szForbiddenEntities));
 	
 	new temp;
 	rm_read_cfg_int(rune_name, "CHECK_ENTITY_SIZE", 1, temp);
@@ -122,10 +131,12 @@ public plugin_precache() {
 	rm_read_cfg_int(rune_name, "CHECK_FORBIDDEN_ENTITIES", 1, temp);
 	g_bCheckForbiddenEntities = bool:temp;
 	
-	rm_read_cfg_flt(rune_name, "PORTAL_COOLDOWN_IN", 0.01, g_fPortalCooldown_IN);
-	rm_read_cfg_flt(rune_name, "PORTAL_COOLDOWN_OUT", 0.3, g_fPortalCooldown_OUT);
+	rm_read_cfg_flt(rune_name, "ENTITY_TELEPORT_COOLDOWN", 0.01, g_fPortalEntityCooldown);
 	rm_read_cfg_flt(rune_name, "PORTAL_DEPLOY_COOLDOWN", 1.0, g_fDeployCooldown);
 	rm_read_cfg_int(rune_name, "MAX_PORTAL_DISTANCE", 2000, g_iMaxPortalDistance);
+	
+	// Иммунитет игрока после телепорта
+	rm_read_cfg_flt(rune_name, "PLAYER_TELEPORT_COOLDOWN", 0.25, g_fPortalPlayerCooldown);
 
 	rune_model_id = precache_model(rune_model_path);
 	rm_register_dictionary("runemod_pg_item.txt");
@@ -157,6 +168,26 @@ public plugin_precache() {
 	rm_base_set_max_count(max_count);
 	
 	rm_read_cfg_int(rune_name, "DELAY_BETWEEN_NEXT_SPAWN", g_iCfgSpawnSecondsDelay, g_iCfgSpawnSecondsDelay);
+	
+	for(new i = 0; i <= MAX_PLAYERS;i++)
+	{
+		for(new n = 0; n <= 1;n++)
+		{
+			g_flLastTeleportTime[i][n] = 0.0;
+			g_portals[i][n] = g_iPlayerData[i][n] = 0;
+		}
+	}
+
+	// Вывод конфигурации в лог для удобства отладки
+	log_amx("[PORTAL] Config summary:");
+	log_amx("[PORTAL] MAX_ENTITY_SIZE = %.2f", g_fMaxEntitySize);
+	log_amx("[PORTAL] CHECK_ENTITY_SIZE = %d", g_bCheckEntitySize ? 1 : 0);
+	log_amx("[PORTAL] CHECK_BLOCKED_ENTITIES = %d", g_bCheckBlockedEntities ? 1 : 0);
+	log_amx("[PORTAL] CHECK_FORBIDDEN_ENTITIES = %d", g_bCheckForbiddenEntities ? 1 : 0);
+	log_amx("[PORTAL] ENTITY_TELEPORT_COOLDOWN = %.3f", g_fPortalEntityCooldown);
+	log_amx("[PORTAL] PLAYER_TELEPORT_COOLDOWN = %.3f", g_fPortalPlayerCooldown);
+	log_amx("[PORTAL] PORTAL_DEPLOY_COOLDOWN = %.3f", g_fDeployCooldown);
+	log_amx("[PORTAL] MAX_PORTAL_DISTANCE = %d", g_iMaxPortalDistance);
 }
 
 public plugin_init() {
@@ -176,7 +207,6 @@ public plugin_init() {
 	RegisterHookChain(RG_CBasePlayer_Killed, "@player_killed_post", true);
 	
 	register_clcmd("weapon_knife", "@cmd_drop");
-	register_clcmd("slot3", "@cmd_drop");
 	
 	RegisterHam(Ham_Item_Deploy, "weapon_knife", "@knife_deploy_p", .Post = 1);
 	RegisterHam(Ham_Item_PostFrame, "weapon_knife", "@knife_postframe");
@@ -185,6 +215,7 @@ public plugin_init() {
 	for(new i = 0; i <= MAX_PLAYERS; i++) {
 		for(new j = 0; j < 2; j++) {
 			g_portals[i][j] = 0;
+			g_flLastTeleportTime[i][j] = 0.0;
 		}
 	}
 }
@@ -213,8 +244,8 @@ parse_blocked_entities() {
 	log_amx("[PORTAL] Raw blocked entities string: '%s'", g_szBlockedEntities);
 	
 	// Разбиваем строку по запятым
-	new classname[32];
-	new start, end;
+	static classname[64];
+	static start, end;
 	new len = strlen(g_szBlockedEntities);
 	new count = 0;
 	
@@ -261,7 +292,7 @@ parse_forbidden_entities() {
 	log_amx("[PORTAL] Raw forbidden entities string: '%s'", g_szForbiddenEntities);
 	
 	// Разбиваем строку по запятым
-	new classname[32];
+	new classname[64];
 	new start, end;
 	new len = strlen(g_szForbiddenEntities);
 	new count = 0;
@@ -333,8 +364,9 @@ bool:is_entity_blocked(const classname[]) {
 		return false;
 	}
 	
-	new temp[32];
-	for(new i = 0; i < ArraySize(g_aBlockedEntities); i++) {
+	static temp[64], i;
+	
+	for(i = 0; i < ArraySize(g_aBlockedEntities); i++) {
 		ArrayGetString(g_aBlockedEntities, i, temp, charsmax(temp));
 		
 		// Совпадение по префиксу
@@ -347,18 +379,26 @@ bool:is_entity_blocked(const classname[]) {
 }
 
 // Игрок не сможет пронести запрещёнку сквозь портал
-bool:is_entity_forbidden(const classname[]) {
+bool:is_entity_forbidden(const pid) {
 	if(!g_bCheckForbiddenEntities || ArraySize(g_aForbiddenEntities) == 0) {
 		return false;
 	}
 	
-	new temp[32];
-	for(new i = 0; i < ArraySize(g_aForbiddenEntities); i++) {
+	static temp[64], i;
+	
+	for(i = 0; i < ArraySize(g_aForbiddenEntities); i++) {
 		ArrayGetString(g_aForbiddenEntities, i, temp, charsmax(temp));
 		
-		// Совпадение по префиксу
-		if(containi(classname, temp) == 0) {
-			return true;
+		new iEnt = MAX_PLAYERS;
+		while((iEnt = rg_find_ent_by_class(iEnt, temp)))
+		{
+			new owner = get_entvar(iEnt, var_owner);
+			new aiment = get_entvar(iEnt, var_aiment);
+			
+			if (pid == owner || pid == aiment)
+			{
+				return true;
+			}
 		}
 	}
 	
@@ -436,36 +476,6 @@ public client_disconnected(id) {
 	return HAM_HANDLED;
 }
 
-bool:is_hull_vacant(const id, const Float:origin[3]) {
-	engfunc(EngFunc_TraceHull, origin, origin, 0, HULL_HEAD, id, g_pCommonTr);
-	
-	if(!get_tr2(g_pCommonTr, TR_StartSolid) && !get_tr2(g_pCommonTr, TR_AllSolid) && get_tr2(g_pCommonTr, TR_InOpen)) {
-		return true;
-	}
-	
-	return false;
-}
-
-bool:is_player_point(const id, const Float:coords[3]) {
-	new iPlayers[32];
-	new iNum;
-	static Float:fOrigin[3];
-	
-	get_players(iPlayers, iNum, "ach");
-	
-	for(new i = 0; i < iNum; i++) {
-		new iPlayer = iPlayers[i];
-		if(iPlayer != id && is_user_connected(iPlayer) && is_user_alive(iPlayer) && is_user_onground(iPlayer)) {
-			get_entvar(iPlayer, var_origin, fOrigin);
-			if(get_distance_f(fOrigin, coords) < 256.0) {
-				return true;
-			}
-		}
-	}
-	
-	return false;
-}
-
 bool:is_can_portal(const iPlayer) {
 	static Float:vecEyesOrigin[3];
 	static Float:vecEyesEndOrigin[3];
@@ -476,7 +486,7 @@ bool:is_can_portal(const iPlayer) {
 	get_entvar(iPlayer, var_view_ofs, vecViewOfs);
 	xs_vec_add(vecEyesOrigin, vecViewOfs, vecEyesOrigin);
 	
-	// Трассируем луч чтобы получить точку куда смотрит игрок (как Origin_AimEndEyes)
+	// Трассируем луч чтобы получить точку куда смотрит игрок
 	static Float:vecAngle[3];
 	static Float:vecDirection[3];
 	get_entvar(iPlayer, var_v_angle, vecAngle);
@@ -486,47 +496,35 @@ bool:is_can_portal(const iPlayer) {
 	xs_vec_mul_scalar(vecDirection, float(g_iMaxPortalDistance), vecEnd);
 	xs_vec_add(vecEyesOrigin, vecEnd, vecEnd);
 	
-	// Трассируем луч чтобы получить реальную точку прицеливания
 	engfunc(EngFunc_TraceLine, vecEyesOrigin, vecEnd, IGNORE_ALL, iPlayer, g_pCommonTr);
 	get_tr2(g_pCommonTr, TR_vecEndPos, vecEyesEndOrigin);
 	
-	if(is_player_point(iPlayer, vecEyesEndOrigin)) {
+	// ПРОСТАЯ ПРОВЕРКА: есть ли стены между игроком и точкой портала?
+	// Отодвигаем стартовую точку от игрока, чтобы не задеть себя
+	static Float:vecStartCheck[3];
+	xs_vec_mul_scalar(vecDirection, 32.0, vecStartCheck);
+	xs_vec_add(vecEyesOrigin, vecStartCheck, vecStartCheck);
+	
+	// Запускаем луч от игрока к точке портала
+	engfunc(EngFunc_TraceLine, vecStartCheck, vecEyesEndOrigin, IGNORE_ALL, iPlayer, g_pCommonTr);
+	
+	// Получаем точку, куда попал луч
+	static Float:vecHitPoint[3];
+	get_tr2(g_pCommonTr, TR_vecEndPos, vecHitPoint);
+	
+	// Если луч попал в ту же точку (или очень близко) - значит нет препятствий
+	if(get_distance_f(vecHitPoint, vecEyesEndOrigin) < 5.0) {
 		return true;
 	}
 	
-	// Дальше оригинальная логика проверки по пути
-	static Float:vecAimOrigin[3];
-	xs_vec_mul_scalar(vecDirection, 32.0, vecDirection);
-	xs_vec_add(vecEyesOrigin, vecDirection, vecAimOrigin);
-
-	new Float:maxDistance = get_distance_f(vecAimOrigin, vecEyesEndOrigin);
-	new i = 0;
-	
-	while(i < floatround(maxDistance)) {
-		i += 32;
-		
-		if(get_distance_f(vecAimOrigin, vecEyesEndOrigin) < 64.0) {
-			break;
-		}
-		
-		xs_vec_add(vecAimOrigin, vecDirection, vecAimOrigin);
-		if(!is_hull_vacant(iPlayer, vecAimOrigin)) {
-			return false;
-		}
-	}
-	
-	return true;
+	// Если расстояние большое - значит луч уперся в стену на пути
+	return false;
 }
 
-// Исправляем выбор типа портала в @knife_postframe
 @knife_postframe(const weapon) {
 	new id = get_entvar(weapon, var_owner);
 	
-	if(!is_user_connected(id)) {
-		return HAM_IGNORED;
-	}
-	
-	if(!VISIBLE_PORTAL_GUN(id)) {
+	if(!is_user_connected(id) || !VISIBLE_PORTAL_GUN(id)) {
 		return HAM_IGNORED;
 	}
 	
@@ -538,9 +536,9 @@ bool:is_can_portal(const iPlayer) {
 	new buttons = get_entvar(id, var_button);
 	new type = -1;
 	if(buttons & IN_ATTACK) {
-		type = PORTAL_1; // Синий портал
+		type = PORTAL_1;
 	} else if(buttons & IN_ATTACK2) {
-		type = PORTAL_2; // Оранжевый портал
+		type = PORTAL_2;
 	} else {
 		SET_PORTAL_GUN_ANIM(id, GUN_ANIM_IDLE);
 		return HAM_SUPERCEDE;
@@ -550,62 +548,60 @@ bool:is_can_portal(const iPlayer) {
 		return HAM_SUPERCEDE;
 	}
 	
-	// Остальной код создания портала...
-	static Float:origin[3];
-	static Float:originEyes[3];
+	// Получаем данные для создания портала
+	static Float:origin[3], Float:originEyes[3], Float:angle[3], Float:normal[3];
+	static portalBox[portalBox_t];
 	
 	get_entvar(id, var_origin, origin);
 	get_entvar(id, var_view_ofs, originEyes);
 	xs_vec_add(originEyes, origin, originEyes);
 	
-	static Float:angle[3];
-	static Float:normal[3];
-	
 	get_entvar(id, var_v_angle, angle);
 	angle_vector(angle, ANGLEVECTOR_FORWARD, normal);
 	
-	static portalBox[portalBox_t];
+	// Основная проверка - если любая из проверок не пройдена, создаем эффект ошибки
+	new bool:success = false;
 	
-	if(!portalBox_create(originEyes, normal, id, portalBox)) {
-		goto error;
-	}
-	
-	// test hull - простая версия
-	static Float:testOrigin[3];
-	xs_vec_mul_scalar(portalBox[pfwd], 10.0, testOrigin);
-	xs_vec_add(testOrigin, portalBox[pcenter], testOrigin);
+	if(portalBox_create(originEyes, normal, id, portalBox)) {
+		// test hull проверка
+		static Float:testOrigin[3];
+		xs_vec_mul_scalar(portalBox[pfwd], 10.0, testOrigin);
+		xs_vec_add(testOrigin, portalBox[pcenter], testOrigin);
 
-	engfunc(EngFunc_TraceLine, portalBox[pcenter], testOrigin, IGNORE_ALL, id, g_pCommonTr);
+		engfunc(EngFunc_TraceLine, portalBox[pcenter], testOrigin, IGNORE_ALL, id, g_pCommonTr);
 
-	if(get_tr2(g_pCommonTr, TR_StartSolid)) {
-		goto error;
-	}
-	
-	if(!is_can_portal(id)) {
-		goto error;
-	}
-	
-	new Float:radius = floatmin(PORTAL_HEIGHT, PORTAL_WIDTH) / 2.0;
-	new anotherEnt = 0;
-	
-	while((anotherEnt = engfunc(EngFunc_FindEntityInSphere, anotherEnt, portalBox[pcenter], radius))) {
-		if(get_entvar(anotherEnt, var_modelindex) == g_idPortalModel && !portal_test_owner(id, anotherEnt, type)) {
-			goto error;
+		if(!get_tr2(g_pCommonTr, TR_StartSolid)) {
+			if(is_can_portal(id)) {
+				new Float:radius = floatmin(PORTAL_HEIGHT, PORTAL_WIDTH) / 2.0;
+				new anotherEnt = 0;
+				new bool:portalBlocked = false;
+				
+				// Проверка на пересечение с другими порталами
+				while((anotherEnt = engfunc(EngFunc_FindEntityInSphere, anotherEnt, portalBox[pcenter], radius))) {
+					if(get_entvar(anotherEnt, var_modelindex) == g_idPortalModel && !portal_test_owner(id, anotherEnt, type)) {
+						portalBlocked = true;
+						break;
+					}
+				}
+				
+				if(!portalBlocked) {
+					// Финальная проверка - создание портала
+					success = portal_open(id, portalBox, type, true);
+				}
+			}
 		}
 	}
 	
-	portal_open(id, portalBox, type, true);
-	goto after;
+	// Если портал не создан - показываем ошибку
+	if(!success) {
+		if(g_portals[id][type] != 0 && is_entity(g_portals[id][type])) {
+			rg_remove_entity(g_portals[id][type]);
+			g_portals[id][type] = 0;
+		} 
+		effect_sparks_error_open(portalBox[pcenter], portalBox[pfwd], type);
+	}
 	
-	error:
-	// Исправляем удаление entity в блоке error
-	if(g_portals[id][type] != 0 && is_entity(g_portals[id][type])) {
-		rg_remove_entity(g_portals[id][type]);
-		g_portals[id][type] = 0;
-	} 
-	effect_sparks_error_open(portalBox[pcenter], portalBox[pfwd], type);
-	
-	after:
+	// Всегда проигрываем звук выстрела и анимацию
 	emit_sound(weapon, CHAN_AUTO, random_num(0, 1) ? g_sPortalGunSoundShot1 : g_sPortalGunSoundShot2, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 	SET_PORTAL_GUN_ANIM(id, GUN_ANIM_SHOT_RAND(id));
 	nextAttackTime[id] = get_gametime() + GUN_SHOOT_DELAY;
@@ -629,14 +625,14 @@ bool:is_can_portal(const iPlayer) {
 	}
 	
 	// Проверка на заблокированные сущности
-	new classname[32];
+	new classname[64];
 	get_entvar(toucher, var_classname, classname, charsmax(classname));
 	
 	if(g_bCheckBlockedEntities && is_entity_blocked(classname)) {
 		return;
 	}
 	
-	if(g_bCheckForbiddenEntities && is_entity_forbidden(classname)) {
+	if(toucher <= MAX_PLAYERS && g_bCheckForbiddenEntities && is_entity_forbidden(toucher)) {
 		return;
 	}
 	
@@ -651,9 +647,10 @@ bool:is_can_portal(const iPlayer) {
 		return;
 	}
 	
-	new portal_type = g_portals[owner][PORTAL_1] == portal ? PORTAL_1 : PORTAL_2;
-	new other_portal_type = portal_type == PORTAL_1 ? PORTAL_2 : PORTAL_1;
 	
+	new portal_type = g_portals[owner][PORTAL_1] == portal ? PORTAL_1 : PORTAL_2;
+	
+	new other_portal_type = portal_type == PORTAL_1 ? PORTAL_2 : PORTAL_1;
 	
 	new other_portal = g_portals[owner][other_portal_type];
 	
@@ -663,25 +660,33 @@ bool:is_can_portal(const iPlayer) {
 		return;
 	}
 	
-	// Проверяем cooldown на портале (используем nextthink)
-	if(get_entvar(portal, var_nextthink) > get_gametime()) {
+	// Проверяем cooldown на портале для сущностей(используем nextthink)
+	if(toucher > MAX_PLAYERS && get_entvar(portal, var_nextthink) > get_gametime()) {
 		return;
 	}
 	
-	// Телепортируем
-	if(portal_teleport(toucher, other_portal, portal)) {
-		// Устанавливаем cooldown для выходного портала
-		set_entvar(other_portal, var_nextthink, get_gametime() + g_fPortalCooldown_OUT);
-		// Устанавливаем cooldown для входного портала
-		set_task(0.01, "set_cd_task", other_portal);
+	// PER-PLAYER IMMUNITY: если это игрок, проверяем индивидуальный таймаут для данного портала типа
+	if(toucher >= 1 && toucher <= MAX_PLAYERS) {
+		if(g_flLastTeleportTime[toucher][portal_type] > get_gametime()) {
+			return;
+		}
 	}
-}
-
-public set_cd_task(portal)
-{
-	if (is_entity(portal))
+	
+	// Телепортируем
+	if(portal_teleport(toucher, other_portal, portal))
 	{
-		set_entvar(portal, var_nextthink, get_gametime() + g_fPortalCooldown_IN);
+		// Если это игрок — отмечаем время телепорта 
+		if(toucher >= 1 && toucher <= MAX_PLAYERS) 
+		{
+			g_flLastTeleportTime[toucher][other_portal_type] = get_gametime()  + g_fPortalPlayerCooldown;
+			g_flLastTeleportTime[toucher][portal_type] = get_gametime()  + g_fPortalPlayerCooldown;
+		}
+		else 
+		{
+			// ДЛЯ СУЩНОСТЕЙ: устанавливаем кулдаун на ОБА портала
+			set_entvar(portal, var_nextthink, get_gametime() + g_fPortalEntityCooldown);
+			set_entvar(other_portal, var_nextthink, get_gametime() + g_fPortalEntityCooldown);
+		}
 	}
 }
 
@@ -694,10 +699,8 @@ public set_cd_task(portal)
 		return PLUGIN_CONTINUE;
 	}
 	
-	static Float:nextDeployTime[MAX_PLAYERS + 1];
-	
 	if(nextDeployTime[id] > get_gametime()) {
-		return PLUGIN_HANDLED;
+		return PLUGIN_CONTINUE;
 	}
 	
 	VISIBLE_PORTAL_GUN(id) = !VISIBLE_PORTAL_GUN(id);
@@ -709,7 +712,7 @@ public set_cd_task(portal)
 	
 	nextDeployTime[id] = get_gametime() + g_fDeployCooldown;
 	
-	return PLUGIN_HANDLED;
+	return PLUGIN_CONTINUE;
 }
 
 public native_give(const id) {
@@ -863,63 +866,304 @@ bool:portal_create_pair(const player) {
 	g_portals[player][0] = pair[0];
 	g_portals[player][1] = pair[1];
 	
-	
-	/*Not needed for empty portals
-	SetTouch(pair[0],"@portal_touch");
-	SetTouch(pair[1],"@portal_touch");*/
-	
 	return true;
 }
 
-portal_open(id, const portalBox[portalBox_t], type, bool:sound = false) {
-	// Если уже есть портал этого типа - удаляем
-	if(g_portals[id][type] != 0) {
-		if(is_entity(g_portals[id][type])) {
-			rg_remove_entity(g_portals[id][type]);
-		}
-		g_portals[id][type] = 0;
-	}
+// Новые функции для проверки телепортации
+bool:portal_calculate_exit_position(const entPortalOut, const Float:entity_mins[3], const Float:entity_maxs[3], Float:destination[3]) {
+    static Float:portal_origin[3], Float:portal_angles[3], Float:portal_normal[3];
+    get_entvar(entPortalOut, var_origin, portal_origin);
+    get_entvar(entPortalOut, var_angles, portal_angles);
+    
+    // Получаем нормаль портала
+    angle_vector(portal_angles, ANGLEVECTOR_FORWARD, portal_normal);
+    portal_normal[2] = -portal_normal[2]; // Инвертируем Z как в оригинальной логике
+    
+    // Вычисляем размеры entity
+    static Float:boxSize[3];
+    boxSize[0] = (floatabs(entity_mins[0]) + floatabs(entity_maxs[0])) / 2.0;
+    boxSize[1] = (floatabs(entity_mins[1]) + floatabs(entity_maxs[1])) / 2.0;
+    boxSize[2] = (floatabs(entity_mins[2]) + floatabs(entity_maxs[2])) / 2.0;
+    
+    // Получаем размеры портала
+    static Float:portal_mins[3], Float:portal_maxs[3];
+    get_entvar(entPortalOut, var_mins, portal_mins);
+    get_entvar(entPortalOut, var_maxs, portal_maxs);
+    
+    // Выбираем dimension по углу pitch портала (как в оригинале)
+    new dimension = 1; // По умолчанию Y
+    if (portal_angles[0] > 45.0) {
+        dimension = 2; // Z
+    }
 
-	new portal = rg_create_entity("info_target");
-	if(!portal) return;
+    // Вычисляем половину размера портала
+    new Float:portal_half = floatabs(portal_maxs[dimension] - portal_mins[dimension]) * 0.5;
+    if (portal_half <= 0.01) {
+        portal_half = (dimension == 2) ? (PORTAL_HEIGHT * 0.5) : (PORTAL_WIDTH * 0.5);
+    }
 
-	set_entvar(portal, var_classname, PORTAL_CLASSNAME);
-	set_entvar(portal, var_model, g_sPortalModel);
-	set_entvar(portal, var_modelindex, g_idPortalModel);
-	set_entvar(portal, var_solid, SOLID_TRIGGER);
-	set_entvar(portal, var_movetype, MOVETYPE_FLY);
-	set_entvar(portal, var_owner, id);
+    new Float:entity_half = boxSize[dimension];
+    new Float:shift = entity_half + portal_half + PORTAL_DESTINATION_SHIFT + PBOX_DEPTH;
 
-	// Устанавливаем позицию и углы
-	set_entvar(portal, var_origin, portalBox[pcenter]);
-	
-	static Float:portal_angles[3];
-	vector_to_angle(portalBox[pfwd], portal_angles);
-	set_entvar(portal, var_angles, portal_angles);
+    // Строим точку назначения
+    xs_vec_mul_scalar(portal_normal, shift, destination);
+    xs_vec_add(portal_origin, destination, destination);
 
-	// Устанавливаем размеры
-	static Float:mins[3], Float:maxs[3];
-	mins[0] = -PORTAL_WIDTH; mins[1] = -PBOX_DEPTH; mins[2] = -PORTAL_HEIGHT;
-	maxs[0] = PORTAL_WIDTH; maxs[1] = PBOX_DEPTH; maxs[2] = PORTAL_HEIGHT;
-	set_entvar(portal, var_mins, mins);
-	set_entvar(portal, var_maxs, maxs);
+    // Проверяем валидность координат
+    if (destination[0] != destination[0] || destination[1] != destination[1] || destination[2] != destination[2]) {
+        return false;
+    }
 
-	// ВАЖНО: Устанавливаем скин для различия цветов
-	// Обычно скин 0 - синий, скин 1 - оранжевый
-	set_entvar(portal, var_skin, type);
+    if (floatabs(destination[0]) > 100000.0 || floatabs(destination[1]) > 100000.0 || floatabs(destination[2]) > 100000.0) {
+        return false;
+    }
+    
+    return true;
+}
 
-	// Также устанавливаем визуальные эффекты
-	set_entvar(portal, var_rendermode, kRenderNormal);
-	set_entvar(portal, var_renderamt, 255.0);
-	
-	// Сохраняем портал
-	g_portals[id][type] = portal;
-	
-	SetTouch(portal,"@portal_touch");
+bool:portal_can_teleport_entity(const entPortalOut, const Float:entity_mins[3], const Float:entity_maxs[3]) {
+    static Float:destination[3];
+    
+    if (!portal_calculate_exit_position(entPortalOut, entity_mins, entity_maxs, destination)) {
+        return false;
+    }
+    
+    // Проверяем hull entity в точке назначения
+    engfunc(EngFunc_TraceHull, destination, destination, 0, HULL_HUMAN, 0, g_pCommonTr);
+    
+    if (get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid) || get_tr2(g_pCommonTr, TR_pHit) >= 0) {
+        return false;
+    }
+    
+    return true;
+}
 
-	if(sound) {
-		emit_sound(portal, CHAN_STATIC, type == PORTAL_1 ? g_sPortalSoundOpen1 : g_sPortalSoundOpen2, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
-	}
+// Обновленная portal_open с точной проверкой
+bool:portal_open(id, const portalBox[portalBox_t], type, bool:sound = false) {
+    // Если уже есть портал этого типа - удаляем
+    if(g_portals[id][type] != 0) {
+        if(is_entity(g_portals[id][type])) {
+            rg_remove_entity(g_portals[id][type]);
+        }
+        g_portals[id][type] = 0;
+    }
+
+    // Создаем портал
+    new portal = rg_create_entity("info_target");
+    if(!portal) return false;
+
+    set_entvar(portal, var_classname, PORTAL_CLASSNAME);
+    set_entvar(portal, var_model, g_sPortalModel);
+    set_entvar(portal, var_modelindex, g_idPortalModel);
+    set_entvar(portal, var_solid, SOLID_TRIGGER);
+    set_entvar(portal, var_movetype, MOVETYPE_FLY);
+    set_entvar(portal, var_owner, id);
+
+    // Устанавливаем позицию и углы
+    set_entvar(portal, var_origin, portalBox[pcenter]);
+    
+    static Float:portal_angles[3];
+    vector_to_angle(portalBox[pfwd], portal_angles);
+    set_entvar(portal, var_angles, portal_angles);
+
+    // Устанавливаем размеры
+    static Float:mins[3], Float:maxs[3];
+    mins[0] = -PORTAL_WIDTH; mins[1] = -PBOX_DEPTH; mins[2] = -PORTAL_HEIGHT;
+    maxs[0] = PORTAL_WIDTH; maxs[1] = PBOX_DEPTH; maxs[2] = PORTAL_HEIGHT;
+    set_entvar(portal, var_mins, mins);
+    set_entvar(portal, var_maxs, maxs);
+
+    set_entvar(portal, var_skin, type);
+    set_entvar(portal, var_rendermode, kRenderNormal);
+    set_entvar(portal, var_renderamt, 255.0);
+    
+    g_portals[id][type] = portal;
+    
+    SetTouch(portal,"@portal_touch");
+
+    // ТОЧНАЯ ПРОВЕРКА: используем ту же логику что и в portal_teleport
+    static Float:player_mins[3] = {-16.0, -16.0, -36.0};
+    static Float:player_maxs[3] = {16.0, 16.0, 36.0};
+    
+    if(!portal_can_teleport_entity(portal, player_mins, player_maxs)) {
+        // Если нельзя выйти - уничтожаем портал
+        rg_remove_entity(portal);
+        g_portals[id][type] = 0;
+        effect_sparks_error_open(portalBox[pcenter], portalBox[pfwd], type);
+        return false;
+    }
+
+    if(sound) {
+        emit_sound(portal, CHAN_STATIC, type == PORTAL_1 ? g_sPortalSoundOpen1 : g_sPortalSoundOpen2, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+    }
+    
+    return true;
+}
+
+// Обновленная portal_teleport с использованием новых функций
+bool:portal_teleport(const id, const entPortalOut, const entPortalIn) {
+    enum {
+        Portal_On_Floor = 1,
+        Portal_On_Ceiling
+    }
+    
+    enum _:Portal_Properties {
+        Portal_Start,
+        Portal_End
+    }
+    
+    new bitPortalAprxmOrig[Portal_Properties] = {0,...};
+    
+    static Float:fPortalAngles[Portal_Properties][3];
+    static Float:fPortalNormal[Portal_Properties][3];
+    static Float:fPortalEndOrigin[3];
+    static Float:fEntAngles[3];
+    static Float:fEntVelocity[3];
+    
+    get_entvar(entPortalIn, var_angles, fPortalAngles[Portal_Start]);
+    get_entvar(entPortalOut, var_angles, fPortalAngles[Portal_End]);
+    angle_vector(fPortalAngles[Portal_Start], ANGLEVECTOR_FORWARD, fPortalNormal[Portal_Start]);
+    angle_vector(fPortalAngles[Portal_End], ANGLEVECTOR_FORWARD, fPortalNormal[Portal_End]);
+    xs_1_neg(fPortalNormal[Portal_Start][2]);
+    xs_1_neg(fPortalNormal[Portal_End][2]);
+    get_entvar(entPortalOut, var_origin, fPortalEndOrigin);
+    get_entvar(id, var_v_angle, fEntAngles);
+    get_entvar(id, var_velocity, fEntVelocity);
+    
+    if(xs_vec_angle(VEC_FLOOR, fPortalNormal[Portal_Start]) < IGNORE_ANGLE_DEG_FL) bitPortalAprxmOrig[Portal_Start] |= Portal_On_Floor;
+    if(xs_vec_angle(VEC_CEILING, fPortalNormal[Portal_Start]) < IGNORE_ANGLE_DEG_CE) bitPortalAprxmOrig[Portal_Start] |= Portal_On_Ceiling;
+    if(xs_vec_angle(VEC_FLOOR, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_FL) bitPortalAprxmOrig[Portal_End] |= Portal_On_Floor;
+    if(xs_vec_angle(VEC_CEILING, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_CE) bitPortalAprxmOrig[Portal_End] |= Portal_On_Ceiling;
+    
+    static Float:mins[3];
+    static Float:maxs[3];
+    get_entvar(id, var_mins, mins);
+    get_entvar(id, var_maxs, maxs);
+    
+    static classname[64];
+    get_entvar(id, var_classname, classname, charsmax(classname));
+    
+    static Float:destination[3];
+    
+    if(!xs_vec_nearlyequal(mins, Vec3Zero) && !xs_vec_nearlyequal(maxs, Vec3Zero)) {
+        // Используем новую функцию для расчета позиции
+        if(!portal_calculate_exit_position(entPortalOut, mins, maxs, destination)) {
+            return false;
+        }
+        
+        // Проверяем hull в точке назначения
+        engfunc(EngFunc_TraceHull, destination, destination, 0, HULL_HUMAN, id, g_pCommonTr);
+        if(get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid) || get_tr2(g_pCommonTr, TR_pHit) >= 0) {
+            return false;
+        }
+        
+        // Вычисляем zCenter (как в оригинале)
+        static Float:boxSize[3];
+        static Float:zCenter;
+        boxSize[0] = (floatabs(mins[0]) + floatabs(maxs[0])) / 2.0;
+        boxSize[1] = (floatabs(mins[1]) + floatabs(maxs[1])) / 2.0;
+        boxSize[2] = (floatabs(mins[2]) + floatabs(maxs[2])) / 2.0;
+        
+        zCenter = boxSize[2] > maxs[2] ? (maxs[2] - boxSize[2]) : (boxSize[2] - maxs[2]);
+        destination[2] += zCenter;
+        
+        set_entvar(id, var_origin, destination);
+        engfunc(EngFunc_SetOrigin, id, destination);
+    } else {
+        set_entvar(id, var_origin, fPortalEndOrigin);
+        engfunc(EngFunc_SetOrigin, id, fPortalEndOrigin);
+    }
+    
+    // Остальная логика телепортации без изменений
+    new Float:fSpeed = vector_length(fEntVelocity);
+    
+    if(bitPortalAprxmOrig[Portal_End] && fSpeed > IGNORE_SPEED) 
+    {
+        if(!xs_vec_nearlyequal(fPortalNormal[Portal_End], VEC_FLOOR) && !xs_vec_nearlyequal(fPortalNormal[Portal_End], VEC_CEILING)) 
+        {
+            fEntAngles[0] = fEntAngles[0] - 80.0 - fPortalAngles[Portal_Start][0] + fPortalAngles[Portal_End][0];
+            fEntAngles[1] = fPortalAngles[Portal_End][1];
+            fEntAngles[2] = fPortalAngles[Portal_End][2];
+        }
+    }
+    else if((bitPortalAprxmOrig[Portal_Start] && bitPortalAprxmOrig[Portal_End]) || (~bitPortalAprxmOrig[Portal_Start] && bitPortalAprxmOrig[Portal_End])) 
+    {
+        // same
+    } 
+    else if(bitPortalAprxmOrig[Portal_Start] && ~bitPortalAprxmOrig[Portal_End]) 
+    {
+        xs_vec_copy(fPortalAngles[Portal_End], fEntAngles);
+    } 
+    else 
+    {
+        fEntAngles[1] = fEntAngles[1] + 180.0 + fPortalAngles[Portal_End][1] - fPortalAngles[Portal_Start][1];
+    }
+    
+    if(FClassnameIs(id, "player")) {
+        set_entvar(id, var_v_angle, fEntAngles);
+        set_entvar(id, var_fixangle, 1);
+    }
+    
+    set_entvar(id, var_angles, fEntAngles);
+    
+    static Float:fOutVelocity[3];
+    
+    if((bitPortalAprxmOrig[Portal_Start] & Portal_On_Floor && bitPortalAprxmOrig[Portal_End] & Portal_On_Ceiling) ||
+       (bitPortalAprxmOrig[Portal_Start] & Portal_On_Ceiling && bitPortalAprxmOrig[Portal_End] & Portal_On_Floor)) {
+        xs_vec_copy(fEntVelocity, fOutVelocity);
+        set_entvar(id, var_velocity, fOutVelocity);
+        return true;
+    }
+    
+    if((bitPortalAprxmOrig[Portal_Start] & Portal_On_Floor && bitPortalAprxmOrig[Portal_End] & Portal_On_Floor) || 
+       (bitPortalAprxmOrig[Portal_Start] & Portal_On_Ceiling && bitPortalAprxmOrig[Portal_End] & Portal_On_Ceiling)) {
+        if(fSpeed < IGNORE_SPEED) {
+            xs_vec_copy(fEntVelocity, fOutVelocity);
+            xs_1_neg(fOutVelocity[2]);
+        } else {
+            xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
+        }
+        set_entvar(id, var_velocity, fOutVelocity);
+        return true;
+    } else if(bitPortalAprxmOrig[Portal_Start] & (Portal_On_Floor | Portal_On_Ceiling) && ~bitPortalAprxmOrig[Portal_End]) {
+        xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
+        set_entvar(id, var_velocity, fOutVelocity);
+        return true;
+    } else if(bitPortalAprxmOrig[Portal_End] & (Portal_On_Floor | Portal_On_Ceiling) && ~bitPortalAprxmOrig[Portal_Start]) {
+        if(fSpeed < IGNORE_SPEED) {
+            xs_vec_copy(fEntVelocity, fOutVelocity);
+        } else {
+            xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
+        }
+        set_entvar(id, var_velocity, fOutVelocity);
+        return true;
+    }
+    
+    static Float:fNormalVelocity[3];
+    xs_vec_normalize(fEntVelocity, fNormalVelocity);
+    
+    static Float:fReflectNormal[3];
+    xs_vec_add(fPortalNormal[Portal_Start], fPortalNormal[Portal_End], fReflectNormal);
+    
+    xs_vec_normalize(fReflectNormal, fReflectNormal);
+    xs_vec_reflect(fNormalVelocity, fReflectNormal, fOutVelocity);
+    xs_1_neg(fOutVelocity[2]);
+    xs_vec_neg(fOutVelocity, fOutVelocity);
+    xs_vec_reflect(fOutVelocity, fPortalNormal[Portal_End], fOutVelocity);
+    
+    if(vector_length(fOutVelocity) <= 0) {
+        xs_vec_copy(fNormalVelocity, fOutVelocity);
+    }
+    
+    xs_vec_mul_scalar(fOutVelocity, fSpeed, fOutVelocity);
+    
+    if(vector_length(fOutVelocity) <= 0) {
+        xs_vec_set(fOutVelocity, 0.1, 0.1, 0.1);
+    }
+    
+    set_entvar(id, var_velocity, fOutVelocity);
+
+    return true;
 }
 
 void:portal_close(const player, const type) {
@@ -945,180 +1189,6 @@ void:portal_remove_pair(const player) {
 		rg_remove_entity(g_portals[player][i]);
 		g_portals[player][i] = 0;
 	}
-}
-
-bool:portal_teleport(const id, const entPortalOut, const entPortalIn) {
-	enum {
-		Portal_On_Floor = 1,
-		Portal_On_Ceiling
-	}
-	
-	enum _:Portal_Properties {
-		Portal_Start,
-		Portal_End
-	}
-	
-	static Float:fPortalAngles[Portal_Properties][3];
-	static Float:fPortalNormal[Portal_Properties][3];
-	static Float:fPortalEndOrigin[3];
-	static bitPortalAprxmOrig[Portal_Properties];
-	static Float:fEntAngles[3];
-	static Float:fEntVelocity[3];
-	
-	get_entvar(entPortalIn, var_angles, fPortalAngles[Portal_Start]);
-	get_entvar(entPortalOut, var_angles, fPortalAngles[Portal_End]);
-	angle_vector(fPortalAngles[Portal_Start], ANGLEVECTOR_FORWARD, fPortalNormal[Portal_Start]);
-	angle_vector(fPortalAngles[Portal_End], ANGLEVECTOR_FORWARD, fPortalNormal[Portal_End]);
-	xs_1_neg(fPortalNormal[Portal_Start][2]);
-	xs_1_neg(fPortalNormal[Portal_End][2]);
-	get_entvar(entPortalOut, var_origin, fPortalEndOrigin);
-	get_entvar(id, var_v_angle, fEntAngles);
-	get_entvar(id, var_velocity, fEntVelocity);
-	
-	if(xs_vec_angle(VEC_FLOOR, fPortalNormal[Portal_Start]) < IGNORE_ANGLE_DEG_FL) bitPortalAprxmOrig[Portal_Start] |= Portal_On_Floor;
-	if(xs_vec_angle(VEC_CEILING, fPortalNormal[Portal_Start]) < IGNORE_ANGLE_DEG_CE) bitPortalAprxmOrig[Portal_Start] |= Portal_On_Ceiling;
-	if(xs_vec_angle(VEC_FLOOR, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_FL) bitPortalAprxmOrig[Portal_End] |= Portal_On_Floor;
-	if(xs_vec_angle(VEC_CEILING, fPortalNormal[Portal_End]) < IGNORE_ANGLE_DEG_CE) bitPortalAprxmOrig[Portal_End] |= Portal_On_Ceiling;
-	
-	static Float:mins[3];
-	static Float:maxs[3];
-	get_entvar(id, var_mins, mins);
-	get_entvar(id, var_maxs, maxs);
-	
-	new classname[32];
-	get_entvar(id, var_classname, classname, charsmax(classname));
-	
-	if(!xs_vec_nearlyequal(mins, Vec3Zero) && !xs_vec_nearlyequal(maxs, Vec3Zero)) {
-		static Float:boxSize[3];
-		static Float:zCenter;
-		boxSize[0] = (floatabs(mins[0]) + floatabs(maxs[0])) / 2.0;
-		boxSize[1] = (floatabs(mins[1]) + floatabs(maxs[1])) / 2.0;
-		boxSize[2] = (floatabs(mins[2]) + floatabs(maxs[2])) / 2.0;
-		
-		zCenter = boxSize[2] > maxs[2] ? (maxs[2] - boxSize[2]) : (boxSize[2] - maxs[2]);
-		
-		static Float:portalMin[3];
-		static Float:portalMax[3];
-		get_entvar(entPortalOut, var_mins, portalMin);
-		get_entvar(entPortalOut, var_maxs, portalMax);
-		
-		
-		// @TODO переосмыслить
-		new Float:sinAngle = xs_sin(xs_vec_angle(fPortalAngles[Portal_End], Vec3Zero), degrees);
-		static Float:shift;
-		
-		new dimension = 1;
-		
-		if(fPortalAngles[Portal_End][0] > 45.0) {  // Используем 0 вместо XS_PITCH
-			dimension = 2;
-		}
-		
-		shift = boxSize[dimension] / sinAngle + portalMax[dimension] / sinAngle;
-		
-		static Float:destination[3];
-		xs_vec_mul_scalar(fPortalNormal[Portal_End], shift + PORTAL_DESTINATION_SHIFT, destination);
-		xs_vec_add(destination, fPortalEndOrigin, destination);
-		
-		engfunc(EngFunc_TraceHull, destination, destination, 0, HULL_HUMAN, id, g_pCommonTr);
-		if(get_tr2(g_pCommonTr, TR_StartSolid) || get_tr2(g_pCommonTr, TR_AllSolid) || get_tr2(g_pCommonTr, TR_pHit) >= 0) {
-			return false;
-		}
-		
-		destination[2] += zCenter;
-		
-		set_entvar(id, var_origin, destination);
-		engfunc(EngFunc_SetOrigin, id, destination);
-	} else {
-		set_entvar(id, var_origin, fPortalEndOrigin);
-		engfunc(EngFunc_SetOrigin, id, fPortalEndOrigin);
-	}
-	
-	static Float:fOutAngles[3];
-	new Float:fSpeed = vector_length(fEntVelocity);
-	
-	if(bitPortalAprxmOrig[Portal_End] && fSpeed > IGNORE_SPEED) {
-		if(xs_vec_nearlyequal(fPortalNormal[Portal_End], VEC_FLOOR) || xs_vec_nearlyequal(fPortalNormal[Portal_End], VEC_CEILING)) {
-			xs_vec_copy(fEntAngles, fOutAngles);
-		} else {
-			fOutAngles[0] = fEntAngles[0] - 80.0 - fPortalAngles[Portal_Start][0] + fPortalAngles[Portal_End][0];
-			fOutAngles[1] = fPortalAngles[Portal_End][1];
-			fOutAngles[2] = fPortalAngles[Portal_End][2];
-		}
-	} else if((bitPortalAprxmOrig[Portal_Start] && bitPortalAprxmOrig[Portal_End]) || (~bitPortalAprxmOrig[Portal_Start] && bitPortalAprxmOrig[Portal_End])) {
-		xs_vec_copy(fEntAngles, fOutAngles);
-	} else if(bitPortalAprxmOrig[Portal_Start] && ~bitPortalAprxmOrig[Portal_End]) {
-		xs_vec_copy(fPortalAngles[Portal_End], fOutAngles);
-	} else {
-		fOutAngles[0] = fEntAngles[0];
-		fOutAngles[1] = fEntAngles[1] + 180.0 + fPortalAngles[Portal_End][1] - fPortalAngles[Portal_Start][1];
-		fOutAngles[2] = fEntAngles[2];
-	}
-	
-	set_entvar(id, var_angles, fOutAngles);
-	
-	if(FClassnameIs(id, "player")) {
-		set_entvar(id, var_v_angle, fOutAngles);
-		set_entvar(id, var_fixangle, 1);
-	}
-	
-	static Float:fOutVelocity[3];
-	
-	if((bitPortalAprxmOrig[Portal_Start] & Portal_On_Floor && bitPortalAprxmOrig[Portal_End] & Portal_On_Ceiling) ||
-	   (bitPortalAprxmOrig[Portal_Start] & Portal_On_Ceiling && bitPortalAprxmOrig[Portal_End] & Portal_On_Floor)) {
-		xs_vec_copy(fEntVelocity, fOutVelocity);
-		set_entvar(id, var_velocity, fOutVelocity);
-		return true;
-	}
-	
-	if((bitPortalAprxmOrig[Portal_Start] & Portal_On_Floor && bitPortalAprxmOrig[Portal_End] & Portal_On_Floor) || 
-	   (bitPortalAprxmOrig[Portal_Start] & Portal_On_Ceiling && bitPortalAprxmOrig[Portal_End] & Portal_On_Ceiling)) {
-		if(fSpeed < IGNORE_SPEED) {
-			xs_vec_copy(fEntVelocity, fOutVelocity);
-			xs_1_neg(fOutVelocity[2]);
-		} else {
-			xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
-		}
-		set_entvar(id, var_velocity, fOutVelocity);
-		return true;
-	} else if(bitPortalAprxmOrig[Portal_Start] & (Portal_On_Floor | Portal_On_Ceiling) && ~bitPortalAprxmOrig[Portal_End]) {
-		xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
-		set_entvar(id, var_velocity, fOutVelocity);
-		return true;
-	} else if(bitPortalAprxmOrig[Portal_End] & (Portal_On_Floor | Portal_On_Ceiling) && ~bitPortalAprxmOrig[Portal_Start]) {
-		if(fSpeed < IGNORE_SPEED) {
-			xs_vec_copy(fEntVelocity, fOutVelocity);
-		} else {
-			xs_vec_mul_scalar(fPortalNormal[Portal_End], fSpeed, fOutVelocity);
-		}
-		set_entvar(id, var_velocity, fOutVelocity);
-		return true;
-	}
-	
-	static Float:fNormalVelocity[3];
-	xs_vec_normalize(fEntVelocity, fNormalVelocity);
-	
-	static Float:fReflectNormal[3];
-	xs_vec_add(fPortalNormal[Portal_Start], fPortalNormal[Portal_End], fReflectNormal);
-	
-	xs_vec_normalize(fReflectNormal, fReflectNormal);
-	xs_vec_reflect(fNormalVelocity, fReflectNormal, fOutVelocity);
-	xs_1_neg(fOutVelocity[2]);
-	xs_vec_neg(fOutVelocity, fOutVelocity);
-	xs_vec_reflect(fOutVelocity, fPortalNormal[Portal_End], fOutVelocity);
-	
-	if(vector_length(fOutVelocity) <= 0) {
-		xs_vec_copy(fNormalVelocity, fOutVelocity);
-	}
-	
-	xs_vec_mul_scalar(fOutVelocity, fSpeed, fOutVelocity);
-	
-	if(vector_length(fOutVelocity) <= 0) {
-		xs_vec_set(fOutVelocity, 0.1, 0.1, 0.1);
-	}
-	
-	set_entvar(id, var_velocity, fOutVelocity);
-
-	return true;
 }
 
 bool:portalBox_create(const Float:shotFrom[3], const Float:shotDirection[3], playerId, outPortalBox[portalBox_t]) {
@@ -1221,7 +1291,8 @@ portalBox_check(const portalBox[portalBox_t], Float:outBestDirection[3]) {
 	
 	// Преобразуем в бинарные значения (1 = есть препятствие, 0 = свободно)
 	static i;
-	for(i = 0; i < sizeof resTable; i++) {
+	
+	for(i = 0; i < 4; i++) {
 		resTable[i] = resTable[i] == 1.0 ? 0.0 : 1.0;
 	}
 	
