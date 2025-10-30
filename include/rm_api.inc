@@ -4,7 +4,7 @@
 
 #define _RUNEMOD_RELOAD
 
-#define RUNEMOD_VERSION "3.8"
+#define RUNEMOD_VERSION "3.8.1"
 
 
 #define HUD_CHANNEL_ID 3
@@ -50,7 +50,7 @@
 #endif
 
 // Пpoвepкa peaльный ли игpoк
-#define is_real_player(%0) (%0 > 0 && %0 <= MAX_PLAYERS)
+#define is_real_player(%0) (%0 > 0 && %0 <= MaxClients)
 
 // Maкcимaльнoe кoличecтвo pyн - плaгинoв
 #define MAX_REGISTER_RUNES 1024

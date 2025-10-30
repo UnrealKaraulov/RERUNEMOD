@@ -468,7 +468,7 @@ public client_disconnected(id, bool:drop, message[], maxlen)
 
 public update_all_player_stat()
 {
-	for(new i = 1; i <= MAX_PLAYERS;i++)
+	for(new i = 1; i <= MaxClients;i++)
 	{
 		if (is_user_connected(i))
 		{
@@ -574,7 +574,7 @@ public cmd_drop(id)
 	static Float:player_drop_time[MAX_PLAYERS + 1] = {0.0,...};
 	static iWeaponsTest[MAX_PLAYERS+1];
 	
-	if (id <= 0 || id > MAX_PLAYERS)
+	if (id <= 0 || id > MaxClients)
 		return PLUGIN_CONTINUE;
 		
 	new tmpwId = get_user_weapon(id);
@@ -603,7 +603,7 @@ public RG_CBasePlayer_DropPlayerItem_Pre(id)
 	static Float:player_drop_time[MAX_PLAYERS + 1] = {0.0,...};
 	static iWeaponsTest[MAX_PLAYERS+1];
 	
-	if (id <= 0 || id > MAX_PLAYERS)
+	if (id <= 0 || id > MaxClients)
 		return HC_CONTINUE;
 		
 	new tmpwId = get_user_weapon(id);
@@ -635,7 +635,7 @@ public DropAllRunes_RoundEnd( )
 	if (runemod_newround_remove > 0)
 	{
 		g_iRoundLeft++;
-		for(new id = 1; id < MAX_PLAYERS + 1;id++)
+		for(new id = 1; id < MaxClients + 1;id++)
 		{
 			player_drop_rune(id);
 			player_drop_all_items(id);
@@ -645,7 +645,7 @@ public DropAllRunes_RoundEnd( )
 
 public DropAllRunes( )
 {
-	for(new id = 1; id < MAX_PLAYERS + 1;id++)
+	for(new id = 1; id < MaxClients + 1;id++)
 	{
 		player_drop_rune(id);
 		player_drop_all_items(id);
@@ -1019,7 +1019,7 @@ stock rm_drop_notify(const id, const rune_id, const bool:is_item, const notify_t
     }
     
     // 4. Отправка уведомлений другим игрокам
-    for(new i = 1; i <= MAX_PLAYERS; i++) {
+    for(new i = 1; i <= MaxClients; i++) {
         if(!g_bUserConnected[i] || i == id) {
             continue;
         }
@@ -1848,7 +1848,7 @@ bool:spawn_runes_internal(spawn_id, bool:forceview = false)
 	
 	if (runemod_spawn_nolook && !forceview)
 	{
-		for(new i = 1; i <= MAX_PLAYERS; i++)
+		for(new i = 1; i <= MaxClients; i++)
 		{
 			if (g_bUserConnected[i] && g_bUserAlive[i] && !g_bUserBot[i])
 			{
@@ -1927,7 +1927,7 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 {
 	if (runemod_active && !g_bCurrentMapIgnored)
 	{
-		for(new i = 1; i <= MAX_PLAYERS; i++)
+		for(new i = 1; i <= MaxClients; i++)
 		{
 			if (g_bUserConnected[i] && g_bUserAlive[i] && !g_bUserBot[i])
 			{
@@ -1938,7 +1938,7 @@ public UPDATE_RUNE_DESCRIPTION(taskid)
 			}
 		}
 
-		for(new i = 1; i <= MAX_PLAYERS; i++)
+		for(new i = 1; i <= MaxClients; i++)
 		{
 			if (!g_bUserConnected[i] || g_bUserAlive[i])
 				continue;
@@ -2269,7 +2269,7 @@ stock bool:fm_is_visible_hull(index, const Float:point[3], hull = 0, ignoremonst
 // Фyнкция пpoвepяeт нe нaxoдитcя ли тoчкa pядoм co игpoкaми
 stock bool:is_no_player_point( Float:coords[3] , Float:dist = 128.0)
 {
-	for(new i = 1; i <= MAX_PLAYERS; i++)
+	for(new i = 1; i <= MaxClients; i++)
 	{
 		if (g_bUserConnected[i] && g_bUserAlive[i])
 		{

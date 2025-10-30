@@ -177,3 +177,5 @@ rm_multijump/rm_multijump.zip
 rm_hammer/update_and_compile.bat
 include/easy_profiler.inc
 rm_hammer/rm_hammer.zip
+rm_portalgun/rm_portal_item_new.txt
+rm_portalgun/rm_portal_item_old.txt
