@@ -15,9 +15,9 @@ new g_iCfgSpawnSecondsDelay = 0;
 
 public plugin_init()
 {
-	register_plugin("RM_VIP_FLAG","1.3","Karaulov"); 
+	register_plugin("RM_VIP_FLAG","1.4","Karaulov"); 
 	
-	new rune_flags[] = "ab";
+	new rune_flags[64] = "ab";
 	/* Чтение конфигурации */
 	rm_read_cfg_str(rune_name,"VIP_FLAGS",rune_flags,rune_flags,charsmax(rune_flags));
 	
@@ -26,7 +26,7 @@ public plugin_init()
 	if (g_uVipFlags == 0)
 	{
 		// Если флаг указан неправильно, эта строка завершит работу плагина с ошибкой.
-		set_fail_state("NO VIP_FLAGS DETECTED");
+		set_fail_state("NO VIP_FLAGS DETECTED ^"%s^"",rune_flags);
 		return;
 	}
 	
