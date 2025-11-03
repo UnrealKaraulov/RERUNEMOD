@@ -37,6 +37,16 @@ stock cfg_debug(const fmt_str[], any:...)
 }
 #endif
 
+/*
+ *
+ * Sets configuration file base path and optional maximum key length.
+ *
+ * Parameter: path         Path (relative, without extension) used for config file (e.g. "plugins/easy_cfg")
+ * Parameter: max_key_val  Maximum allowed key value length; -1 for no limit
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_set_path(const path[], max_key_val = -1)
 {
 	copy(cfg_path,charsmax(cfg_path),path);
@@ -73,6 +83,16 @@ stock bool:cfg_set_path(const path[], max_key_val = -1)
 	}
 }
 
+/*
+ *
+ * Retrieves absolute config file path (including configs directory and ".ini").
+ *
+ * Parameter: path  Buffer to receive constructed file path
+ * Parameter: len   Buffer length
+ *
+ * @returns true on success
+ *
+*/
 stock bool:cfg_get_path(path[], const len)
 {
 	new szFile[512];
@@ -81,6 +101,13 @@ stock bool:cfg_get_path(path[], const len)
 	return true;
 }
 
+/*
+ *
+ * Clears (truncates) the config file, creating an empty .ini.
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_clear()
 {
 	new szFile[512] = {EOS};
@@ -101,6 +128,21 @@ stock bool:cfg_clear()
 	return true;
 }
 
+/*
+ *
+ * Read string value from config.
+ *
+ * If the key is missing, writes the provided default value into the config file and returns false.
+ *
+ * Parameter: section      Section name
+ * Parameter: arg          Key name
+ * Parameter: default_val  Default string to write/return if key not found
+ * Parameter: out_val      Buffer to receive read value (or default if written)
+ * Parameter: outlen       Buffer length
+ *
+ * @returns true if value was read (key existed), false if default was written
+ *
+*/
 stock bool:cfg_read_str(const section[], const arg[], const default_val[], out_val[], const outlen)
 {
 	#if defined EASY_CFG_DEBUG
@@ -122,6 +164,20 @@ stock bool:cfg_read_str(const section[], const arg[], const default_val[], out_v
 	return true;
 }
 
+/*
+ *
+ * Read integer value from config.
+ *
+ * If the key is missing, writes the provided default value into the config file and returns false.
+ *
+ * Parameter: section      Section name
+ * Parameter: arg          Key name
+ * Parameter: default_val  Default integer to write/return if key not found
+ * Parameter: out_val      Reference to int cell that receives the value
+ *
+ * @returns true if value was read (key existed), false if default was written
+ *
+*/
 stock bool:cfg_read_int(const section[], const arg[], const default_val, &out_val)
 {
 	#if defined EASY_CFG_DEBUG
@@ -147,6 +203,20 @@ stock bool:cfg_read_int(const section[], const arg[], const default_val, &out_va
 	return true;
 }
 
+/*
+ *
+ * Read boolean value from config.
+ *
+ * Stored as "true" or "false" strings. If missing, writes default and returns false.
+ *
+ * Parameter: section      Section name
+ * Parameter: arg          Key name
+ * Parameter: default_val  Default boolean (true/false) to write/return if key not found
+ * Parameter: out_val      Reference to bool cell that receives the value
+ *
+ * @returns true if value was read (key existed), false if default was written
+ *
+*/
 stock bool:cfg_read_bool(const section[], const arg[], const bool:default_val, &bool:out_val)
 {
 	static tmp_bool[16];
@@ -173,6 +243,20 @@ stock bool:cfg_read_bool(const section[], const arg[], const bool:default_val, &
 	}
 }
 
+/*
+ *
+ * Read float value from config.
+ *
+ * Uses string float formatting with trimmed trailing zeros. If missing, writes default and returns false.
+ *
+ * Parameter: section      Section name
+ * Parameter: arg          Key name
+ * Parameter: default_val  Default Float to write/return if key not found
+ * Parameter: out_val      Reference to Float that receives the value
+ *
+ * @returns true if value was read (key existed), false if default was written
+ *
+*/
 stock bool:cfg_read_flt(const section[], const arg[], const Float:default_val, &Float:out_val)
 {
 	#if defined EASY_CFG_DEBUG
@@ -198,6 +282,17 @@ stock bool:cfg_read_flt(const section[], const arg[], const Float:default_val, &
 	return true;
 }
 
+/*
+ *
+ * Write string value into config.
+ *
+ * Parameter: section  Section name
+ * Parameter: arg      Key name
+ * Parameter: val      String value to write
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_write_str(const section[], const arg[], const val[])
 {
 	#if defined EASY_CFG_DEBUG
@@ -207,6 +302,17 @@ stock bool:cfg_write_str(const section[], const arg[], const val[])
 	return ini_write_string(cfg_path, section, arg, val);
 }
 
+/*
+ *
+ * Write integer value into config.
+ *
+ * Parameter: section  Section name
+ * Parameter: arg      Key name
+ * Parameter: val      Integer value to write
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_write_int(const section[], const arg[], const val)
 {
 	#if defined EASY_CFG_DEBUG
@@ -216,6 +322,18 @@ stock bool:cfg_write_int(const section[], const arg[], const val)
 	return ini_write_int(cfg_path, section, arg, val);
 }
 
+/*
+ *
+ * Write boolean value into config.
+ * Written as "true" or "false".
+ *
+ * Parameter: section  Section name
+ * Parameter: arg      Key name
+ * Parameter: val      Boolean value to write
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_write_bool(const section[], const arg[], const bool:val)
 {
 	#if defined EASY_CFG_DEBUG
@@ -225,6 +343,18 @@ stock bool:cfg_write_bool(const section[], const arg[], const bool:val)
 	return ini_write_string(cfg_path, section, arg, val ? "true" : "false");
 }
 
+/*
+ *
+ * Write float value into config.
+ * Floats are written with 5 decimal precision then trailing zeros trimmed.
+ *
+ * Parameter: section  Section name
+ * Parameter: arg      Key name
+ * Parameter: val      Float value to write
+ *
+ * @returns true on success, false on failure
+ *
+*/
 stock bool:cfg_write_flt(const section[], const arg[], const Float:val)
 {
 	#if defined EASY_CFG_DEBUG
