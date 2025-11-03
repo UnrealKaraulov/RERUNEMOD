@@ -89,6 +89,9 @@ stock bool:cfg_set_path(const path[], max_key_val = -1)
 					else 
 					{
 						hFile = fopen(szFile, "wb");
+						#if defined EASY_CFG_DEBUG
+						cfg_debug("=== CFG_INIT: New dir: %s. File found %i.", szDir, hFile ? 1 : 0);
+						#endif
 						if (hFile)
 						{
 							fclose(hFile);
