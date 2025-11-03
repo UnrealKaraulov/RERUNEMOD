@@ -10,12 +10,13 @@ new rune_descr[] = "rm_vip_item_desc";
 new rune_model_path[64] = "models/rm_reloaded/w_vip.mdl";
 
 new g_uVipFlags = 0;
+new g_uAddedFlags[MAX_PLAYERS + 1];
 
 new g_iCfgSpawnSecondsDelay = 0;
 
 public plugin_init()
 {
-	register_plugin("RM_VIP_FLAG","1.4","Karaulov"); 
+	register_plugin("RM_VIP_FLAG","2.0","Karaulov"); 
 	
 	new rune_flags[64] = "ab";
 	/* Чтение конфигурации */
@@ -67,17 +68,21 @@ public plugin_precache()
 
 public rm_give_rune(id)
 {
-	// Игнорировать если у игрока уже есть данный вип
-	if (get_user_flags(id) & g_uVipFlags != g_uVipFlags)
-	{
-		// Убираем старые совпадающие флаги
-		remove_user_flags(id,g_uVipFlags);
-		// Убираем флаг 'z' 
-		remove_user_flags(id,ADMIN_USER);
-		// Добавляем привилегии до конца карты
-		set_user_flags(id, get_user_flags(id) + g_uVipFlags);
-		return RUNE_PICKUP_SUCCESS;
-	}
-	else 
+	new currentFlags = get_user_flags(id);
+	new missingFlags = g_uVipFlags & ~currentFlags;
+	
+	if (missingFlags == 0)
 		return NO_RUNE_PICKUP_SUCCESS;
+	
+	set_user_flags(id, currentFlags | missingFlags);
+	g_uAddedFlags[id] = missingFlags;
+	
+	return RUNE_PICKUP_SUCCESS;
+}
+
+public rm_drop_rune(id)
+{
+	new currentFlags = get_user_flags(id);
+	set_user_flags(id, currentFlags & ~g_uAddedFlags[id]);
+	g_uAddedFlags[id] = 0;	
 }
